@@ -1,0 +1,8 @@
+{
+  "top_module"  : "cl_tb_top",
+  "a_baseaddr"  : 0,
+  "b_baseaddr"  : 1024,
+  "c_baseaddr"  : 2048,
+  "row_col_size": 16,
+  "num_ctl_cmd" : 4
+}

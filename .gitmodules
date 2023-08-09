@@ -1,0 +1,8 @@
+[submodule "base_nics/open-nic-shell"]
+	path = base_nics/open-nic-shell
+	url = https://github.com/Xilinx/open-nic-shell.git
+	branch = main
+[submodule "drivers/onic-driver"]
+	path = drivers/onic-driver
+	url = https://github.com/Hyunok-Kim/onic-driver.git
+	branch = main
