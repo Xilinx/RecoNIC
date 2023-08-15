@@ -14,13 +14,13 @@ RDMA traffic is processed by the RDMA engine and payload data from the network c
 
 The software stack contains the network stack driver used to handle non-RDMA traffic (such as TCP/IP, UDP/IP, and ARP), the memory driver for memory access between the host and device memory, and control driver used to configure/control components in the hardware shell. 
 
-## System requirement
+## System Requirement
 
 * Two servers, each one has an AMD-Xilinx Alveo U250 FPGA board
 * The two AMD-Xilinx Alveo U250 boards can be connected via a 100Gbps cable or through a 100Gbps switch
 * Experiments are tested on machines with Ubuntu 20.04 and linux kernel version 5.4.0-125-generic.
 
-## Preliminary installation
+## Preliminary Installation
 
 * Vivado 2021.2
 * ERNIC license <br/>
@@ -93,7 +93,7 @@ Info: Target ID or target name can be obtained from "Open New Target" under "Ope
 $ ./program_fpga.sh -b d8:00.0 -t target_name -r remote_hostname
 ```
 
-## Driver installation
+## Driver Installation
 
 * Install the modified onic driver
 ```
@@ -186,7 +186,7 @@ If everything works fine, it should return similar output from your terminals. A
 
 ## Applications
 
-### Build-in example - network systolic-array matrix multiplication
+### Built-in example - network systolic-array matrix multiplication
 
 In the current implementation, we have [matrix multiplication](examples/network_systolic_mm) as an example to demonstrate how to use RecoNIC. In this example, array A and B are stored in the host memory of the remote peer, and the computation is done in the local peer. 
 
@@ -238,7 +238,7 @@ $ sudo ./network_systolic_mm -d /dev/reconic-mm -p /sys/bus/pci/devices/0000\:d8
 
 ## Performance Evaluation
 
-### DMA Testing
+### DMA testing
 
 The [dma_test](examples/dma_test) folder is used to test data copy functionality between host and device's memory. It supports both read and write from/to the NIC's memory. In this example, the host acts as a master.
 
@@ -299,7 +299,7 @@ Calculate total read bandwidth achieved:
 
 ```
 
-## Hardware simulation
+## Hardware Simulation
 
 The simulation framework supports self-testing and regression test. Stimulus, control metadata and golden data are generated from a python script, *packet_gen.py*. User can specify their own json file to generate a new set of testing under *./sim/testcases* folder. The testbenches will automatically read those generated files and construct packets in AXI-streaming format and other control-related signals. The simulation framework can support xsim and questasim.
 
