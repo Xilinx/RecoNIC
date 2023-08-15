@@ -14,14 +14,6 @@ RDMA traffic is processed by the RDMA engine and payload data from the network c
 
 The software stack contains the network stack driver used to handle non-RDMA traffic (such as TCP/IP, UDP/IP, and ARP), the memory driver for memory access between the host and device memory, and control driver used to configure/control components in the hardware shell. 
 
-## Built-in Example
-
-In the current implementation, we have [matrix multiplication](examples/network_systolic_mm) as an example to demonstrate how to use RecoNIC. In this example, array A and B are stored in the host memory of the remote peer, and the computation is done in the local peer. 
-
-**Execution flow**: The local host first issues two RDMA read requests to the remote peer for acquiring array A and B and store it in the device memory. Once detecting the readiness of the two arrays, the local host issues a compute control command to the Compute Logic to start computation. Once the computation is finished, the host reads the result back to the host memory for verification.
-
-The [hardware implementation](shell/compute/lookside) of the MM computation is a systolic-array version and written in HLS C from the [Vitis_Accel_Examples](https://github.com/Xilinx/Vitis_Accel_Examples/blob/master/cpp_kernels/systolic_array/src/mmult.cpp).
-
 ## System requirement
 
 * Two servers, each one has an AMD-Xilinx Alveo U250 FPGA board
@@ -192,9 +184,63 @@ PING 192.100.51.1 (192.100.51.1) 56(84) bytes of data.
 
 If everything works fine, it should return similar output from your terminals. After verifying, you can stop *ping*. The system is now up and we're ready to play with applications.
 
-## Testing data copy performance (host as a master)
+## Applications
 
-The [dma_test](examples/dma_test) folder is used to test data copy functionality between host and device's memory. It supports both read and write from/to the NIC's memory.
+### Build-in example - network systolic-array matrix multiplication
+
+In the current implementation, we have [matrix multiplication](examples/network_systolic_mm) as an example to demonstrate how to use RecoNIC. In this example, array A and B are stored in the host memory of the remote peer, and the computation is done in the local peer. 
+
+**Execution flow**: The local host first issues two RDMA read requests to the remote peer for acquiring array A and B and store it in the device memory. Once detecting the readiness of the two arrays, the local host issues a compute control command to the Compute Logic to start computation. Once the computation is finished, the host reads the result back to the host memory for verification.
+
+The [hardware implementation](shell/compute/lookside) of the MM computation is a systolic-array version and written in HLS C from the [Vitis_Accel_Examples](https://github.com/Xilinx/Vitis_Accel_Examples/blob/master/cpp_kernels/systolic_array/src/mmult.cpp).
+
+Data (Array A and B) is stored in a server node (Peer 1), while computation is executed in a client node (Peer 2).
+
+Before we run the example, we need to configure hugepages in both servers.
+```
+# 1. Edit /etc/sysctl.conf file and configure number of hugepages by setting 'vm.nr_hugepages'. Each 
+#    hugepage will have 2MB size
+$ vm.nr_hugepages = 2048
+# 2. Refresh the kernel parameters
+$ sudo sysctl -p
+```
+Compilation
+```
+$ cd examples/network_systolic_mm
+$ make
+$ ./network_systolic_mm -h
+usage: ./network_systolic_mm [OPTIONS]
+
+  -d (--device) character device name (defaults to /dev/reconic-mm)
+  -p (--pcie_resource) PCIe resource
+  -r (--src_ip) Source IP address
+  -i (--dst_ip) Destination IP address
+  -u (--udp_sport) UDP source port
+  -t (--tcp_sport) TCP source port
+  -q (--dst_qp) Destination QP number
+  -s (--server) Server node
+  -c (--client) Client node
+  -h (--help) print usage help and exit
+
+```
+
+**Peer 1** - Server (192.100.51.1)
+```
+$ sudo ./network_systolic_mm -d /dev/reconic-mm -p /sys/bus/pci/devices/0000\:d8\:00.0/resource2 -r 192.100.51.1 -i 192.100.52.1 -u 22222 -t 11111 --dst_qp 2 -s 2>&1 | tee server_debug.log
+```
+
+**Peer 2** - Client (192.100.52.1)
+```
+$ cd software/network_systolic_mm
+$ make
+$ sudo ./network_systolic_mm -d /dev/reconic-mm -p /sys/bus/pci/devices/0000\:d8\:00.0/resource2 -r 192.100.52.1 -i 192.100.51.1 -u 22222 -t 11111 --dst_qp 2 -c 2>&1 | tee client_debug.log
+```
+
+## Performance Evaluation
+
+### DMA Testing
+
+The [dma_test](examples/dma_test) folder is used to test data copy functionality between host and device's memory. It supports both read and write from/to the NIC's memory. In this example, the host acts as a master.
 
 ```
 $ cd examples/dma_test
@@ -253,51 +299,7 @@ Calculate total read bandwidth achieved:
 
 ```
 
-## Running systolic-array MM example
-
-Data (Array A and B) is stored in a server node (Peer 1), while computation is executed in a client node (Peer 2).
-
-Before we run the example, we need to configure hugepages in both servers.
-```
-# 1. Edit /etc/sysctl.conf file and configure number of hugepages by setting 'vm.nr_hugepages'. Each 
-#    hugepage will have 2MB size
-$ vm.nr_hugepages = 2048
-# 2. Refresh the kernel parameters
-$ sudo sysctl -p
-```
-Compilation
-```
-$ cd examples/network_systolic_mm
-$ make
-$ ./network_systolic_mm -h
-usage: ./network_systolic_mm [OPTIONS]
-
-  -d (--device) character device name (defaults to /dev/reconic-mm)
-  -p (--pcie_resource) PCIe resource
-  -r (--src_ip) Source IP address
-  -i (--dst_ip) Destination IP address
-  -u (--udp_sport) UDP source port
-  -t (--tcp_sport) TCP source port
-  -q (--dst_qp) Destination QP number
-  -s (--server) Server node
-  -c (--client) Client node
-  -h (--help) print usage help and exit
-
-```
-
-**Peer 1** - Server (192.100.51.1)
-```
-$ sudo ./network_systolic_mm -d /dev/reconic-mm -p /sys/bus/pci/devices/0000\:d8\:00.0/resource2 -r 192.100.51.1 -i 192.100.52.1 -u 22222 -t 11111 --dst_qp 2 -s 2>&1 | tee server_debug.log
-```
-
-**Peer 2** - Client (192.100.52.1)
-```
-$ cd software/network_systolic_mm
-$ make
-$ sudo ./network_systolic_mm -d /dev/reconic-mm -p /sys/bus/pci/devices/0000\:d8\:00.0/resource2 -r 192.100.52.1 -i 192.100.51.1 -u 22222 -t 11111 --dst_qp 2 -c 2>&1 | tee client_debug.log
-```
-
-## Simulation
+## Hardware simulation
 
 The simulation framework supports self-testing and regression test. Stimulus, control metadata and golden data are generated from a python script, *packet_gen.py*. User can specify their own json file to generate a new set of testing under *./sim/testcases* folder. The testbenches will automatically read those generated files and construct packets in AXI-streaming format and other control-related signals. The simulation framework can support xsim and questasim.
 
