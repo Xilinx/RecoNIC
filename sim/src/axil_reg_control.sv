@@ -8,9 +8,11 @@
 module axil_reg_control (
   input string        which_rdma,
   input string        rdma_cfg_filename,
+  input string        rdma_recv_cfg_filename,
   input string        rdma_stat_filename,
   input               start_config_rdma,
   output              finish_config_rdma,
+  input               start_checking_recv,
   input               start_rdma_stat,
   output              finish_rdma_stat,
   output logic        m_axil_reg_awvalid,
@@ -48,6 +50,21 @@ logic        config_vld;
 logic [31:0] config_addr;
 logic [31:0] config_data;
 
+logic [31:0] rn_rdma_recv_conf;
+logic        eof_rdma_recv_conf;
+logic        config_rq_vld;
+logic [31:0] rq_addr;
+logic [31:0] rq_golden_value;
+logic        rq_pidb_vld;
+logic [31:0] rq_pidb_addr;
+logic [31:0] rq_pidb_golden_value;
+logic [31:0] rq_pidb_value;
+logic        rq_cidb_vld;
+logic [31:0] rq_cidb_addr;
+logic        poll_rq_pidb_vld;
+logic [31:0] poll_rq_pidb_addr;
+logic [31:0] poll_rq_pidb_golden_value;
+
 /* AXI-Lite read interface */
 localparam AXIL_READ_IDLE = 2'b01;
 localparam AXIL_READ_RESP = 2'b10;
@@ -71,14 +88,23 @@ begin
   rn_rdma_conf <= $fopen($sformatf("%s.txt", rdma_cfg_filename), "r");
 end
 
+always_ff @(posedge axil_rstn)
+begin
+  rn_rdma_recv_conf <= $fopen($sformatf("%s.txt", rdma_recv_cfg_filename), "r");
+end
+
 always_ff @(posedge axil_clk)
 begin
   if (!axil_rstn) begin
     config_addr <= 32'd0;
     config_data <= 32'd0;
     config_vld  <= 1'b0;
-
     eof_rdma_conf <= 1'b0;
+
+    config_rq_vld   <= 1'b0;
+    rq_addr         <= 32'd0;
+    rq_golden_value <= 32'd0;
+    eof_rdma_recv_conf <= 1'b0;
   end
   else begin
     if (start_config_rdma) begin
@@ -99,7 +125,7 @@ begin
           end          
         end
 
-        if((wr_state == AXIL_WRITE_RESP) && m_axil_reg_bvalid) begin
+        if((wr_state == AXIL_WRITE_RESP) && m_axil_reg_bvalid && config_vld) begin
           config_vld <= 1'b0;
         end
       end
@@ -112,10 +138,58 @@ begin
       config_data <= 32'd0;
       config_addr <= 32'd0;
     end
+
+    // Checking RQ completion for send/receive operations
+    if (start_checking_recv) begin
+      if (rn_rdma_recv_conf) begin
+        if (!eof_rdma_recv_conf) begin
+          if(!config_rq_vld && !poll_rq_pidb_vld) begin
+            if (32'h2 != $fscanf(rn_rdma_recv_conf, "%x %x", rq_addr, rq_golden_value)) begin
+              $display("INFO: [axil_reg_control] time=%t, Finished reading %s file", $time, $sformatf("%s.txt", rdma_recv_cfg_filename));
+              rq_golden_value <= 32'd0;
+              rq_addr         <= 32'd0;
+              config_rq_vld   <= 1'b0;
+
+              eof_rdma_recv_conf <= 1'b1;
+            end
+            else begin
+              config_rq_vld <= 1'b1;
+            end
+          end
+
+          // Logic used to de-assert config_rq_vld
+          // Set config_rq_vld to 1'b0 when rq_pidb_vld read is done
+          if (m_axil_reg_rvalid && (m_axil_reg_rresp == 2'd0) && rq_pidb_vld) begin
+            config_rq_vld <= 1'b0;
+          end
+          else begin
+            // Set config_rq_vld to 1'b0 when rq_cidb write is done
+            if((wr_state == AXIL_WRITE_RESP) && m_axil_reg_bvalid && rq_cidb_vld) begin
+              config_rq_vld <= 1'b0;
+            end
+          end
+        end
+
+      end
+      else begin
+        $fatal("INFO: [axil_reg_control], time=%t, no %s file to check RQ completion status for a receive operation", $time, $sformatf("%s.txt", rdma_recv_cfg_filename));
+      end      
+    end
+    else begin
+      config_rq_vld   <= 1'b0;
+      rq_addr         <= 32'd0;
+      rq_golden_value <= 32'd0;
+    end
   end
 end
 
 assign finish_config_rdma = eof_rdma_conf;
+
+assign rq_pidb_vld  = (config_rq_vld && (rq_golden_value != 32'hffffffff)) ? config_rq_vld : 1'b0;
+assign rq_pidb_addr = config_rq_vld ? ((rq_golden_value != 32'hffffffff) ? rq_addr : 32'd0) : 32'd0;
+assign rq_pidb_golden_value = config_rq_vld ? ((rq_golden_value != 32'hffffffff) ? rq_golden_value : 32'd0) : 32'd0;
+assign rq_cidb_vld  = (config_rq_vld && (rq_golden_value == 32'hffffffff)) ? config_rq_vld : 1'b0;
+assign rq_cidb_addr = config_rq_vld ? ((rq_golden_value == 32'hffffffff) ? rq_addr : 32'd0) : 32'd0;
 
 always_comb
 begin
@@ -128,7 +202,7 @@ begin
   wr_nextstate = wr_state;
   case(wr_state)
   AXIL_WRITE_IDLE: begin
-    if(config_vld) begin
+    if(config_vld || rq_cidb_vld) begin
       wr_nextstate = AXIL_WRITE;
     end
     else begin
@@ -138,7 +212,7 @@ begin
   AXIL_WRITE: begin
     wr_nextstate = AXIL_WRITE;
     m_axil_reg_awvalid = 1'b1;
-    m_axil_reg_awaddr  = config_addr;
+    m_axil_reg_awaddr  = config_vld ? config_addr : rq_cidb_addr;
     if (m_axil_reg_awready) begin
       wr_nextstate = AXIL_WRITE_WREADY;
     end
@@ -146,7 +220,9 @@ begin
   AXIL_WRITE_WREADY: begin
     if (m_axil_reg_wready) begin
       m_axil_reg_wvalid = 1'b1;
-      m_axil_reg_wdata  = config_data;
+      // If rq_cidb_vld is asserted, then write rq_pidb_value to rq_cidb to complete the 
+      // receive operation
+      m_axil_reg_wdata  = config_vld ? config_data : rq_pidb_value;
       wr_nextstate = AXIL_WRITE_RESP;
     end
   end
@@ -280,9 +356,9 @@ begin
   axil_read_nextstate = axil_read_state;
   case(axil_read_state)
   AXIL_READ_IDLE: begin
-    if(stat_reg_vld) begin
+    if(stat_reg_vld || rq_pidb_vld || poll_rq_pidb_vld) begin
       m_axil_reg_arvalid = 1'b1;
-      m_axil_reg_araddr  = stat_reg_addr;
+      m_axil_reg_araddr  = stat_reg_vld ? stat_reg_addr : (rq_pidb_vld ? rq_pidb_addr : poll_rq_pidb_addr);
       if(m_axil_reg_arready) begin
         axil_read_nextstate = AXIL_READ_RESP;
       end
@@ -309,7 +385,7 @@ begin
     end
   end
   AXIL_WAIT_NEXT_READ: begin
-    if(next_read) begin
+    if(next_read || poll_rq_pidb_vld) begin
       axil_read_nextstate = AXIL_READ_IDLE;
     end
   end
@@ -325,13 +401,20 @@ begin
     rdma_stat_vld   <= 1'b0;
     rdma_stat_value <= 32'd0;
     next_read       <= 1'b0;
+
+    rq_pidb_value   <= 32'd0;
     axil_read_state <= AXIL_READ_IDLE;
   end
   else begin
     next_read <= 1'b0;
     if(m_axil_reg_rvalid && (m_axil_reg_rresp == 2'd0)) begin
-      rdma_stat_vld   <= 1'b1;
-      rdma_stat_value <= m_axil_reg_rdata;
+      if (rq_pidb_vld || poll_rq_pidb_vld) begin
+        rq_pidb_value <= m_axil_reg_rdata;
+      end
+      else begin
+        rdma_stat_vld   <= 1'b1;
+        rdma_stat_value <= m_axil_reg_rdata;
+      end
     end
     else begin
       next_read     <= rdma_stat_vld ? 1'b1 : 1'b0;
@@ -339,6 +422,59 @@ begin
     end
 
     axil_read_state <= axil_read_nextstate;
+  end
+end
+
+localparam POLLING = 1'b0;
+localparam TIMEOUT = 1'b1;
+localparam TIMEOUT_THRESHOLD = 32'h00000400;
+logic poll_state;
+logic [31:0] timeout_cnt;
+
+always_ff @(posedge axil_clk)
+begin
+  if(!axil_rstn) begin
+    poll_rq_pidb_vld  <= 1'b0;
+    poll_rq_pidb_addr <= 32'd0;
+    poll_rq_pidb_golden_value <= 32'd0;
+
+    timeout_cnt <= 32'd0;
+    poll_state <= POLLING;
+  end
+  else begin
+    if (rq_pidb_vld && m_axil_reg_rvalid && (m_axil_reg_rresp == 2'd0) && (!poll_rq_pidb_vld)) begin
+      if (rq_pidb_golden_value != m_axil_reg_rdata) begin
+        // Polling rq_pidb
+        poll_rq_pidb_vld  <= 1'b1;
+        poll_rq_pidb_addr <= rq_pidb_addr;
+        poll_rq_pidb_golden_value <= rq_pidb_golden_value;
+        //$fatal("ERROR: [axil_reg_control], time=%t, %s, rq_pidb_gloden_value (%d) and rq_pidb_value (%d) are mismatched", $time, rq_pidb_golden_value, m_axil_reg_rdata);
+      end
+    end
+
+    if (poll_rq_pidb_vld && m_axil_reg_rvalid && (m_axil_reg_rresp == 2'd0)) begin
+      case(poll_state)
+      POLLING: begin
+        if (poll_rq_pidb_golden_value == m_axil_reg_rdata) begin
+          // Polling rq_pidb
+          poll_rq_pidb_vld  <= 1'b0;
+          poll_rq_pidb_addr <= 32'd0;
+          poll_rq_pidb_golden_value <= 32'd0;
+          //$fatal("ERROR: [axil_reg_control], time=%t, %s, rq_pidb_gloden_value (%d) and rq_pidb_value (%d) are mismatched", $time, rq_pidb_golden_value, m_axil_reg_rdata);
+        end
+
+        timeout_cnt <= timeout_cnt + 1;
+        if (timeout_cnt == TIMEOUT_THRESHOLD) begin
+          timeout_cnt <= 32'd0;
+          poll_state <= TIMEOUT;
+        end
+      end
+      TIMEOUT: begin
+        $fatal("ERROR: [axil_reg_control], time=%t, rq_pidb timeout", $time);
+      end
+      default: poll_state <= POLLING;
+      endcase
+    end
   end
 end
 

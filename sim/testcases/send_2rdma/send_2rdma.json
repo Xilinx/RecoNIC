@@ -1,0 +1,23 @@
+{
+  "top_module"          : "rn_tb_2rdma_top",
+  "pkt_type"            : "rocev2",
+  "pkt_op"              : "send",
+  "non_roce_traffic"    : "no",
+  "noise_roce_en"       : "no",
+  "payload_size"        : 64,
+  "src_baseaddr"        : 2048,
+  "dst_baseaddr"        : 1024,
+  "num_data_buffer"     : 4,
+  "mr_buf_size"         : 32768,
+  "data_buffer_size"    : 4096,
+  "num_qp"              : 4,
+  "udp_sport"           : 17185,
+  "destination_qpid"    : 2,
+  "sq_depth"            : 4,
+  "rq_depth"            : 4,
+  "mtu_size"            : 4096,
+  "rq_buffer_size"      : 64,
+  "partition_key"       : 4660,
+  "r_key"               : 22,
+  "sq_psn"              : 10
+}

@@ -6,7 +6,7 @@
 set ips {
   axi_mm_bram
   axi_sys_mm
-  axil_2to1_crossbar
+  axil_3to1_crossbar
   reconic_axil_crossbar
   axi_protocol_checker
   dev_mem_axi_crossbar

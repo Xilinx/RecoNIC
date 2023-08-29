@@ -342,6 +342,7 @@ class GenRoCEClass(pktGenClass):
     self.rdma2_global_config = []
     self.rdma2_per_q_config  = []
     self.rdma2_mr_config     = []
+    self.rdma2_per_q_recv_config     = []
     self.rdma2_stat_reg_config       = []
     self.rdma2_debug_stat_reg_config = []
     '''
@@ -956,7 +957,10 @@ class GenRoCEClass(pktGenClass):
       opcode = eh.opcode_lst.index(self.pkt_op)
       if (opcode == 0x5):
         opcode = 0x0c
+
+      # Generate two send operations
       self.gen_rdma_wqe(qpid, wrid, 0, payload_addr, payload_len, opcode, remote_offset, remote_key)
+      #self.gen_rdma_wqe(qpid, wrid, 1, payload_addr + 0x40, payload_len, opcode, remote_offset, remote_key)
 
       '''
       # FIXME: Temp multiple operations (read after write) testing
@@ -979,6 +983,33 @@ class GenRoCEClass(pktGenClass):
         opcode = 0x0c
       self.gen_rdma_wqe(qpid, wrid+1, 1, payload_addr, payload_len, opcode, remote_offset, remote_key)
       '''
+      # Configure SQPIi
+      sq_pidb_offset = self.get_rdma_per_q_config_addr(eh.SQPIi, qpid)
+      sq_pidb_config_str = format(sq_pidb_offset, '08x') + ' ' + format(self.sq_pidb, '08x')
+      debug_str = 'eh.SQPIi: ' + sq_pidb_config_str + '\n'
+      self.rdma_per_q_config.append(sq_pidb_config_str)
+
+      # Configuration used to post receive operations of the remote peer
+      if (opcode == 0x2) or (opcode == 0x3):
+        # 1. poll rq_pidb
+        rq_pidb_offset = self.get_rdma_per_q_config_addr(eh.STATRQPIDBi , qpid)
+        # As we only have one send per queue, the golden number of send per queue is '1'
+        rq_config_str = format(rq_pidb_offset, '08x') + ' ' + format(len(self.rdma_wqe_list), '08x')
+        self.rdma2_per_q_recv_config.append(rq_config_str)
+        # 2. Update rq_cidb with value from reading rq_pidb register
+        rq_cidb_offset = self.get_rdma_per_q_config_addr(eh.RQCIi, qpid)
+        # rq_cidb register will be updated with the returned value from rq_pidb. '0xffff_ffff'
+        # is used to detect rq_cidb address when reading configuration file in the hardware
+        # testbench.
+        rq_config_str = format(rq_cidb_offset, '08x') + ' ' + format(0xffffffff, '08x')
+        self.rdma2_per_q_recv_config.append(rq_config_str)
+      
+      if (self.debug_path != ''):
+        debug_fname = pjoin(self.debug_path, f'debug_rdma_perq_csr_config_qpid_{qpid}.txt')
+        helper_lst = []
+        helper_lst.append(debug_str)
+        self.write2file(debug_fname, '', helper_lst, mode='a')
+
 
   def gen_rdma_perq_csr_config(self, qpid, dst_ip, dst_mac_lsb, dst_mac_msb, dst_qpid, part_key, sq_psn, pd_num, sq_depth=8, rq_depth=8, en_rq_intr=0, en_cq_intr=0, en_hw_handshake=0, en_cqe_write=1, mtu_sz=4096, rq_buf_sz=1024, is_remote_peer=False):
     """Generate RDMA per-queue control status register configurations
@@ -1180,8 +1211,12 @@ class GenRoCEClass(pktGenClass):
     #      011 – 2048B
     #      100 - 4096B (default)
     #      101 to 111 - Reserved
-    # [31:16]: RQ Buffer size (in multiple of 256B). This is the size of each buffer 
-    #          element in the request and not the size of the entire request.
+    # [31:16]: RQ Buffer size (in multiple of 256B). This is the size of each 
+    #          element in the request and not the size of the entire request. 
+    #          For example, when RQ Buffer size is 1 and we have two send operations.
+    #          The baseaddress of RQ is 0x10000. Payload of the 1st send will be written
+    #          into 0x10000, while payload of the 2nd send will be written into 
+    #          (0x10000 + 1*256) = 0x10100
     mtu_list = [256, 512, 1024, 2048, 4096]
     assert(mtu_sz in mtu_list), "Please provide correct mtu size from [256, 512, 1024, 2048, 4096]"
     mtu_config = mtu_list.index(mtu_sz) & 0x00000007
@@ -1451,21 +1486,37 @@ class GenRoCEClass(pktGenClass):
     '''
 
     self.sq_pidb = self.sq_pidb + 1
-    sq_pidb_offset = self.get_rdma_per_q_config_addr(eh.SQPIi, qpid)
-    sq_pidb_config_str = format(sq_pidb_offset, '08x') + ' ' + format(self.sq_pidb, '08x')
-    debug_str = 'eh.SQPIi: ' + sq_pidb_config_str + '\n'
+    #sq_pidb_offset = self.get_rdma_per_q_config_addr(eh.SQPIi, qpid)
+    #sq_pidb_config_str = format(sq_pidb_offset, '08x') + ' ' + format(self.sq_pidb, '08x')
+    #debug_str = 'eh.SQPIi: ' + sq_pidb_config_str + '\n'
 
-    self.rdma_per_q_config.append(sq_pidb_config_str)
+    #self.rdma_per_q_config.append(sq_pidb_config_str)
+
+    # FIXME: In the current implementation, we only support one send per queue.
+    # For send operations, we need to generate receive WQE as well
+    #if (opcode == 0x2) or (opcode == 0x3):
+    #  # 1. poll rq_pidb
+    #  rq_pidb_offset = self.get_rdma_per_q_config_addr(eh.STATRQPIDBi , qpid)
+    #  # As we only have one send per queue, the golden number of send per queue is '1'
+    #  rq_config_str = format(rq_pidb_offset, '08x') + ' ' + format(1, '08x')
+    #  self.rdma2_per_q_recv_config.append(rq_config_str)
+    #  # 2. Update rq_cidb with value from reading rq_pidb register
+    #  rq_cidb_offset = self.get_rdma_per_q_config_addr(eh.RQCIi, qpid)
+    #  # rq_cidb register will be updated with the returned value from rq_pidb. '0xffff_ffff'
+    #  # is used to detect rq_cidb address when reading configuration file in the hardware
+    #  # testbench.
+    #  rq_config_str = format(rq_cidb_offset, '08x') + ' ' + format(0xffffffff, '08x')
+    #  self.rdma2_per_q_recv_config.append(rq_config_str)
 
     if(len(self.rdma2_global_config) != 0):
       self.rdma1_stat_reg_config.append(format(self.get_rdma_per_q_config_addr(eh.SQPIi    , qpid), '08x'))
       self.rdma1_debug_stat_reg_config.append('eh.SQPIi           : ' + format(self.get_rdma_per_q_config_addr(eh.SQPIi, qpid), '08x'))
 
-    if (self.debug_path != ''):
-      debug_fname = pjoin(self.debug_path, f'debug_rdma_perq_csr_config_qpid_{qpid}.txt')
-      helper_lst = []
-      helper_lst.append(debug_str)
-      self.write2file(debug_fname, '', helper_lst, mode='a')
+    #if (self.debug_path != ''):
+    #  debug_fname = pjoin(self.debug_path, f'debug_rdma_perq_csr_config_qpid_{qpid}.txt')
+    #  helper_lst = []
+    #  helper_lst.append(debug_str)
+    #  self.write2file(debug_fname, '', helper_lst, mode='a')
 
     logger.info("A RDMA WQE is generated")
 

@@ -5,7 +5,7 @@
 //==============================================================================
 `timescale 1ns/1ps
 
-module axil_2to1_crossbar_wrapper (
+module axil_3to1_crossbar_wrapper (
   // RDMA2 register interface for configuration
   input         s_axil_reg_awvalid,
   input  [31:0] s_axil_reg_awaddr,
@@ -42,6 +42,24 @@ module axil_2to1_crossbar_wrapper (
   output  [1:0] s_axil_stat_rresp,
   input         s_axil_stat_rready,
 
+  // RDMA2 receive register interface for dealing with incoming send RDMA packets
+  input         s_axil_recv_awvalid,
+  input  [31:0] s_axil_recv_awaddr,
+  output        s_axil_recv_awready,
+  input         s_axil_recv_wvalid,
+  input  [31:0] s_axil_recv_wdata,
+  output        s_axil_recv_wready,
+  output        s_axil_recv_bvalid,
+  output  [1:0] s_axil_recv_bresp,
+  input         s_axil_recv_bready,
+  input         s_axil_recv_arvalid,
+  input  [31:0] s_axil_recv_araddr,
+  output        s_axil_recv_arready,
+  output        s_axil_recv_rvalid,
+  output [31:0] s_axil_recv_rdata,
+  output  [1:0] s_axil_recv_rresp,
+  input         s_axil_recv_rready,
+
   // RDMA2 AXIL interface
   output        m_axil_awvalid,
   output [31:0] m_axil_awaddr,
@@ -64,9 +82,10 @@ module axil_2to1_crossbar_wrapper (
   input axil_rstn
 );
 
-localparam C_NUM_MASTERS = 2;
+localparam C_NUM_MASTERS = 3;
 localparam C_REG_INDEX   = 0;
 localparam C_STAT_INDEX  = 1;
+localparam C_RECV_INDEX  = 2;
 
 logic  [(1*C_NUM_MASTERS)-1:0] axil_awvalid;
 logic [(32*C_NUM_MASTERS)-1:0] axil_awaddr;
@@ -85,14 +104,14 @@ logic [(32*C_NUM_MASTERS)-1:0] axil_rdata;
 logic  [(2*C_NUM_MASTERS)-1:0] axil_rresp;
 logic  [(1*C_NUM_MASTERS)-1:0] axil_rready;
 
-assign axil_awvalid = {s_axil_stat_awvalid, s_axil_reg_awvalid};
-assign axil_awaddr  = {s_axil_stat_awaddr, s_axil_reg_awaddr};
-assign axil_wvalid  = {s_axil_stat_wvalid, s_axil_reg_wvalid};
-assign axil_wdata   = {s_axil_stat_wdata, s_axil_reg_wdata};
-assign axil_bready  = {s_axil_stat_bready, s_axil_reg_bready};
-assign axil_arvalid = {s_axil_stat_arvalid, s_axil_reg_arvalid};
-assign axil_araddr  = {s_axil_stat_araddr, s_axil_reg_araddr};
-assign axil_rready  = {s_axil_stat_rready, s_axil_reg_rready};
+assign axil_awvalid = {s_axil_recv_awvalid, s_axil_stat_awvalid, s_axil_reg_awvalid};
+assign axil_awaddr  = {s_axil_recv_awaddr , s_axil_stat_awaddr, s_axil_reg_awaddr};
+assign axil_wvalid  = {s_axil_recv_wvalid , s_axil_stat_wvalid, s_axil_reg_wvalid};
+assign axil_wdata   = {s_axil_recv_wdata  , s_axil_stat_wdata, s_axil_reg_wdata};
+assign axil_bready  = {s_axil_recv_bready , s_axil_stat_bready, s_axil_reg_bready};
+assign axil_arvalid = {s_axil_recv_arvalid, s_axil_stat_arvalid, s_axil_reg_arvalid};
+assign axil_araddr  = {s_axil_recv_araddr , s_axil_stat_araddr, s_axil_reg_araddr};
+assign axil_rready  = {s_axil_recv_rready , s_axil_stat_rready, s_axil_reg_rready};
 
 assign s_axil_reg_awready = axil_awready[C_REG_INDEX];
 assign s_axil_reg_wready  = axil_wready[C_REG_INDEX];
@@ -106,13 +125,22 @@ assign s_axil_reg_rresp   = axil_rresp[C_REG_INDEX*2+: 2];
 assign s_axil_stat_awready = axil_awready[C_STAT_INDEX];
 assign s_axil_stat_wready  = axil_wready[C_STAT_INDEX];
 assign s_axil_stat_bvalid  = axil_bvalid[C_STAT_INDEX];
-assign s_axil_stat_bresp   = axil_bresp[C_STAT_INDEX*2+: 2];;
+assign s_axil_stat_bresp   = axil_bresp[C_STAT_INDEX*2+: 2];
 assign s_axil_stat_arready = axil_arready[C_STAT_INDEX];
 assign s_axil_stat_rvalid  = axil_rvalid[C_STAT_INDEX];;
 assign s_axil_stat_rdata   = axil_rdata[C_STAT_INDEX*32+: 32];
-assign s_axil_stat_rresp   = axil_rresp[C_STAT_INDEX*2+: 2];;
+assign s_axil_stat_rresp   = axil_rresp[C_STAT_INDEX*2+: 2];
 
-axil_2to1_crossbar axil_2to1_crossbar_inst (
+assign s_axil_recv_awready = axil_awready[C_RECV_INDEX];
+assign s_axil_recv_wready  = axil_wready [C_RECV_INDEX];
+assign s_axil_recv_bvalid  = axil_bvalid [C_RECV_INDEX];
+assign s_axil_recv_bresp   = axil_bresp  [C_RECV_INDEX*2+: 2];
+assign s_axil_recv_arready = axil_arready[C_RECV_INDEX];
+assign s_axil_recv_rvalid  = axil_rvalid [C_RECV_INDEX];
+assign s_axil_recv_rdata   = axil_rdata  [C_RECV_INDEX*32+: 32];
+assign s_axil_recv_rresp   = axil_rresp  [C_RECV_INDEX*2+: 2];
+
+axil_3to1_crossbar axil_3to1_crossbar_inst (
   .s_axi_awaddr  (axil_awaddr),
   .s_axi_awprot  (0),
   .s_axi_awvalid (axil_awvalid),
@@ -157,4 +185,4 @@ axil_2to1_crossbar axil_2to1_crossbar_inst (
   .aresetn       (axil_rstn)
 );
 
-endmodule: axil_2to1_crossbar_wrapper
+endmodule: axil_3to1_crossbar_wrapper

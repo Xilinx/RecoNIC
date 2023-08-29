@@ -86,8 +86,11 @@ vcom -work reco -64 -93 \
 vlog -64 -work reco -L axi_crossbar_v2_1_26 "+incdir+../build/ip/reconic_axil_crossbar/hdl" \
 "../build/ip/reconic_axil_crossbar/sim/reconic_axil_crossbar.v" \
 
-vlog -64 -work reco -L axi_crossbar_v2_1_26 "+incdir+../build/ip/axil_2to1_crossbar/hdl" \
-"../build/ip/axil_2to1_crossbar/sim/axil_2to1_crossbar.v" \
+#vlog -64 -work reco -L axi_crossbar_v2_1_26 "+incdir+../build/ip/axil_2to1_crossbar/hdl" \
+#"../build/ip/axil_2to1_crossbar/sim/axil_2to1_crossbar.v" \
+
+vlog -64 -work reco -L axi_crossbar_v2_1_26 "+incdir+../build/ip/axil_3to1_crossbar/hdl" \
+"../build/ip/axil_3to1_crossbar/sim/axil_3to1_crossbar.v" \
 
 vlog -64 -work reco -L fifo_generator_v13_2_6 "+incdir+../build/ip/dev_mem_axi_crossbar/hdl" \
 "../build/ip/dev_mem_axi_crossbar/hdl/axi_crossbar_v2_1_vl_rfs.v" \
@@ -127,7 +130,7 @@ vlog -64 -sv +define+DEBUG -L xpm -work reco \
 "../src/axi_read_verify.sv" \
 "../src/axil_reg_stimulus.sv" \
 "../src/axil_reg_control.sv" \
-"../src/axil_2to1_crossbar_wrapper.sv" \
+"../src/axil_3to1_crossbar_wrapper.sv" \
 "../src/init_mem.sv" \
 "../src/rdma_rn_wrapper.sv" \
 "../src/rn_tb_pkg.sv" \

@@ -3,12 +3,12 @@
 # SPDX-License-Identifier: MIT
 #
 #==============================================================================
-set axil_2to1_crossbar_inst axil_2to1_crossbar
+set axil_3to1_crossbar_inst axil_3to1_crossbar
 
-create_ip -name axi_crossbar -vendor xilinx.com -library ip -version 2.1 -module_name $axil_2to1_crossbar_inst -dir ${ip_build_dir}
+create_ip -name axi_crossbar -vendor xilinx.com -library ip -version 2.1 -module_name $axil_3to1_crossbar_inst -dir ${ip_build_dir}
 
 set_property -dict {
-    CONFIG.NUM_SI {2} 
+    CONFIG.NUM_SI {3} 
     CONFIG.NUM_MI {1} 
     CONFIG.PROTOCOL {AXI4LITE}
     CONFIG.CONNECTIVITY_MODE {SASD} 
@@ -81,4 +81,4 @@ set_property -dict {
     CONFIG.S00_SINGLE_THREAD {1}
     CONFIG.S01_SINGLE_THREAD {1} 
     CONFIG.M00_A00_ADDR_WIDTH {22}
-} [get_ips $axil_2to1_crossbar_inst]
+} [get_ips $axil_3to1_crossbar_inst]

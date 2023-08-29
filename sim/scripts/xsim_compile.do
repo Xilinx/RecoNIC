@@ -84,7 +84,7 @@ xvlog $xvlog_opts -sv -d DEBUG -L axi_bram_ctrl_v4_1_6 -L xpm -work reco \
 "../src/axi_read_verify.sv" \
 "../src/axil_reg_stimulus.sv" \
 "../src/axil_reg_control.sv" \
-"../src/axil_2to1_crossbar_wrapper.sv" \
+"../src/axil_3to1_crossbar_wrapper.sv" \
 "../src/init_mem.sv" \
 "../src/rdma_rn_wrapper.sv" \
 "../src/rn_tb_pkg.sv" \

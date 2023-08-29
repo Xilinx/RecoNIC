@@ -36,6 +36,8 @@ rdma1_stat_reg_cfg_filename = 'rdma1_stat_reg_config.txt'
 rdma1_debug_stat_reg_cfg_filename = 'debug_rdma1_stat_reg_config.txt'
 rdma2_global_config_filename = 'rdma2_global_config.txt'
 rdma2_per_q_config_filename  = 'rdma2_per_q_config.txt'
+# rdma2_per_q_recv_config.txt is used for remote RDMA to check incoming send operations
+rdma2_perq_recv_config_filename = 'rdma2_per_q_recv_config.txt'
 rdma2_mr_config_filename     = 'rdma2_mr_config.txt'
 rdma2_combined_cfg_filename = 'rdma2_combined_config.txt'
 rdma2_stat_reg_cfg_filename = 'rdma2_stat_reg_config.txt'
@@ -189,6 +191,7 @@ class testcaseClass:
         rdma1_debug_stat_cfg_fname = pjoin(tc_dir, rdma1_debug_stat_reg_cfg_filename)
         rdma2_glb_cfg_fname  = pjoin(tc_dir, rdma2_global_config_filename)
         rdma2_perq_cfg_fname = pjoin(tc_dir, rdma2_per_q_config_filename)
+        rdma2_perq_recv_cfg_fname = pjoin(tc_dir, rdma2_perq_recv_config_filename)
         rdma2_mr_cfg_fname   = pjoin(tc_dir, rdma2_mr_config_filename)
         rdma2_combined_cfg_fname = pjoin(tc_dir, rdma2_combined_cfg_filename)
         rdma2_stat_cfg_fname = pjoin(tc_dir, rdma2_stat_reg_cfg_filename)
@@ -213,6 +216,7 @@ class testcaseClass:
             pkt_gen.write2file(rdma1_debug_stat_cfg_fname, '', pkt_gen.rdma1_debug_stat_reg_config)
             pkt_gen.write2file(rdma2_glb_cfg_fname, '', pkt_gen.rdma2_global_config)
             pkt_gen.write2file(rdma2_perq_cfg_fname, '', pkt_gen.rdma2_per_q_config)
+            pkt_gen.write2file(rdma2_perq_recv_cfg_fname ,'', pkt_gen.rdma2_per_q_recv_config)
             pkt_gen.write2file(rdma2_mr_cfg_fname, '', pkt_gen.rdma2_mr_config)
             rdma2_combined_config = pkt_gen.rdma2_global_config + pkt_gen.rdma2_per_q_config + pkt_gen.rdma2_mr_config
             pkt_gen.write2file(rdma2_combined_cfg_fname, '', rdma2_combined_config)

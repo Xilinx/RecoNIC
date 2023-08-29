@@ -21,6 +21,7 @@ string rdma_combined_cfg_filename  = "rdma_combined_config";
 string rdma1_stat_filename         = "rdma1_stat_reg_config";
 string rdma2_combined_cfg_filename = "rdma2_combined_config";
 string rdma2_stat_reg_cfg_filename = "rdma2_stat_reg_config";
+string rdma2_recv_cfg_filename     = "rdma2_per_q_recv_config";
 /*
 string table_filename            = "table";
 string rsp_table_filename        = "rsp_table";
@@ -111,6 +112,24 @@ logic        s_axil_rdma2_stat_rvalid;
 logic [31:0] s_axil_rdma2_stat_rdata;
 logic  [1:0] s_axil_rdma2_stat_rresp;
 logic        s_axil_rdma2_stat_rready;
+
+// RDMA AXI4-Lite polling register channel for receive operations of the remote RDMA peer
+logic        s_axil_rdma2_recv_awvalid;
+logic [31:0] s_axil_rdma2_recv_awaddr;
+logic        s_axil_rdma2_recv_awready;
+logic        s_axil_rdma2_recv_wvalid;
+logic [31:0] s_axil_rdma2_recv_wdata;
+logic        s_axil_rdma2_recv_wready;
+logic        s_axil_rdma2_recv_bvalid;
+logic  [1:0] s_axil_rdma2_recv_bresp;
+logic        s_axil_rdma2_recv_bready;
+logic        s_axil_rdma2_recv_arvalid;
+logic [31:0] s_axil_rdma2_recv_araddr;
+logic        s_axil_rdma2_recv_arready;
+logic        s_axil_rdma2_recv_rvalid;
+logic [31:0] s_axil_rdma2_recv_rdata;
+logic  [1:0] s_axil_rdma2_recv_rresp;
+logic        s_axil_rdma2_recv_rready;
 
 // RecoNIC AXI4-Lite register channel
 logic        s_axil_rn_awvalid;
@@ -640,6 +659,9 @@ logic start_config_rdma2;
 logic finish_config_rdma2;
 logic start_rdma2_stat;
 logic finish_rdma2_stat;
+logic start_checking_recv_rdma2;
+logic checking_recv_rdma2;
+logic [1:0] start_checking_recv_rdma2_cdc;
 
 // remote peer rdma to local peer rdma
 logic [511:0] rp_rdma2lp_rdma_axis_tdata;
@@ -1154,7 +1176,7 @@ rdma_rn_wrapper rdma_rn_wrapper_inst (
   .m_axi_rdma_rsp_payload_rready       (axi_rdma_rsp_payload_rready),
   .m_axi_rdma_rsp_payload_arlock       (axi_rdma_rsp_payload_arlock),
 
-  // RDMA AXI MM interface used to fetch WQE entries in the senq queue from DDR by the QP manager
+  // RDMA AXI MM interface used to fetch WQE entries in the send queue from DDR by the QP manager
   .m_axi_rdma_get_wqe_awid             (axi_rdma_get_wqe_awid),
   .m_axi_rdma_get_wqe_awaddr           (axi_rdma_get_wqe_awaddr),
   .m_axi_rdma_get_wqe_awlen            (axi_rdma_get_wqe_awlen),
@@ -3069,9 +3091,11 @@ rdma_subsystem_wrapper remote_peer_rdma_inst (
 axil_reg_control config_reg_config_rdma2 (
   .which_rdma        ("rdma2"),
   .rdma_cfg_filename (rdma2_combined_cfg_filename),
+  .rdma_recv_cfg_filename(""),
   .rdma_stat_filename(""),
   .start_config_rdma (start_config_rdma2),
   .finish_config_rdma(finish_config_rdma2),
+  .start_checking_recv(1'b0),
   .start_rdma_stat   (1'b0),
   .finish_rdma_stat  (),
   .m_axil_reg_awvalid(s_axil_rdma2_reg_awvalid),
@@ -3096,13 +3120,73 @@ axil_reg_control config_reg_config_rdma2 (
 
 assign start_config_rdma2 = init_sys_mem_done && init_dev_mem_done;
 
+// Polling for receive operations
+axil_reg_control read_rdma2_recv_reg (
+  .which_rdma        ("rdma2"),
+  .rdma_cfg_filename (""),
+  .rdma_recv_cfg_filename(rdma2_recv_cfg_filename),
+  .rdma_stat_filename(""),
+  .start_config_rdma (1'b0),
+  .finish_config_rdma(),
+  .start_checking_recv(start_checking_recv_rdma2),
+  .start_rdma_stat   (1'b0),
+  .finish_rdma_stat  (),
+  .m_axil_reg_awvalid(s_axil_rdma2_recv_awvalid),
+  .m_axil_reg_awaddr (s_axil_rdma2_recv_awaddr),
+  .m_axil_reg_awready(s_axil_rdma2_recv_awready),
+  .m_axil_reg_wvalid (s_axil_rdma2_recv_wvalid),
+  .m_axil_reg_wdata  (s_axil_rdma2_recv_wdata),
+  .m_axil_reg_wready (s_axil_rdma2_recv_wready),
+  .m_axil_reg_bvalid (s_axil_rdma2_recv_bvalid),
+  .m_axil_reg_bresp  (s_axil_rdma2_recv_bresp),
+  .m_axil_reg_bready (s_axil_rdma2_recv_bready),
+  .m_axil_reg_arvalid(s_axil_rdma2_recv_arvalid),
+  .m_axil_reg_araddr (s_axil_rdma2_recv_araddr),
+  .m_axil_reg_arready(s_axil_rdma2_recv_arready),
+  .m_axil_reg_rvalid (s_axil_rdma2_recv_rvalid),
+  .m_axil_reg_rdata  (s_axil_rdma2_recv_rdata),
+  .m_axil_reg_rresp  (s_axil_rdma2_recv_rresp),
+  .m_axil_reg_rready (s_axil_rdma2_recv_rready),
+  .axil_clk          (axil_clk),
+  .axil_rstn         (axil_rstn)
+);
+
+always_ff @(posedge axis_clk)
+begin
+  if(!axis_rstn) begin
+    checking_recv_rdma2 <= 1'b0;
+  end
+  else begin
+    if (m_axis_cmac_tx_tvalid && m_axis_cmac_tx_tready) begin
+      // Detect whether it's a send operation
+      if ((bth_opcode==8'h00) || (bth_opcode==8'h01) || (bth_opcode==8'h02) || (bth_opcode==8'h03) || (bth_opcode==8'h04) || (bth_opcode==8'h05)) begin
+        checking_recv_rdma2 <= 1'b1;
+      end
+    end
+  end
+end
+
+always_ff @(posedge axil_clk)
+begin
+  if(!axil_rstn) begin
+    start_checking_recv_rdma2_cdc <= 2'd0;
+  end
+  else begin
+    start_checking_recv_rdma2_cdc <= {start_checking_recv_rdma2_cdc[0], checking_recv_rdma2};
+  end
+end
+
+assign start_checking_recv_rdma2 = start_checking_recv_rdma2_cdc[1];
+
 // Configure the remote RDMA
 axil_reg_control read_rdma2_stat_reg (
   .which_rdma        ("rdma2"),
   .rdma_cfg_filename (""),
+  .rdma_recv_cfg_filename(""),
   .rdma_stat_filename(rdma2_stat_reg_cfg_filename),
   .start_config_rdma (1'b0),
   .finish_config_rdma(),
+  .start_checking_recv(1'b0),
   .start_rdma_stat   (start_rdma2_stat),
   .finish_rdma_stat  (finish_rdma2_stat),
   .m_axil_reg_awvalid(s_axil_rdma2_stat_awvalid),
@@ -3125,7 +3209,7 @@ axil_reg_control read_rdma2_stat_reg (
   .axil_rstn         (axil_rstn)
 );
 
-axil_2to1_crossbar_wrapper axil_2to1_wrapper (
+axil_3to1_crossbar_wrapper axil_3to1_wrapper (
   // RDMA2 register interface for configuration
   .s_axil_reg_awvalid  (s_axil_rdma2_reg_awvalid),
   .s_axil_reg_awaddr   (s_axil_rdma2_reg_awaddr ),
@@ -3161,6 +3245,24 @@ axil_2to1_crossbar_wrapper axil_2to1_wrapper (
   .s_axil_stat_rdata    (s_axil_rdma2_stat_rdata  ),
   .s_axil_stat_rresp    (s_axil_rdma2_stat_rresp  ),
   .s_axil_stat_rready   (s_axil_rdma2_stat_rready ),
+
+  // RDMA2 polling interface for receive operations
+  .s_axil_recv_awvalid  (s_axil_rdma2_recv_awvalid),
+  .s_axil_recv_awaddr   (s_axil_rdma2_recv_awaddr ),
+  .s_axil_recv_awready  (s_axil_rdma2_recv_awready),
+  .s_axil_recv_wvalid   (s_axil_rdma2_recv_wvalid ),
+  .s_axil_recv_wdata    (s_axil_rdma2_recv_wdata  ),
+  .s_axil_recv_wready   (s_axil_rdma2_recv_wready ),
+  .s_axil_recv_bvalid   (s_axil_rdma2_recv_bvalid ),
+  .s_axil_recv_bresp    (s_axil_rdma2_recv_bresp  ),
+  .s_axil_recv_bready   (s_axil_rdma2_recv_bready ),
+  .s_axil_recv_arvalid  (s_axil_rdma2_recv_arvalid),
+  .s_axil_recv_araddr   (s_axil_rdma2_recv_araddr ),
+  .s_axil_recv_arready  (s_axil_rdma2_recv_arready),
+  .s_axil_recv_rvalid   (s_axil_rdma2_recv_rvalid ),
+  .s_axil_recv_rdata    (s_axil_rdma2_recv_rdata  ),
+  .s_axil_recv_rresp    (s_axil_rdma2_recv_rresp  ),
+  .s_axil_recv_rready   (s_axil_rdma2_recv_rready ),
 
   .m_axil_awvalid  (axil_rdma2_awvalid),
   .m_axil_awaddr   (axil_rdma2_awaddr ),
