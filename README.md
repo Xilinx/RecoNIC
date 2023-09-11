@@ -4,6 +4,7 @@ To meet the explosive growth of data and scale-out workloads/applications, today
 
 To address these challenges, we propose RecoNIC, an RDMA-enabled SmartNIC platform with compute acceleration, designed to minimize the overhead associated with data copies and to bring data as close to computation as feasible. The platform consists of a hardware shell and software stacks. The hardware shell of RecoNIC encompasses basic NIC functionalities, an RDMA engine, and two programmable compute logic modules for lookaside and streaming computations, respectively. Developers have the flexibility to design their accelerators using RTL, HLS or Vitis Networking P4 within the RecoNIC's programmable compute logic modules. This allows for the processing of network data without resorting to the multiple copies’ characteristic of traditional CPU-centric solutions. The logic executed within these programmable modules can access both RecoNIC and host memory in remote peers via RDMA.
 
+
 ## RecoNIC System Overview
 
 <img src="doc/image/RecoNIC.png" width=70% height=70%>
@@ -350,29 +351,31 @@ $ python run_testcase.py -roce -tc read_2rdma -questasim -gui
 User can specify their own configuraiton file to construct a new testcase. The configuration file is in the form of 'json'. Here is an example for generating configuration files for RDMA read operations
 ```
 {
-  "top_module"          : "rn_tb_2rdma_top",
-  "pkt_type"            : "rocev2",
-  "pkt_op"              : "read",
-  "non_roce_traffic"    : "no",
-  "noise_roce_en"       : "no",
-  "payload_size"        : 64,
-  "src_baseaddr"        : 2048,
-  "dst_baseaddr"        : 1024,
-  "num_data_buffer"     : 4,
-  "mr_buf_size"         : 32768,
-  "data_buffer_size"    : 4096,
-  "num_qp"              : 4,
-  "udp_sport"           : 17185,
-  "destination_qpid"    : 2,
-  "sq_depth"            : 4,
-  "rq_depth"            : 4,
-  "mtu_size"            : 4096,
-  "rq_buffer_size"      : 2048,
-  "partition_key"       : 4660,
-  "r_key"               : 22,
-  "sq_psn"              : 10
+  "top_module"            : "rn_tb_2rdma_top",
+  "pkt_type"              : "rocev2",
+  "pkt_op"                : "read",
+  "non_roce_traffic"      : "no",
+  "noise_roce_en"         : "no",
+  "payload_size"          : 64,
+  "src_baseaddr_location" :"dev_mem",
+  "src_baseaddr"          : 2048,
+  "dst_baseaddr"          : 1024,
+  "num_data_buffer"       : 4,
+  "mr_buf_size"           : 32768,
+  "data_buffer_size"      : 4096,
+  "num_qp"                : 4,
+  "udp_sport"             : 17185,
+  "destination_qpid"      : 2,
+  "sq_depth"              : 4,
+  "rq_depth"              : 4,
+  "mtu_size"              : 4096,
+  "rq_buffer_size"        : 2048,
+  "partition_key"         : 4660,
+  "r_key"                 : 22,
+  "sq_psn"                : 10
 }
 ```
+"src_baseaddr_location" is used to specify the source buffer location either at host memory ("sys_mem") or device memory ("dev_mem").
 
 The simulation source code is located at [sim/src](sim/src).
 

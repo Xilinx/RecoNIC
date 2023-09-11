@@ -6,6 +6,7 @@
   "num_non_roce"        : 16,
   "payload_size"        : 1024,
   "number_flow"         : 1,
+  "src_baseaddr_location" :"sys_mem",
   "src_baseaddr"        : 512,
   "dst_baseaddr"        : 1024,
   "num_data_buffer"     : 4,

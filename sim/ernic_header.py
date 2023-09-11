@@ -141,3 +141,5 @@ OP_READ		    	= 4
 OP_SEND_INV	  	= 12
 
 opcode_lst = ['write', 'write_immdt', 'send', 'send_immdt', 'read', 'send_inv']
+location_lst = ['dev_mem','sys_mem']
+dev_offset = 0xa350000000000000

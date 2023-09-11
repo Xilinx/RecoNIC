@@ -47,6 +47,9 @@ xvlog $xvlog_opts -work reco --include "../build/ip/reconic_axil_crossbar/hdl" \
 xvlog $xvlog_opts -work reco -L axi_crossbar_v2_1_26 --include "../build/ip/axil_2to1_crossbar/hdl" \
 "../build/ip/axil_2to1_crossbar/sim/axil_2to1_crossbar.v" \
 
+xvlog $xvlog_opts -work reco -L axi_crossbar_v2_1_26 --include "../build/ip/axil_3to1_crossbar/hdl" \
+"../build/ip/axil_3to1_crossbar/sim/axil_3to1_crossbar.v" \
+
 xvlog $xvlog_opts -work reco -sv \
 "../../base_nics/open-nic-shell/src/utility/generic_reset.sv" \
 "../../base_nics/open-nic-shell/src/rdma_subsystem/rdma_subsystem.sv" \
@@ -93,7 +96,15 @@ xvlog $xvlog_opts -sv -d DEBUG -L axi_bram_ctrl_v4_1_6 -L xpm -work reco \
 "../src/rn_tb_checker.sv" \
 "../src/rn_tb_top.sv" \
 "../src/cl_tb_top.sv" \
-"../src/rn_tb_2rdma_top.sv"
+"../src/rn_tb_2rdma_top.sv" \
+"../src/axi_3to1_interconnect_to_dev_mem.sv" \
+"../src/axi_5to2_interconnect_to_sys_mem.sv" \
+
+xvlog $xvlog_opts -work reco -sv -L fifo_generator_v13_2_6 \
+"../build/ip/dev_mem_3to1_axi_crossbar/synth/dev_mem_3to1_axi_crossbar.v"
+
+xvlog $xvlog_opts -work reco -sv -L fifo_generator_v13_2_6 \
+"../build/ip/sys_mem_5to2_axi_crossbar/synth/sys_mem_5to2_axi_crossbar.v"
 
 xvlog $xvlog_opts -work reco \
 "$VIVADO_DATA_DIR/verilog/src/glbl.v"

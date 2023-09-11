@@ -10,7 +10,9 @@ set ips {
   reconic_axil_crossbar
   axi_protocol_checker
   dev_mem_axi_crossbar
+  dev_mem_3to1_axi_crossbar
   sys_mem_axi_crossbar
+  sys_mem_5to2_axi_crossbar
   packet_parser
   rdma_core
 }

@@ -189,7 +189,7 @@ logic  [15:0] m_axis_cmac_tx_tuser_size;
 logic         m_axis_cmac_tx_tready;
 
 // Initialize device memory
-logic   [3:0] m_axi_init_dev_awid;
+logic   [4:0] m_axi_init_dev_awid;
 logic  [63:0] m_axi_init_dev_awaddr;
 logic   [7:0] m_axi_init_dev_awlen;
 logic   [2:0] m_axi_init_dev_awsize;
@@ -208,7 +208,7 @@ logic         m_axi_init_dev_wlast;
 logic         m_axi_init_dev_wvalid;
 logic         m_axi_init_dev_wready;
 // AXI write response channel
-logic   [3:0] m_axi_init_dev_bid;
+logic   [4:0] m_axi_init_dev_bid;
 logic   [1:0] m_axi_init_dev_bresp;
 logic         m_axi_init_dev_bvalid;
 logic         m_axi_init_dev_bready;
@@ -515,8 +515,46 @@ logic           axi_rdma_completion_rready;
 logic           axi_rdma_completion_arlock;
 logic   [3 : 0] axi_rdma_completion_arqos;
 
+logic           axi_rdma_completion_or_init_sys_awid;
+logic  [63 : 0] axi_rdma_completion_or_init_sys_awaddr;
+logic   [3 : 0] axi_rdma_completion_or_init_sys_awqos;
+logic   [7 : 0] axi_rdma_completion_or_init_sys_awlen;
+logic   [2 : 0] axi_rdma_completion_or_init_sys_awsize;
+logic   [1 : 0] axi_rdma_completion_or_init_sys_awburst;
+logic   [3 : 0] axi_rdma_completion_or_init_sys_awcache;
+logic   [2 : 0] axi_rdma_completion_or_init_sys_awprot;
+logic           axi_rdma_completion_or_init_sys_awvalid;
+logic           axi_rdma_completion_or_init_sys_awready;
+logic [511 : 0] axi_rdma_completion_or_init_sys_wdata;
+logic  [63 : 0] axi_rdma_completion_or_init_sys_wstrb;
+logic           axi_rdma_completion_or_init_sys_wlast;
+logic           axi_rdma_completion_or_init_sys_wvalid;
+logic           axi_rdma_completion_or_init_sys_wready;
+logic           axi_rdma_completion_or_init_sys_awlock;
+logic           axi_rdma_completion_or_init_sys_bid;
+logic   [1 : 0] axi_rdma_completion_or_init_sys_bresp;
+logic           axi_rdma_completion_or_init_sys_bvalid;
+logic           axi_rdma_completion_or_init_sys_bready;
+logic           axi_rdma_completion_or_init_sys_arid;
+logic  [63 : 0] axi_rdma_completion_or_init_sys_araddr;
+logic   [7 : 0] axi_rdma_completion_or_init_sys_arlen;
+logic   [2 : 0] axi_rdma_completion_or_init_sys_arsize;
+logic   [1 : 0] axi_rdma_completion_or_init_sys_arburst;
+logic   [3 : 0] axi_rdma_completion_or_init_sys_arcache;
+logic   [2 : 0] axi_rdma_completion_or_init_sys_arprot;
+logic           axi_rdma_completion_or_init_sys_arvalid;
+logic           axi_rdma_completion_or_init_sys_arready;
+logic           axi_rdma_completion_or_init_sys_rid;
+logic [511 : 0] axi_rdma_completion_or_init_sys_rdata;
+logic   [1 : 0] axi_rdma_completion_or_init_sys_rresp;
+logic           axi_rdma_completion_or_init_sys_rlast;
+logic           axi_rdma_completion_or_init_sys_rvalid;
+logic           axi_rdma_completion_or_init_sys_rready;
+logic           axi_rdma_completion_or_init_sys_arlock;
+logic   [3 : 0] axi_rdma_completion_or_init_sys_arqos;
+
 // AXI MM interface used to access the device memory
-logic   [1:0] axi_dev_mem_awid;
+logic   [4:0] axi_dev_mem_awid;
 logic  [63:0] axi_dev_mem_awaddr;
 logic   [7:0] axi_dev_mem_awlen;
 logic   [2:0] axi_dev_mem_awsize;
@@ -533,11 +571,11 @@ logic  [63:0] axi_dev_mem_wstrb;
 logic         axi_dev_mem_wlast;
 logic         axi_dev_mem_wvalid;
 logic         axi_dev_mem_wready;
-logic   [1:0] axi_dev_mem_bid;
+logic   [4:0] axi_dev_mem_bid;
 logic   [1:0] axi_dev_mem_bresp;
 logic         axi_dev_mem_bvalid;
 logic         axi_dev_mem_bready;
-logic   [1:0] axi_dev_mem_arid;
+logic   [4:0] axi_dev_mem_arid;
 logic  [63:0] axi_dev_mem_araddr;
 logic   [7:0] axi_dev_mem_arlen;
 logic   [2:0] axi_dev_mem_arsize;
@@ -549,7 +587,7 @@ logic   [3:0] axi_dev_mem_arcache;
 logic   [2:0] axi_dev_mem_arprot;
 logic         axi_dev_mem_arvalid;
 logic         axi_dev_mem_arready;
-logic   [1:0] axi_dev_mem_rid;
+logic   [4:0] axi_dev_mem_rid;
 logic [511:0] axi_dev_mem_rdata;
 logic   [1:0] axi_dev_mem_rresp;
 logic         axi_dev_mem_rlast;
@@ -596,7 +634,7 @@ logic           axi_compute_logic_arlock;
 logic   [3 : 0] axi_compute_logic_arqos;
 
 // AXI MM interface used to access the system memory (s_axib_* of the QDMA IP)
-logic     [1:0] axi_sys_mem_awid;
+logic     [2:0] axi_sys_mem_awid;
 logic    [63:0] axi_sys_mem_awaddr;
 logic     [7:0] axi_sys_mem_awlen;
 logic     [2:0] axi_sys_mem_awsize;
@@ -613,11 +651,11 @@ logic    [63:0] axi_sys_mem_wstrb;
 logic           axi_sys_mem_wlast;
 logic           axi_sys_mem_wvalid;
 logic           axi_sys_mem_wready;
-logic     [1:0] axi_sys_mem_bid;
+logic     [2:0] axi_sys_mem_bid;
 logic     [1:0] axi_sys_mem_bresp;
 logic           axi_sys_mem_bvalid;
 logic           axi_sys_mem_bready;
-logic     [1:0] axi_sys_mem_arid;
+logic     [2:0] axi_sys_mem_arid;
 logic    [63:0] axi_sys_mem_araddr;
 logic     [7:0] axi_sys_mem_arlen;
 logic     [2:0] axi_sys_mem_arsize;
@@ -629,7 +667,7 @@ logic     [3:0] axi_sys_mem_arcache;
 logic     [2:0] axi_sys_mem_arprot;
 logic           axi_sys_mem_arvalid;
 logic           axi_sys_mem_arready;
-logic     [1:0] axi_sys_mem_rid;
+logic     [2:0] axi_sys_mem_rid;
 logic   [511:0] axi_sys_mem_rdata;
 logic     [1:0] axi_sys_mem_rresp;
 logic           axi_sys_mem_rlast;
@@ -904,6 +942,47 @@ logic           m_axi_rdma_completion_rvalid;
 logic           m_axi_rdma_completion_rready;
 logic           m_axi_rdma_completion_arlock;
 
+//AXI interface between system mem crossbar and device mem crossbar
+logic   [2 : 0] axi_from_sys_to_dev_crossbar_awid;
+logic  [63 : 0] axi_from_sys_to_dev_crossbar_awaddr;
+logic  [31 : 0] axi_from_sys_to_dev_crossbar_awuser;
+logic   [3 : 0] axi_from_sys_to_dev_crossbar_awqos;
+logic   [7 : 0] axi_from_sys_to_dev_crossbar_awlen;
+logic   [2 : 0] axi_from_sys_to_dev_crossbar_awsize;
+logic   [1 : 0] axi_from_sys_to_dev_crossbar_awburst;
+logic   [3 : 0] axi_from_sys_to_dev_crossbar_awcache;
+logic   [2 : 0] axi_from_sys_to_dev_crossbar_awprot;
+logic           axi_from_sys_to_dev_crossbar_awvalid;
+logic           axi_from_sys_to_dev_crossbar_awready;
+logic [511 : 0] axi_from_sys_to_dev_crossbar_wdata;
+logic  [63 : 0] axi_from_sys_to_dev_crossbar_wstrb;
+logic           axi_from_sys_to_dev_crossbar_wlast;
+logic           axi_from_sys_to_dev_crossbar_wvalid;
+logic           axi_from_sys_to_dev_crossbar_wready;
+logic           axi_from_sys_to_dev_crossbar_awlock;
+logic   [4 : 0] axi_from_sys_to_dev_crossbar_bid;
+logic   [1 : 0] axi_from_sys_to_dev_crossbar_bresp;
+logic           axi_from_sys_to_dev_crossbar_bvalid;
+logic           axi_from_sys_to_dev_crossbar_bready;
+logic   [2 : 0] axi_from_sys_to_dev_crossbar_arid;
+logic  [63 : 0] axi_from_sys_to_dev_crossbar_araddr;
+logic   [7 : 0] axi_from_sys_to_dev_crossbar_arlen;
+logic   [2 : 0] axi_from_sys_to_dev_crossbar_arsize;
+logic   [1 : 0] axi_from_sys_to_dev_crossbar_arburst;
+logic   [3 : 0] axi_from_sys_to_dev_crossbar_arcache;
+logic   [2 : 0] axi_from_sys_to_dev_crossbar_arprot;
+logic           axi_from_sys_to_dev_crossbar_arvalid;
+logic           axi_from_sys_to_dev_crossbar_arready;
+logic   [4 : 0] axi_from_sys_to_dev_crossbar_rid;
+logic [511 : 0] axi_from_sys_to_dev_crossbar_rdata;
+logic   [1 : 0] axi_from_sys_to_dev_crossbar_rresp;
+logic           axi_from_sys_to_dev_crossbar_rlast;
+logic           axi_from_sys_to_dev_crossbar_rvalid;
+logic           axi_from_sys_to_dev_crossbar_rready;
+logic           axi_from_sys_to_dev_crossbar_arlock;
+logic   [3 : 0] axi_from_sys_to_dev_crossbar_arqos;
+
+
 // Send WQE completion queue doorbell
 logic         resp_hndler_o_send_cq_db_cnt_valid;
 logic   [9:0] resp_hndler_o_send_cq_db_addr;
@@ -954,6 +1033,21 @@ logic [511:0] m_axis_cmac_tx_tdata_delay;
 logic [63:0]  m_axis_cmac_tx_tkeep_delay;
 logic         m_axis_cmac_tx_tvalid_delay;
 logic         m_axis_cmac_tx_tlast_delay;
+
+logic           one_unused_bit0;
+logic           one_unused_bit1;
+
+logic   [1 : 0] two_unused_bit0;
+logic   [1 : 0] two_unused_bit1;
+logic   [1 : 0] two_unused_bit2;
+logic   [1 : 0] two_unused_bit3;
+logic   [1 : 0] two_unused_bit4;
+logic   [1 : 0] two_unused_bit5;
+logic   [1 : 0] two_unused_bit6;
+logic   [1 : 0] two_unused_bit7;
+logic   [1 : 0] two_unused_bit8;
+logic   [1 : 0] two_unused_bit9;
+logic   [1 : 0] two_unused_bit10;
 
 rn_tb_generator generator (
   .traffic_filename(traffic_filename),
@@ -1336,83 +1430,9 @@ rdma_rn_wrapper rdma_rn_wrapper_inst (
 assign m_axis_cmac_tx_tready =1'b1;
 
 // AXI crossbar used to access device memory
-axi_interconnect_to_dev_mem axi_interconnect_to_dev_mem_inst(
-  .s_axi_rdma_send_write_payload_awid    (axi_rdma_send_write_payload_awid),
-  .s_axi_rdma_send_write_payload_awaddr  (axi_rdma_send_write_payload_awaddr),
-  .s_axi_rdma_send_write_payload_awqos   (axi_rdma_send_write_payload_awqos),
-  .s_axi_rdma_send_write_payload_awlen   (axi_rdma_send_write_payload_awlen),
-  .s_axi_rdma_send_write_payload_awsize  (axi_rdma_send_write_payload_awsize),
-  .s_axi_rdma_send_write_payload_awburst (axi_rdma_send_write_payload_awburst),
-  .s_axi_rdma_send_write_payload_awcache (axi_rdma_send_write_payload_awcache),
-  .s_axi_rdma_send_write_payload_awprot  (axi_rdma_send_write_payload_awprot),
-  .s_axi_rdma_send_write_payload_awvalid (axi_rdma_send_write_payload_awvalid),
-  .s_axi_rdma_send_write_payload_awready (axi_rdma_send_write_payload_awready),
-  .s_axi_rdma_send_write_payload_wdata   (axi_rdma_send_write_payload_wdata),
-  .s_axi_rdma_send_write_payload_wstrb   (axi_rdma_send_write_payload_wstrb),
-  .s_axi_rdma_send_write_payload_wlast   (axi_rdma_send_write_payload_wlast),
-  .s_axi_rdma_send_write_payload_wvalid  (axi_rdma_send_write_payload_wvalid),
-  .s_axi_rdma_send_write_payload_wready  (axi_rdma_send_write_payload_wready),
-  .s_axi_rdma_send_write_payload_awlock  (axi_rdma_send_write_payload_awlock),
-  .s_axi_rdma_send_write_payload_bid     (axi_rdma_send_write_payload_bid),
-  .s_axi_rdma_send_write_payload_bresp   (axi_rdma_send_write_payload_bresp),
-  .s_axi_rdma_send_write_payload_bvalid  (axi_rdma_send_write_payload_bvalid),
-  .s_axi_rdma_send_write_payload_bready  (axi_rdma_send_write_payload_bready),
-  .s_axi_rdma_send_write_payload_arid    (axi_rdma_send_write_payload_arid),
-  .s_axi_rdma_send_write_payload_araddr  (axi_rdma_send_write_payload_araddr),
-  .s_axi_rdma_send_write_payload_arlen   (axi_rdma_send_write_payload_arlen),
-  .s_axi_rdma_send_write_payload_arsize  (axi_rdma_send_write_payload_arsize),
-  .s_axi_rdma_send_write_payload_arburst (axi_rdma_send_write_payload_arburst),
-  .s_axi_rdma_send_write_payload_arcache (axi_rdma_send_write_payload_arcache),
-  .s_axi_rdma_send_write_payload_arprot  (axi_rdma_send_write_payload_arprot),
-  .s_axi_rdma_send_write_payload_arvalid (axi_rdma_send_write_payload_arvalid),
-  .s_axi_rdma_send_write_payload_arready (axi_rdma_send_write_payload_arready),
-  .s_axi_rdma_send_write_payload_rid     (axi_rdma_send_write_payload_rid),
-  .s_axi_rdma_send_write_payload_rdata   (axi_rdma_send_write_payload_rdata),
-  .s_axi_rdma_send_write_payload_rresp   (axi_rdma_send_write_payload_rresp),
-  .s_axi_rdma_send_write_payload_rlast   (axi_rdma_send_write_payload_rlast),
-  .s_axi_rdma_send_write_payload_rvalid  (axi_rdma_send_write_payload_rvalid),
-  .s_axi_rdma_send_write_payload_rready  (axi_rdma_send_write_payload_rready),
-  .s_axi_rdma_send_write_payload_arlock  (axi_rdma_send_write_payload_arlock),
-  .s_axi_rdma_send_write_payload_arqos   (axi_rdma_send_write_payload_arqos),
 
-  .s_axi_rdma_rsp_payload_awid           (axi_rdma_rsp_payload_awid),
-  .s_axi_rdma_rsp_payload_awaddr         (axi_rdma_rsp_payload_awaddr),
-  .s_axi_rdma_rsp_payload_awqos          (axi_rdma_rsp_payload_awqos),
-  .s_axi_rdma_rsp_payload_awlen          (axi_rdma_rsp_payload_awlen),
-  .s_axi_rdma_rsp_payload_awsize         (axi_rdma_rsp_payload_awsize),
-  .s_axi_rdma_rsp_payload_awburst        (axi_rdma_rsp_payload_awburst),
-  .s_axi_rdma_rsp_payload_awcache        (axi_rdma_rsp_payload_awcache),
-  .s_axi_rdma_rsp_payload_awprot         (axi_rdma_rsp_payload_awprot),
-  .s_axi_rdma_rsp_payload_awvalid        (axi_rdma_rsp_payload_awvalid),
-  .s_axi_rdma_rsp_payload_awready        (axi_rdma_rsp_payload_awready),
-  .s_axi_rdma_rsp_payload_wdata          (axi_rdma_rsp_payload_wdata),
-  .s_axi_rdma_rsp_payload_wstrb          (axi_rdma_rsp_payload_wstrb),
-  .s_axi_rdma_rsp_payload_wlast          (axi_rdma_rsp_payload_wlast),
-  .s_axi_rdma_rsp_payload_wvalid         (axi_rdma_rsp_payload_wvalid),
-  .s_axi_rdma_rsp_payload_wready         (axi_rdma_rsp_payload_wready),
-  .s_axi_rdma_rsp_payload_awlock         (axi_rdma_rsp_payload_awlock),
-  .s_axi_rdma_rsp_payload_bid            (axi_rdma_rsp_payload_bid),
-  .s_axi_rdma_rsp_payload_bresp          (axi_rdma_rsp_payload_bresp),
-  .s_axi_rdma_rsp_payload_bvalid         (axi_rdma_rsp_payload_bvalid),
-  .s_axi_rdma_rsp_payload_bready         (axi_rdma_rsp_payload_bready),
-  .s_axi_rdma_rsp_payload_arid           (axi_rdma_rsp_payload_arid),
-  .s_axi_rdma_rsp_payload_araddr         (axi_rdma_rsp_payload_araddr),
-  .s_axi_rdma_rsp_payload_arlen          (axi_rdma_rsp_payload_arlen),
-  .s_axi_rdma_rsp_payload_arsize         (axi_rdma_rsp_payload_arsize),
-  .s_axi_rdma_rsp_payload_arburst        (axi_rdma_rsp_payload_arburst),
-  .s_axi_rdma_rsp_payload_arcache        (axi_rdma_rsp_payload_arcache),
-  .s_axi_rdma_rsp_payload_arprot         (axi_rdma_rsp_payload_arprot),
-  .s_axi_rdma_rsp_payload_arvalid        (axi_rdma_rsp_payload_arvalid),
-  .s_axi_rdma_rsp_payload_arready        (axi_rdma_rsp_payload_arready),
-  .s_axi_rdma_rsp_payload_rid            (axi_rdma_rsp_payload_rid),
-  .s_axi_rdma_rsp_payload_rdata          (axi_rdma_rsp_payload_rdata),
-  .s_axi_rdma_rsp_payload_rresp          (axi_rdma_rsp_payload_rresp),
-  .s_axi_rdma_rsp_payload_rlast          (axi_rdma_rsp_payload_rlast),
-  .s_axi_rdma_rsp_payload_rvalid         (axi_rdma_rsp_payload_rvalid),
-  .s_axi_rdma_rsp_payload_rready         (axi_rdma_rsp_payload_rready),
-  .s_axi_rdma_rsp_payload_arlock         (axi_rdma_rsp_payload_arlock),
-  .s_axi_rdma_rsp_payload_arqos          (axi_rdma_rsp_payload_arqos),
-
+axi_3to1_interconnect_to_dev_mem axi_interconnect_to_dev_mem_inst(
+  
   .s_axi_qdma_mm_awid                    (m_axi_init_dev_awid),
   .s_axi_qdma_mm_awaddr                  (m_axi_init_dev_awaddr),
   .s_axi_qdma_mm_awqos                   (m_axi_init_dev_awqos),
@@ -1489,6 +1509,44 @@ axi_interconnect_to_dev_mem axi_interconnect_to_dev_mem_inst(
   .s_axi_compute_logic_arlock            (axi_compute_logic_arlock),
   .s_axi_compute_logic_arqos             (axi_compute_logic_arqos),
 
+  .s_axi_from_sys_crossbar_awid          (axi_from_sys_to_dev_crossbar_awid),
+  .s_axi_from_sys_crossbar_awaddr        (axi_from_sys_to_dev_crossbar_awaddr),
+  .s_axi_from_sys_crossbar_awqos         (axi_from_sys_to_dev_crossbar_awqos),
+  .s_axi_from_sys_crossbar_awlen         (axi_from_sys_to_dev_crossbar_awlen),
+  .s_axi_from_sys_crossbar_awsize        (axi_from_sys_to_dev_crossbar_awsize),
+  .s_axi_from_sys_crossbar_awburst       (axi_from_sys_to_dev_crossbar_awburst),
+  .s_axi_from_sys_crossbar_awcache       (axi_from_sys_to_dev_crossbar_awcache),
+  .s_axi_from_sys_crossbar_awprot        (axi_from_sys_to_dev_crossbar_awprot),
+  .s_axi_from_sys_crossbar_awvalid       (axi_from_sys_to_dev_crossbar_awvalid),
+  .s_axi_from_sys_crossbar_awready       (axi_from_sys_to_dev_crossbar_awready),
+  .s_axi_from_sys_crossbar_wdata         (axi_from_sys_to_dev_crossbar_wdata),
+  .s_axi_from_sys_crossbar_wstrb         (axi_from_sys_to_dev_crossbar_wstrb),
+  .s_axi_from_sys_crossbar_wlast         (axi_from_sys_to_dev_crossbar_wlast),
+  .s_axi_from_sys_crossbar_wvalid        (axi_from_sys_to_dev_crossbar_wvalid),
+  .s_axi_from_sys_crossbar_wready        (axi_from_sys_to_dev_crossbar_wready),
+  .s_axi_from_sys_crossbar_awlock        (axi_from_sys_to_dev_crossbar_awlock),
+  .s_axi_from_sys_crossbar_bid           (axi_from_sys_to_dev_crossbar_bid),
+  .s_axi_from_sys_crossbar_bresp         (axi_from_sys_to_dev_crossbar_bresp),
+  .s_axi_from_sys_crossbar_bvalid        (axi_from_sys_to_dev_crossbar_bvalid),
+  .s_axi_from_sys_crossbar_bready        (axi_from_sys_to_dev_crossbar_bready),
+  .s_axi_from_sys_crossbar_arid          (axi_from_sys_to_dev_crossbar_arid),
+  .s_axi_from_sys_crossbar_araddr        (axi_from_sys_to_dev_crossbar_araddr),
+  .s_axi_from_sys_crossbar_arlen         (axi_from_sys_to_dev_crossbar_arlen),
+  .s_axi_from_sys_crossbar_arsize        (axi_from_sys_to_dev_crossbar_arsize),
+  .s_axi_from_sys_crossbar_arburst       (axi_from_sys_to_dev_crossbar_arburst),
+  .s_axi_from_sys_crossbar_arcache       (axi_from_sys_to_dev_crossbar_arcache),
+  .s_axi_from_sys_crossbar_arprot        (axi_from_sys_to_dev_crossbar_arprot),
+  .s_axi_from_sys_crossbar_arvalid       (axi_from_sys_to_dev_crossbar_arvalid),
+  .s_axi_from_sys_crossbar_arready       (axi_from_sys_to_dev_crossbar_arready),
+  .s_axi_from_sys_crossbar_rid           (axi_from_sys_to_dev_crossbar_rid),
+  .s_axi_from_sys_crossbar_rdata         (axi_from_sys_to_dev_crossbar_rdata),
+  .s_axi_from_sys_crossbar_rresp         (axi_from_sys_to_dev_crossbar_rresp),
+  .s_axi_from_sys_crossbar_rlast         (axi_from_sys_to_dev_crossbar_rlast),
+  .s_axi_from_sys_crossbar_rvalid        (axi_from_sys_to_dev_crossbar_rvalid),
+  .s_axi_from_sys_crossbar_rready        (axi_from_sys_to_dev_crossbar_rready),
+  .s_axi_from_sys_crossbar_arlock        (axi_from_sys_to_dev_crossbar_arlock),
+  .s_axi_from_sys_crossbar_arqos         (axi_from_sys_to_dev_crossbar_arqos),
+
   .m_axi_dev_mem_awaddr                  (axi_dev_mem_awaddr),
   .m_axi_dev_mem_awprot                  (axi_dev_mem_awprot),
   .m_axi_dev_mem_awvalid                 (axi_dev_mem_awvalid),
@@ -1529,8 +1587,8 @@ axi_interconnect_to_dev_mem axi_interconnect_to_dev_mem_inst(
   .m_axi_dev_mem_rlast                   (axi_dev_mem_rlast),
   .m_axi_dev_mem_rid                     (axi_dev_mem_rid), 
 
-  .axis_aclk   (axis_clk),
-  .axis_arestn (axis_rstn)   
+  .axis_aclk                             (axis_clk),
+  .axis_arestn                           (axis_rstn)   
 );
 
 axi_interconnect_to_dev_mem axi_2to1_for_send_write_payload_to_dev_mem(
@@ -1735,202 +1793,476 @@ assign axi_rdma1_send_write_payload_arqos = 4'd0;
 assign axi_rdma2_send_write_payload_awqos = 4'd0;
 assign axi_rdma2_send_write_payload_arqos = 4'd0;
 
-// AXI crossbar used to access system memory (used dev_memory crossbar for initialization/debug)
-axi_interconnect_to_dev_mem axi_interconnect_to_sys_mem_inst(
-  .s_axi_rdma_send_write_payload_awid    (axi_rdma_get_wqe_awid),
-  .s_axi_rdma_send_write_payload_awaddr  (axi_rdma_get_wqe_awaddr),
-  .s_axi_rdma_send_write_payload_awqos   (axi_rdma_get_wqe_awqos),
-  .s_axi_rdma_send_write_payload_awlen   (axi_rdma_get_wqe_awlen),
-  .s_axi_rdma_send_write_payload_awsize  (axi_rdma_get_wqe_awsize),
-  .s_axi_rdma_send_write_payload_awburst (axi_rdma_get_wqe_awburst),
-  .s_axi_rdma_send_write_payload_awcache (axi_rdma_get_wqe_awcache),
-  .s_axi_rdma_send_write_payload_awprot  (axi_rdma_get_wqe_awprot),
-  .s_axi_rdma_send_write_payload_awvalid (axi_rdma_get_wqe_awvalid),
-  .s_axi_rdma_send_write_payload_awready (axi_rdma_get_wqe_awready),
-  .s_axi_rdma_send_write_payload_wdata   (axi_rdma_get_wqe_wdata),
-  .s_axi_rdma_send_write_payload_wstrb   (axi_rdma_get_wqe_wstrb),
-  .s_axi_rdma_send_write_payload_wlast   (axi_rdma_get_wqe_wlast),
-  .s_axi_rdma_send_write_payload_wvalid  (axi_rdma_get_wqe_wvalid),
-  .s_axi_rdma_send_write_payload_wready  (axi_rdma_get_wqe_wready),    
-  .s_axi_rdma_send_write_payload_awlock  (axi_rdma_get_wqe_awlock),
-  .s_axi_rdma_send_write_payload_bid     (axi_rdma_get_wqe_bid),
-  .s_axi_rdma_send_write_payload_bresp   (axi_rdma_get_wqe_bresp),
-  .s_axi_rdma_send_write_payload_bvalid  (axi_rdma_get_wqe_bvalid),
-  .s_axi_rdma_send_write_payload_bready  (axi_rdma_get_wqe_bready),
-  .s_axi_rdma_send_write_payload_arid    (axi_rdma_get_wqe_arid),
-  .s_axi_rdma_send_write_payload_araddr  (axi_rdma_get_wqe_araddr),
-  .s_axi_rdma_send_write_payload_arlen   (axi_rdma_get_wqe_arlen),
-  .s_axi_rdma_send_write_payload_arsize  (axi_rdma_get_wqe_arsize),
-  .s_axi_rdma_send_write_payload_arburst (axi_rdma_get_wqe_arburst),
-  .s_axi_rdma_send_write_payload_arcache (axi_rdma_get_wqe_arcache),
-  .s_axi_rdma_send_write_payload_arprot  (axi_rdma_get_wqe_arprot),
-  .s_axi_rdma_send_write_payload_arvalid (axi_rdma_get_wqe_arvalid),
-  .s_axi_rdma_send_write_payload_arready (axi_rdma_get_wqe_arready),
-  .s_axi_rdma_send_write_payload_rid     (axi_rdma_get_wqe_rid),
-  .s_axi_rdma_send_write_payload_rdata   (axi_rdma_get_wqe_rdata),
-  .s_axi_rdma_send_write_payload_rresp   (axi_rdma_get_wqe_rresp),
-  .s_axi_rdma_send_write_payload_rlast   (axi_rdma_get_wqe_rlast),
-  .s_axi_rdma_send_write_payload_rvalid  (axi_rdma_get_wqe_rvalid),
-  .s_axi_rdma_send_write_payload_rready  (axi_rdma_get_wqe_rready),
-  .s_axi_rdma_send_write_payload_arlock  (axi_rdma_get_wqe_arlock),
-  .s_axi_rdma_send_write_payload_arqos   (axi_rdma_get_wqe_arqos),
+axi_5to2_interconnect_to_sys_mem axi_interconnect_to_sys_mem_inst(
+  .s_axi_rdma_get_wqe_awid              (axi_rdma_get_wqe_awid),//{2'd0,axi_rdma_get_wqe_awid}
+  .s_axi_rdma_get_wqe_awaddr            (axi_rdma_get_wqe_awaddr),
+  .s_axi_rdma_get_wqe_awqos             (axi_rdma_get_wqe_awqos),
+  .s_axi_rdma_get_wqe_awlen             (axi_rdma_get_wqe_awlen),
+  .s_axi_rdma_get_wqe_awsize            (axi_rdma_get_wqe_awsize),
+  .s_axi_rdma_get_wqe_awburst           (axi_rdma_get_wqe_awburst),
+  .s_axi_rdma_get_wqe_awcache           (axi_rdma_get_wqe_awcache),
+  .s_axi_rdma_get_wqe_awprot            (axi_rdma_get_wqe_awprot),
+  .s_axi_rdma_get_wqe_awvalid           (axi_rdma_get_wqe_awvalid),
+  .s_axi_rdma_get_wqe_awready           (axi_rdma_get_wqe_awready),
+  .s_axi_rdma_get_wqe_wdata             (axi_rdma_get_wqe_wdata),
+  .s_axi_rdma_get_wqe_wstrb             (axi_rdma_get_wqe_wstrb),
+  .s_axi_rdma_get_wqe_wlast             (axi_rdma_get_wqe_wlast),
+  .s_axi_rdma_get_wqe_wvalid            (axi_rdma_get_wqe_wvalid),
+  .s_axi_rdma_get_wqe_wready            (axi_rdma_get_wqe_wready),    
+  .s_axi_rdma_get_wqe_awlock            (axi_rdma_get_wqe_awlock),
+  .s_axi_rdma_get_wqe_bid               (axi_rdma_get_wqe_bid),//{two_unused_bit8,axi_rdma_get_wqe_bid}
+  .s_axi_rdma_get_wqe_bresp             (axi_rdma_get_wqe_bresp),
+  .s_axi_rdma_get_wqe_bvalid            (axi_rdma_get_wqe_bvalid),
+  .s_axi_rdma_get_wqe_bready            (axi_rdma_get_wqe_bready),
+  .s_axi_rdma_get_wqe_arid              (axi_rdma_get_wqe_arid),//{2'd0,axi_rdma_get_wqe_arid}
+  .s_axi_rdma_get_wqe_araddr            (axi_rdma_get_wqe_araddr),
+  .s_axi_rdma_get_wqe_arlen             (axi_rdma_get_wqe_arlen),
+  .s_axi_rdma_get_wqe_arsize            (axi_rdma_get_wqe_arsize),
+  .s_axi_rdma_get_wqe_arburst           (axi_rdma_get_wqe_arburst),
+  .s_axi_rdma_get_wqe_arcache           (axi_rdma_get_wqe_arcache),
+  .s_axi_rdma_get_wqe_arprot            (axi_rdma_get_wqe_arprot),
+  .s_axi_rdma_get_wqe_arvalid           (axi_rdma_get_wqe_arvalid),
+  .s_axi_rdma_get_wqe_arready           (axi_rdma_get_wqe_arready),
+  .s_axi_rdma_get_wqe_rid               (axi_rdma_get_wqe_rid),//{two_unused_bit7,axi_rdma_get_wqe_rid}
+  .s_axi_rdma_get_wqe_rdata             (axi_rdma_get_wqe_rdata),
+  .s_axi_rdma_get_wqe_rresp             (axi_rdma_get_wqe_rresp),
+  .s_axi_rdma_get_wqe_rlast             (axi_rdma_get_wqe_rlast),
+  .s_axi_rdma_get_wqe_rvalid            (axi_rdma_get_wqe_rvalid),
+  .s_axi_rdma_get_wqe_rready            (axi_rdma_get_wqe_rready),
+  .s_axi_rdma_get_wqe_arlock            (axi_rdma_get_wqe_arlock),
+  .s_axi_rdma_get_wqe_arqos             (axi_rdma_get_wqe_arqos),
 
-  .s_axi_rdma_rsp_payload_awid           (axi_rdma_get_payload_awid),
-  .s_axi_rdma_rsp_payload_awaddr         (axi_rdma_get_payload_awaddr),
-  .s_axi_rdma_rsp_payload_awqos          (axi_rdma_get_payload_awqos),
-  .s_axi_rdma_rsp_payload_awlen          (axi_rdma_get_payload_awlen),
-  .s_axi_rdma_rsp_payload_awsize         (axi_rdma_get_payload_awsize),
-  .s_axi_rdma_rsp_payload_awburst        (axi_rdma_get_payload_awburst),
-  .s_axi_rdma_rsp_payload_awcache        (axi_rdma_get_payload_awcache),
-  .s_axi_rdma_rsp_payload_awprot         (axi_rdma_get_payload_awprot),
-  .s_axi_rdma_rsp_payload_awvalid        (axi_rdma_get_payload_awvalid),
-  .s_axi_rdma_rsp_payload_awready        (axi_rdma_get_payload_awready),
-  .s_axi_rdma_rsp_payload_wdata          (axi_rdma_get_payload_wdata),
-  .s_axi_rdma_rsp_payload_wstrb          (axi_rdma_get_payload_wstrb),
-  .s_axi_rdma_rsp_payload_wlast          (axi_rdma_get_payload_wlast),
-  .s_axi_rdma_rsp_payload_wvalid         (axi_rdma_get_payload_wvalid),
-  .s_axi_rdma_rsp_payload_wready         (axi_rdma_get_payload_wready),
-  .s_axi_rdma_rsp_payload_awlock         (axi_rdma_get_payload_awlock),
-  .s_axi_rdma_rsp_payload_bid            (axi_rdma_get_payload_bid),
-  .s_axi_rdma_rsp_payload_bresp          (axi_rdma_get_payload_bresp),
-  .s_axi_rdma_rsp_payload_bvalid         (axi_rdma_get_payload_bvalid),
-  .s_axi_rdma_rsp_payload_bready         (axi_rdma_get_payload_bready),
-  .s_axi_rdma_rsp_payload_arid           (axi_rdma_get_payload_arid),
-  .s_axi_rdma_rsp_payload_araddr         (axi_rdma_get_payload_araddr),
-  .s_axi_rdma_rsp_payload_arlen          (axi_rdma_get_payload_arlen),
-  .s_axi_rdma_rsp_payload_arsize         (axi_rdma_get_payload_arsize),
-  .s_axi_rdma_rsp_payload_arburst        (axi_rdma_get_payload_arburst),
-  .s_axi_rdma_rsp_payload_arcache        (axi_rdma_get_payload_arcache),
-  .s_axi_rdma_rsp_payload_arprot         (axi_rdma_get_payload_arprot),
-  .s_axi_rdma_rsp_payload_arvalid        (axi_rdma_get_payload_arvalid),
-  .s_axi_rdma_rsp_payload_arready        (axi_rdma_get_payload_arready),
-  //.s_axi_rdma_rsp_payload_rid            (axi_rdma_get_payload_rid),
-  .s_axi_rdma_rsp_payload_rid            (),
-  .s_axi_rdma_rsp_payload_rdata          (axi_rdma_get_payload_rdata),
-  .s_axi_rdma_rsp_payload_rresp          (axi_rdma_get_payload_rresp),
-  .s_axi_rdma_rsp_payload_rlast          (axi_rdma_get_payload_rlast),
-  .s_axi_rdma_rsp_payload_rvalid         (axi_rdma_get_payload_rvalid),
-  .s_axi_rdma_rsp_payload_rready         (axi_rdma_get_payload_rready),
-  .s_axi_rdma_rsp_payload_arlock         (axi_rdma_get_payload_arlock),
-  .s_axi_rdma_rsp_payload_arqos          (axi_rdma_get_payload_arqos),
+  .s_axi_rdma_get_payload_awid          (axi_rdma_get_payload_awid),//{1'b0,axi_rdma_get_payload_awid}
+  .s_axi_rdma_get_payload_awaddr        (axi_rdma_get_payload_awaddr),
+  .s_axi_rdma_get_payload_awqos         (axi_rdma_get_payload_awqos),
+  .s_axi_rdma_get_payload_awlen         (axi_rdma_get_payload_awlen),
+  .s_axi_rdma_get_payload_awsize        (axi_rdma_get_payload_awsize),
+  .s_axi_rdma_get_payload_awburst       (axi_rdma_get_payload_awburst),
+  .s_axi_rdma_get_payload_awcache       (axi_rdma_get_payload_awcache),
+  .s_axi_rdma_get_payload_awprot        (axi_rdma_get_payload_awprot),
+  .s_axi_rdma_get_payload_awvalid       (axi_rdma_get_payload_awvalid),
+  .s_axi_rdma_get_payload_awready       (axi_rdma_get_payload_awready),
+  .s_axi_rdma_get_payload_wdata         (axi_rdma_get_payload_wdata),
+  .s_axi_rdma_get_payload_wstrb         (axi_rdma_get_payload_wstrb),
+  .s_axi_rdma_get_payload_wlast         (axi_rdma_get_payload_wlast),
+  .s_axi_rdma_get_payload_wvalid        (axi_rdma_get_payload_wvalid),
+  .s_axi_rdma_get_payload_wready        (axi_rdma_get_payload_wready),
+  .s_axi_rdma_get_payload_awlock        (axi_rdma_get_payload_awlock),
+  .s_axi_rdma_get_payload_bid           (axi_rdma_get_payload_bid),//{one_unused_bit0,axi_rdma_get_payload_bid}
+  .s_axi_rdma_get_payload_bresp         (axi_rdma_get_payload_bresp),
+  .s_axi_rdma_get_payload_bvalid        (axi_rdma_get_payload_bvalid),
+  .s_axi_rdma_get_payload_bready        (axi_rdma_get_payload_bready),
+  .s_axi_rdma_get_payload_arid          (axi_rdma_get_payload_arid),//{1'b0,axi_rdma_get_payload_arid}
+  .s_axi_rdma_get_payload_araddr        (axi_rdma_get_payload_araddr),
+  .s_axi_rdma_get_payload_arlen         (axi_rdma_get_payload_arlen),
+  .s_axi_rdma_get_payload_arsize        (axi_rdma_get_payload_arsize),
+  .s_axi_rdma_get_payload_arburst       (axi_rdma_get_payload_arburst),
+  .s_axi_rdma_get_payload_arcache       (axi_rdma_get_payload_arcache),
+  .s_axi_rdma_get_payload_arprot        (axi_rdma_get_payload_arprot),
+  .s_axi_rdma_get_payload_arvalid       (axi_rdma_get_payload_arvalid),
+  .s_axi_rdma_get_payload_arready       (axi_rdma_get_payload_arready),
+  //.s_axi_rdma_get_payload_rid           ({one_unused_bit1,axi_rdma_get_payload_rid}),
+  .s_axi_rdma_get_payload_rid           (),
+  .s_axi_rdma_get_payload_rdata         (axi_rdma_get_payload_rdata),
+  .s_axi_rdma_get_payload_rresp         (axi_rdma_get_payload_rresp),
+  .s_axi_rdma_get_payload_rlast         (axi_rdma_get_payload_rlast),
+  .s_axi_rdma_get_payload_rvalid        (axi_rdma_get_payload_rvalid),
+  .s_axi_rdma_get_payload_rready        (axi_rdma_get_payload_rready),
+  .s_axi_rdma_get_payload_arlock        (axi_rdma_get_payload_arlock),
+  .s_axi_rdma_get_payload_arqos         (axi_rdma_get_payload_arqos),
 
-  //.s_axi_qdma_mm_awid                    (axi_rdma_completion_awid),
-  .s_axi_qdma_mm_awid                    (0),
-  .s_axi_qdma_mm_awaddr                  (axi_rdma_completion_awaddr),
-  .s_axi_qdma_mm_awqos                   (axi_rdma_completion_awqos),
-  .s_axi_qdma_mm_awlen                   (axi_rdma_completion_awlen),
-  .s_axi_qdma_mm_awsize                  (axi_rdma_completion_awsize),
-  .s_axi_qdma_mm_awburst                 (axi_rdma_completion_awburst),
-  .s_axi_qdma_mm_awcache                 (axi_rdma_completion_awcache),
-  .s_axi_qdma_mm_awprot                  (axi_rdma_completion_awprot),
-  .s_axi_qdma_mm_awvalid                 (axi_rdma_completion_awvalid),
-  .s_axi_qdma_mm_awready                 (axi_rdma_completion_awready),
-  .s_axi_qdma_mm_wdata                   (axi_rdma_completion_wdata),
-  .s_axi_qdma_mm_wstrb                   (axi_rdma_completion_wstrb),
-  .s_axi_qdma_mm_wlast                   (axi_rdma_completion_wlast),
-  .s_axi_qdma_mm_wvalid                  (axi_rdma_completion_wvalid),
-  .s_axi_qdma_mm_wready                  (axi_rdma_completion_wready),
-  .s_axi_qdma_mm_awlock                  (axi_rdma_completion_awlock),
-  .s_axi_qdma_mm_bid                     (axi_rdma_completion_bid),
-  .s_axi_qdma_mm_bresp                   (axi_rdma_completion_bresp),
-  .s_axi_qdma_mm_bvalid                  (axi_rdma_completion_bvalid),
-  .s_axi_qdma_mm_bready                  (axi_rdma_completion_bready),
-  //.s_axi_qdma_mm_arid                    (axi_rdma_completion_arid),
-  .s_axi_qdma_mm_arid                    (0),
-  .s_axi_qdma_mm_araddr                  (axi_rdma_completion_araddr),
-  .s_axi_qdma_mm_arlen                   (axi_rdma_completion_arlen),
-  .s_axi_qdma_mm_arsize                  (axi_rdma_completion_arsize),
-  .s_axi_qdma_mm_arburst                 (axi_rdma_completion_arburst),
-  .s_axi_qdma_mm_arcache                 (axi_rdma_completion_arcache),
-  .s_axi_qdma_mm_arprot                  (axi_rdma_completion_arprot),
-  .s_axi_qdma_mm_arvalid                 (axi_rdma_completion_arvalid),
-  .s_axi_qdma_mm_arready                 (axi_rdma_completion_arready),
-  .s_axi_qdma_mm_rid                     (axi_rdma_completion_rid),
-  .s_axi_qdma_mm_rdata                   (axi_rdma_completion_rdata),
-  .s_axi_qdma_mm_rresp                   (axi_rdma_completion_rresp),
-  .s_axi_qdma_mm_rlast                   (axi_rdma_completion_rlast),
-  .s_axi_qdma_mm_rvalid                  (axi_rdma_completion_rvalid),
-  .s_axi_qdma_mm_rready                  (axi_rdma_completion_rready),
-  .s_axi_qdma_mm_arlock                  (axi_rdma_completion_arlock),
-  .s_axi_qdma_mm_arqos                   (axi_rdma_completion_arqos),
+  .s_axi_rdma_completion_awid           (0),//{2'd0,axi_rdma_completion_awid}
+  .s_axi_rdma_completion_awaddr         (axi_rdma_completion_or_init_sys_awaddr),
+  .s_axi_rdma_completion_awqos          (axi_rdma_completion_or_init_sys_awqos),
+  .s_axi_rdma_completion_awlen          (axi_rdma_completion_or_init_sys_awlen),
+  .s_axi_rdma_completion_awsize         (axi_rdma_completion_or_init_sys_awsize),
+  .s_axi_rdma_completion_awburst        (axi_rdma_completion_or_init_sys_awburst),
+  .s_axi_rdma_completion_awcache        (axi_rdma_completion_or_init_sys_awcache),
+  .s_axi_rdma_completion_awprot         (axi_rdma_completion_or_init_sys_awprot),
+  .s_axi_rdma_completion_awvalid        (axi_rdma_completion_or_init_sys_awvalid),
+  .s_axi_rdma_completion_awready        (axi_rdma_completion_or_init_sys_awready),
+  .s_axi_rdma_completion_wdata          (axi_rdma_completion_or_init_sys_wdata),
+  .s_axi_rdma_completion_wstrb          (axi_rdma_completion_or_init_sys_wstrb),
+  .s_axi_rdma_completion_wlast          (axi_rdma_completion_or_init_sys_wlast),
+  .s_axi_rdma_completion_wvalid         (axi_rdma_completion_or_init_sys_wvalid),
+  .s_axi_rdma_completion_wready         (axi_rdma_completion_or_init_sys_wready),
+  .s_axi_rdma_completion_awlock         (axi_rdma_completion_or_init_sys_awlock),
+  .s_axi_rdma_completion_bid            (),//{two_unused_bit6,axi_rdma_completion_bid}
+  .s_axi_rdma_completion_bresp          (axi_rdma_completion_or_init_sys_bresp),
+  .s_axi_rdma_completion_bvalid         (axi_rdma_completion_or_init_sys_bvalid),
+  .s_axi_rdma_completion_bready         (axi_rdma_completion_or_init_sys_bready),
+  .s_axi_rdma_completion_arid           (axi_rdma_completion_or_init_sys_arid),//{2'd0,axi_rdma_completion_arid}
+  .s_axi_rdma_completion_araddr         (axi_rdma_completion_or_init_sys_araddr),
+  .s_axi_rdma_completion_arlen          (axi_rdma_completion_or_init_sys_arlen),
+  .s_axi_rdma_completion_arsize         (axi_rdma_completion_or_init_sys_arsize),
+  .s_axi_rdma_completion_arburst        (axi_rdma_completion_or_init_sys_arburst),
+  .s_axi_rdma_completion_arcache        (axi_rdma_completion_or_init_sys_arcache),
+  .s_axi_rdma_completion_arprot         (axi_rdma_completion_or_init_sys_arprot),
+  .s_axi_rdma_completion_arvalid        (axi_rdma_completion_or_init_sys_arvalid),
+  .s_axi_rdma_completion_arready        (axi_rdma_completion_or_init_sys_arready),
+  .s_axi_rdma_completion_rid            (),//{two_unused_bit5,axi_rdma_completion_rid}
+  .s_axi_rdma_completion_rdata          (axi_rdma_completion_or_init_sys_rdata),
+  .s_axi_rdma_completion_rresp          (axi_rdma_completion_or_init_sys_rresp),
+  .s_axi_rdma_completion_rlast          (axi_rdma_completion_or_init_sys_rlast),
+  .s_axi_rdma_completion_rvalid         (axi_rdma_completion_or_init_sys_rvalid),
+  .s_axi_rdma_completion_rready         (axi_rdma_completion_or_init_sys_rready),
+  .s_axi_rdma_completion_arlock         (axi_rdma_completion_or_init_sys_arlock),
+  .s_axi_rdma_completion_arqos          (axi_rdma_completion_or_init_sys_arqos),
 
-  .s_axi_compute_logic_awid              (m_axi_init_sys_awid),
-  .s_axi_compute_logic_awaddr            (m_axi_init_sys_awaddr),
-  .s_axi_compute_logic_awqos             (m_axi_init_sys_awqos),
-  .s_axi_compute_logic_awlen             (m_axi_init_sys_awlen),
-  .s_axi_compute_logic_awsize            (m_axi_init_sys_awsize),
-  .s_axi_compute_logic_awburst           (m_axi_init_sys_awburst),
-  .s_axi_compute_logic_awcache           (m_axi_init_sys_awcache),
-  .s_axi_compute_logic_awprot            (m_axi_init_sys_awprot),
-  .s_axi_compute_logic_awvalid           (m_axi_init_sys_awvalid),
-  .s_axi_compute_logic_awready           (m_axi_init_sys_awready),
-  .s_axi_compute_logic_wdata             (m_axi_init_sys_wdata),
-  .s_axi_compute_logic_wstrb             (m_axi_init_sys_wstrb),
-  .s_axi_compute_logic_wlast             (m_axi_init_sys_wlast),
-  .s_axi_compute_logic_wvalid            (m_axi_init_sys_wvalid),
-  .s_axi_compute_logic_wready            (m_axi_init_sys_wready),
-  .s_axi_compute_logic_awlock            (m_axi_init_sys_awlock),
-  .s_axi_compute_logic_bid               (m_axi_init_sys_bid),
-  .s_axi_compute_logic_bresp             (m_axi_init_sys_bresp),
-  .s_axi_compute_logic_bvalid            (m_axi_init_sys_bvalid),
-  .s_axi_compute_logic_bready            (m_axi_init_sys_bready),
-  .s_axi_compute_logic_arid              (m_axi_veri_sys_arid),
-  .s_axi_compute_logic_araddr            (m_axi_veri_sys_araddr),
-  .s_axi_compute_logic_arlen             (m_axi_veri_sys_arlen),
-  .s_axi_compute_logic_arsize            (m_axi_veri_sys_arsize),
-  .s_axi_compute_logic_arburst           (m_axi_veri_sys_arburst),
-  .s_axi_compute_logic_arcache           (m_axi_veri_sys_arcache),
-  .s_axi_compute_logic_arprot            (m_axi_veri_sys_arprot),
-  .s_axi_compute_logic_arvalid           (m_axi_veri_sys_arvalid),
-  .s_axi_compute_logic_arready           (m_axi_veri_sys_arready),
-  .s_axi_compute_logic_rid               (m_axi_veri_sys_rid),
-  .s_axi_compute_logic_rdata             (m_axi_veri_sys_rdata),
-  .s_axi_compute_logic_rresp             (m_axi_veri_sys_rresp),
-  .s_axi_compute_logic_rlast             (m_axi_veri_sys_rlast),
-  .s_axi_compute_logic_rvalid            (m_axi_veri_sys_rvalid),
-  .s_axi_compute_logic_rready            (m_axi_veri_sys_rready),
-  .s_axi_compute_logic_arlock            (m_axi_veri_sys_arlock),
-  .s_axi_compute_logic_arqos             (m_axi_veri_sys_arqos),
+  .s_axi_rdma_send_write_payload_awid    (axi_rdma_send_write_payload_awid),//{2'd0,axi_rdma_send_write_payload_awid}
+  .s_axi_rdma_send_write_payload_awaddr  (axi_rdma_send_write_payload_awaddr),
+  .s_axi_rdma_send_write_payload_awqos   (axi_rdma_send_write_payload_awqos),
+  .s_axi_rdma_send_write_payload_awlen   (axi_rdma_send_write_payload_awlen),
+  .s_axi_rdma_send_write_payload_awsize  (axi_rdma_send_write_payload_awsize),
+  .s_axi_rdma_send_write_payload_awburst (axi_rdma_send_write_payload_awburst),
+  .s_axi_rdma_send_write_payload_awcache (axi_rdma_send_write_payload_awcache),
+  .s_axi_rdma_send_write_payload_awprot  (axi_rdma_send_write_payload_awprot),
+  .s_axi_rdma_send_write_payload_awvalid (axi_rdma_send_write_payload_awvalid),
+  .s_axi_rdma_send_write_payload_awready (axi_rdma_send_write_payload_awready),
+  .s_axi_rdma_send_write_payload_wdata   (axi_rdma_send_write_payload_wdata),
+  .s_axi_rdma_send_write_payload_wstrb   (axi_rdma_send_write_payload_wstrb),
+  .s_axi_rdma_send_write_payload_wlast   (axi_rdma_send_write_payload_wlast),
+  .s_axi_rdma_send_write_payload_wvalid  (axi_rdma_send_write_payload_wvalid),
+  .s_axi_rdma_send_write_payload_wready  (axi_rdma_send_write_payload_wready),
+  .s_axi_rdma_send_write_payload_awlock  (axi_rdma_send_write_payload_awlock),
+  .s_axi_rdma_send_write_payload_bid     (axi_rdma_send_write_payload_bid),//{two_unused_bit9,axi_rdma_send_write_payload_bid}
+  .s_axi_rdma_send_write_payload_bresp   (axi_rdma_send_write_payload_bresp),
+  .s_axi_rdma_send_write_payload_bvalid  (axi_rdma_send_write_payload_bvalid),
+  .s_axi_rdma_send_write_payload_bready  (axi_rdma_send_write_payload_bready),
+  .s_axi_rdma_send_write_payload_arid    (axi_rdma_send_write_payload_arid),//{2'd0,axi_rdma_send_write_payload_arid}
+  .s_axi_rdma_send_write_payload_araddr  (axi_rdma_send_write_payload_araddr),
+  .s_axi_rdma_send_write_payload_arlen   (axi_rdma_send_write_payload_arlen),
+  .s_axi_rdma_send_write_payload_arsize  (axi_rdma_send_write_payload_arsize),
+  .s_axi_rdma_send_write_payload_arburst (axi_rdma_send_write_payload_arburst),
+  .s_axi_rdma_send_write_payload_arcache (axi_rdma_send_write_payload_arcache),
+  .s_axi_rdma_send_write_payload_arprot  (axi_rdma_send_write_payload_arprot),
+  .s_axi_rdma_send_write_payload_arvalid (axi_rdma_send_write_payload_arvalid),
+  .s_axi_rdma_send_write_payload_arready (axi_rdma_send_write_payload_arready),
+  .s_axi_rdma_send_write_payload_rid     (axi_rdma_send_write_payload_rid),//{two_unused_bit10,axi_rdma_send_write_payload_rid}
+  .s_axi_rdma_send_write_payload_rdata   (axi_rdma_send_write_payload_rdata),
+  .s_axi_rdma_send_write_payload_rresp   (axi_rdma_send_write_payload_rresp),
+  .s_axi_rdma_send_write_payload_rlast   (axi_rdma_send_write_payload_rlast),
+  .s_axi_rdma_send_write_payload_rvalid  (axi_rdma_send_write_payload_rvalid),
+  .s_axi_rdma_send_write_payload_rready  (axi_rdma_send_write_payload_rready),
+  .s_axi_rdma_send_write_payload_arlock  (axi_rdma_send_write_payload_arlock),
+  .s_axi_rdma_send_write_payload_arqos   (axi_rdma_send_write_payload_arqos),
 
-  .m_axi_dev_mem_awaddr                  (axi_sys_mem_awaddr),
-  .m_axi_dev_mem_awprot                  (axi_sys_mem_awprot),
-  .m_axi_dev_mem_awvalid                 (axi_sys_mem_awvalid),
-  .m_axi_dev_mem_awready                 (axi_sys_mem_awready),
-  .m_axi_dev_mem_awsize                  (axi_sys_mem_awsize),
-  .m_axi_dev_mem_awburst                 (axi_sys_mem_awburst),
-  .m_axi_dev_mem_awcache                 (axi_sys_mem_awcache),
-  .m_axi_dev_mem_awlen                   (axi_sys_mem_awlen),
-  .m_axi_dev_mem_awlock                  (axi_sys_mem_awlock),
-  .m_axi_dev_mem_awqos                   (axi_sys_mem_awqos),
-  .m_axi_dev_mem_awregion                (axi_sys_mem_awregion),
-  .m_axi_dev_mem_awid                    (axi_sys_mem_awid),
-  .m_axi_dev_mem_wdata                   (axi_sys_mem_wdata),
-  .m_axi_dev_mem_wstrb                   (axi_sys_mem_wstrb),
-  .m_axi_dev_mem_wvalid                  (axi_sys_mem_wvalid),
-  .m_axi_dev_mem_wready                  (axi_sys_mem_wready),
-  .m_axi_dev_mem_wlast                   (axi_sys_mem_wlast),
-  .m_axi_dev_mem_bresp                   (axi_sys_mem_bresp),
-  .m_axi_dev_mem_bvalid                  (axi_sys_mem_bvalid),
-  .m_axi_dev_mem_bready                  (axi_sys_mem_bready),
-  .m_axi_dev_mem_bid                     (axi_sys_mem_bid),
-  .m_axi_dev_mem_araddr                  (axi_sys_mem_araddr),
-  .m_axi_dev_mem_arprot                  (axi_sys_mem_arprot),
-  .m_axi_dev_mem_arvalid                 (axi_sys_mem_arvalid),
-  .m_axi_dev_mem_arready                 (axi_sys_mem_arready),
-  .m_axi_dev_mem_arsize                  (axi_sys_mem_arsize),
-  .m_axi_dev_mem_arburst                 (axi_sys_mem_arburst),
-  .m_axi_dev_mem_arcache                 (axi_sys_mem_arcache),
-  .m_axi_dev_mem_arlock                  (axi_sys_mem_arlock),
-  .m_axi_dev_mem_arlen                   (axi_sys_mem_arlen),
-  .m_axi_dev_mem_arqos                   (axi_sys_mem_arqos),
-  .m_axi_dev_mem_arregion                (axi_sys_mem_arregion),
-  .m_axi_dev_mem_arid                    (axi_sys_mem_arid),
-  .m_axi_dev_mem_rdata                   (axi_sys_mem_rdata),
-  .m_axi_dev_mem_rresp                   (axi_sys_mem_rresp),
-  .m_axi_dev_mem_rvalid                  (axi_sys_mem_rvalid),
-  .m_axi_dev_mem_rready                  (axi_sys_mem_rready),
-  .m_axi_dev_mem_rlast                   (axi_sys_mem_rlast),
-  .m_axi_dev_mem_rid                     (axi_sys_mem_rid), 
+  .s_axi_rdma_rsp_payload_awid           (axi_rdma_rsp_payload_awid),//{2'd0,axi_rdma_rsp_payload_awid}
+  .s_axi_rdma_rsp_payload_awaddr         (axi_rdma_rsp_payload_awaddr),
+  .s_axi_rdma_rsp_payload_awqos          (axi_rdma_rsp_payload_awqos),
+  .s_axi_rdma_rsp_payload_awlen          (axi_rdma_rsp_payload_awlen),
+  .s_axi_rdma_rsp_payload_awsize         (axi_rdma_rsp_payload_awsize),
+  .s_axi_rdma_rsp_payload_awburst        (axi_rdma_rsp_payload_awburst),
+  .s_axi_rdma_rsp_payload_awcache        (axi_rdma_rsp_payload_awcache),
+  .s_axi_rdma_rsp_payload_awprot         (axi_rdma_rsp_payload_awprot),
+  .s_axi_rdma_rsp_payload_awvalid        (axi_rdma_rsp_payload_awvalid),
+  .s_axi_rdma_rsp_payload_awready        (axi_rdma_rsp_payload_awready),
+  .s_axi_rdma_rsp_payload_wdata          (axi_rdma_rsp_payload_wdata),
+  .s_axi_rdma_rsp_payload_wstrb          (axi_rdma_rsp_payload_wstrb),
+  .s_axi_rdma_rsp_payload_wlast          (axi_rdma_rsp_payload_wlast),
+  .s_axi_rdma_rsp_payload_wvalid         (axi_rdma_rsp_payload_wvalid),
+  .s_axi_rdma_rsp_payload_wready         (axi_rdma_rsp_payload_wready),
+  .s_axi_rdma_rsp_payload_awlock         (axi_rdma_rsp_payload_awlock),
+  .s_axi_rdma_rsp_payload_bid            (axi_rdma_rsp_payload_bid),//{two_unused_bit3,axi_rdma_rsp_payload_bid}
+  .s_axi_rdma_rsp_payload_bresp          (axi_rdma_rsp_payload_bresp),
+  .s_axi_rdma_rsp_payload_bvalid         (axi_rdma_rsp_payload_bvalid),
+  .s_axi_rdma_rsp_payload_bready         (axi_rdma_rsp_payload_bready),
+  .s_axi_rdma_rsp_payload_arid           (axi_rdma_rsp_payload_arid),//{2'd0,axi_rdma_rsp_payload_arid}
+  .s_axi_rdma_rsp_payload_araddr         (axi_rdma_rsp_payload_araddr),
+  .s_axi_rdma_rsp_payload_arlen          (axi_rdma_rsp_payload_arlen),
+  .s_axi_rdma_rsp_payload_arsize         (axi_rdma_rsp_payload_arsize),
+  .s_axi_rdma_rsp_payload_arburst        (axi_rdma_rsp_payload_arburst),
+  .s_axi_rdma_rsp_payload_arcache        (axi_rdma_rsp_payload_arcache),
+  .s_axi_rdma_rsp_payload_arprot         (axi_rdma_rsp_payload_arprot),
+  .s_axi_rdma_rsp_payload_arvalid        (axi_rdma_rsp_payload_arvalid),
+  .s_axi_rdma_rsp_payload_arready        (axi_rdma_rsp_payload_arready),
+  .s_axi_rdma_rsp_payload_rid            (axi_rdma_rsp_payload_rid),//{two_unused_bit4,axi_rdma_rsp_payload_rid}
+  .s_axi_rdma_rsp_payload_rdata          (axi_rdma_rsp_payload_rdata),
+  .s_axi_rdma_rsp_payload_rresp          (axi_rdma_rsp_payload_rresp),
+  .s_axi_rdma_rsp_payload_rlast          (axi_rdma_rsp_payload_rlast),
+  .s_axi_rdma_rsp_payload_rvalid         (axi_rdma_rsp_payload_rvalid),
+  .s_axi_rdma_rsp_payload_rready         (axi_rdma_rsp_payload_rready),
+  .s_axi_rdma_rsp_payload_arlock         (axi_rdma_rsp_payload_arlock),
+  .s_axi_rdma_rsp_payload_arqos          (axi_rdma_rsp_payload_arqos),
+
+  .m_axi_sys_mem_awaddr                  (axi_sys_mem_awaddr),
+  .m_axi_sys_mem_awprot                  (axi_sys_mem_awprot),
+  .m_axi_sys_mem_awvalid                 (axi_sys_mem_awvalid),
+  .m_axi_sys_mem_awready                 (axi_sys_mem_awready),
+  .m_axi_sys_mem_awsize                  (axi_sys_mem_awsize),
+  .m_axi_sys_mem_awburst                 (axi_sys_mem_awburst),
+  .m_axi_sys_mem_awcache                 (axi_sys_mem_awcache),
+  .m_axi_sys_mem_awlen                   (axi_sys_mem_awlen),
+  .m_axi_sys_mem_awlock                  (axi_sys_mem_awlock),
+  .m_axi_sys_mem_awqos                   (axi_sys_mem_awqos),
+  .m_axi_sys_mem_awregion                (axi_sys_mem_awregion),
+  .m_axi_sys_mem_awid                    (axi_sys_mem_awid),
+  .m_axi_sys_mem_wdata                   (axi_sys_mem_wdata),
+  .m_axi_sys_mem_wstrb                   (axi_sys_mem_wstrb),
+  .m_axi_sys_mem_wvalid                  (axi_sys_mem_wvalid),
+  .m_axi_sys_mem_wready                  (axi_sys_mem_wready),
+  .m_axi_sys_mem_wlast                   (axi_sys_mem_wlast),
+  .m_axi_sys_mem_bresp                   (axi_sys_mem_bresp),
+  .m_axi_sys_mem_bvalid                  (axi_sys_mem_bvalid),
+  .m_axi_sys_mem_bready                  (axi_sys_mem_bready),
+  .m_axi_sys_mem_bid                     (axi_sys_mem_bid),
+  .m_axi_sys_mem_araddr                  (axi_sys_mem_araddr),
+  .m_axi_sys_mem_arprot                  (axi_sys_mem_arprot),
+  .m_axi_sys_mem_arvalid                 (axi_sys_mem_arvalid),
+  .m_axi_sys_mem_arready                 (axi_sys_mem_arready),
+  .m_axi_sys_mem_arsize                  (axi_sys_mem_arsize),
+  .m_axi_sys_mem_arburst                 (axi_sys_mem_arburst),
+  .m_axi_sys_mem_arcache                 (axi_sys_mem_arcache),
+  .m_axi_sys_mem_arlock                  (axi_sys_mem_arlock),
+  .m_axi_sys_mem_arlen                   (axi_sys_mem_arlen),
+  .m_axi_sys_mem_arqos                   (axi_sys_mem_arqos),
+  .m_axi_sys_mem_arregion                (axi_sys_mem_arregion),
+  .m_axi_sys_mem_arid                    (axi_sys_mem_arid),
+  .m_axi_sys_mem_rdata                   (axi_sys_mem_rdata),
+  .m_axi_sys_mem_rresp                   (axi_sys_mem_rresp),
+  .m_axi_sys_mem_rvalid                  (axi_sys_mem_rvalid),
+  .m_axi_sys_mem_rready                  (axi_sys_mem_rready),
+  .m_axi_sys_mem_rlast                   (axi_sys_mem_rlast),
+  .m_axi_sys_mem_rid                     (axi_sys_mem_rid), 
+
+  .m_axi_sys_to_dev_crossbar_awaddr      (axi_from_sys_to_dev_crossbar_awaddr),
+  .m_axi_sys_to_dev_crossbar_awprot      (axi_from_sys_to_dev_crossbar_awprot),
+  .m_axi_sys_to_dev_crossbar_awvalid     (axi_from_sys_to_dev_crossbar_awvalid),
+  .m_axi_sys_to_dev_crossbar_awready     (axi_from_sys_to_dev_crossbar_awready),
+  .m_axi_sys_to_dev_crossbar_awsize      (axi_from_sys_to_dev_crossbar_awsize),
+  .m_axi_sys_to_dev_crossbar_awburst     (axi_from_sys_to_dev_crossbar_awburst),
+  .m_axi_sys_to_dev_crossbar_awcache     (axi_from_sys_to_dev_crossbar_awcache),
+  .m_axi_sys_to_dev_crossbar_awlen       (axi_from_sys_to_dev_crossbar_awlen),
+  .m_axi_sys_to_dev_crossbar_awlock      (axi_from_sys_to_dev_crossbar_awlock),
+  .m_axi_sys_to_dev_crossbar_awqos       (axi_from_sys_to_dev_crossbar_awqos),
+  .m_axi_sys_to_dev_crossbar_awregion    (axi_from_sys_to_dev_crossbar_awregion),
+  .m_axi_sys_to_dev_crossbar_awid        (axi_from_sys_to_dev_crossbar_awid),
+  .m_axi_sys_to_dev_crossbar_wdata       (axi_from_sys_to_dev_crossbar_wdata),
+  .m_axi_sys_to_dev_crossbar_wstrb       (axi_from_sys_to_dev_crossbar_wstrb),
+  .m_axi_sys_to_dev_crossbar_wvalid      (axi_from_sys_to_dev_crossbar_wvalid),
+  .m_axi_sys_to_dev_crossbar_wready      (axi_from_sys_to_dev_crossbar_wready),
+  .m_axi_sys_to_dev_crossbar_wlast       (axi_from_sys_to_dev_crossbar_wlast),
+  .m_axi_sys_to_dev_crossbar_bresp       (axi_from_sys_to_dev_crossbar_bresp),
+  .m_axi_sys_to_dev_crossbar_bvalid      (axi_from_sys_to_dev_crossbar_bvalid),
+  .m_axi_sys_to_dev_crossbar_bready      (axi_from_sys_to_dev_crossbar_bready),
+  .m_axi_sys_to_dev_crossbar_bid         (axi_from_sys_to_dev_crossbar_bid),
+  .m_axi_sys_to_dev_crossbar_araddr      (axi_from_sys_to_dev_crossbar_araddr),
+  .m_axi_sys_to_dev_crossbar_arprot      (axi_from_sys_to_dev_crossbar_arprot),
+  .m_axi_sys_to_dev_crossbar_arvalid     (axi_from_sys_to_dev_crossbar_arvalid),
+  .m_axi_sys_to_dev_crossbar_arready     (axi_from_sys_to_dev_crossbar_arready),
+  .m_axi_sys_to_dev_crossbar_arsize      (axi_from_sys_to_dev_crossbar_arsize),
+  .m_axi_sys_to_dev_crossbar_arburst     (axi_from_sys_to_dev_crossbar_arburst),
+  .m_axi_sys_to_dev_crossbar_arcache     (axi_from_sys_to_dev_crossbar_arcache),
+  .m_axi_sys_to_dev_crossbar_arlock      (axi_from_sys_to_dev_crossbar_arlock),
+  .m_axi_sys_to_dev_crossbar_arlen       (axi_from_sys_to_dev_crossbar_arlen),
+  .m_axi_sys_to_dev_crossbar_arqos       (axi_from_sys_to_dev_crossbar_arqos),
+  .m_axi_sys_to_dev_crossbar_arregion    (axi_from_sys_to_dev_crossbar_arregion),
+  .m_axi_sys_to_dev_crossbar_arid        (axi_from_sys_to_dev_crossbar_arid),
+  .m_axi_sys_to_dev_crossbar_rdata       (axi_from_sys_to_dev_crossbar_rdata),
+  .m_axi_sys_to_dev_crossbar_rresp       (axi_from_sys_to_dev_crossbar_rresp),
+  .m_axi_sys_to_dev_crossbar_rvalid      (axi_from_sys_to_dev_crossbar_rvalid),
+  .m_axi_sys_to_dev_crossbar_rready      (axi_from_sys_to_dev_crossbar_rready),
+  .m_axi_sys_to_dev_crossbar_rlast       (axi_from_sys_to_dev_crossbar_rlast),
+  .m_axi_sys_to_dev_crossbar_rid         (axi_from_sys_to_dev_crossbar_rid),
+
+  .axis_aclk                             (axis_clk),
+  .axis_arestn                           (axis_rstn)   
+);
+
+
+
+axi_interconnect_to_dev_mem axi_2to1_for_completion_or_init_sys(
+  .s_axi_rdma_send_write_payload_awid    (axi_rdma_completion_awid),
+  .s_axi_rdma_send_write_payload_awaddr  (axi_rdma_completion_awaddr),
+  .s_axi_rdma_send_write_payload_awqos   (axi_rdma_completion_awqos),
+  .s_axi_rdma_send_write_payload_awlen   (axi_rdma_completion_awlen),
+  .s_axi_rdma_send_write_payload_awsize  (axi_rdma_completion_awsize),
+  .s_axi_rdma_send_write_payload_awburst (axi_rdma_completion_awburst),
+  .s_axi_rdma_send_write_payload_awcache (axi_rdma_completion_awcache),
+  .s_axi_rdma_send_write_payload_awprot  (axi_rdma_completion_awprot),
+  .s_axi_rdma_send_write_payload_awvalid (axi_rdma_completion_awvalid),
+  .s_axi_rdma_send_write_payload_awready (axi_rdma_completion_awready),
+  .s_axi_rdma_send_write_payload_wdata   (axi_rdma_completion_wdata),
+  .s_axi_rdma_send_write_payload_wstrb   (axi_rdma_completion_wstrb),
+  .s_axi_rdma_send_write_payload_wlast   (axi_rdma_completion_wlast),
+  .s_axi_rdma_send_write_payload_wvalid  (axi_rdma_completion_wvalid),
+  .s_axi_rdma_send_write_payload_wready  (axi_rdma_completion_wready),
+  .s_axi_rdma_send_write_payload_awlock  (axi_rdma_completion_awlock),
+  .s_axi_rdma_send_write_payload_bid     (axi_rdma_completion_bid),
+  .s_axi_rdma_send_write_payload_bresp   (axi_rdma_completion_bresp),
+  .s_axi_rdma_send_write_payload_bvalid  (axi_rdma_completion_bvalid),
+  .s_axi_rdma_send_write_payload_bready  (axi_rdma_completion_bready),
+  .s_axi_rdma_send_write_payload_arid    (axi_rdma_completion_arid),
+  .s_axi_rdma_send_write_payload_araddr  (axi_rdma_completion_araddr),
+  .s_axi_rdma_send_write_payload_arlen   (axi_rdma_completion_arlen),
+  .s_axi_rdma_send_write_payload_arsize  (axi_rdma_completion_arsize),
+  .s_axi_rdma_send_write_payload_arburst (axi_rdma_completion_arburst),
+  .s_axi_rdma_send_write_payload_arcache (axi_rdma_completion_arcache),
+  .s_axi_rdma_send_write_payload_arprot  (axi_rdma_completion_arprot),
+  .s_axi_rdma_send_write_payload_arvalid (axi_rdma_completion_arvalid),
+  .s_axi_rdma_send_write_payload_arready (axi_rdma_completion_arready),
+  .s_axi_rdma_send_write_payload_rid     (axi_rdma_completion_rid),
+  .s_axi_rdma_send_write_payload_rdata   (axi_rdma_completion_rdata),
+  .s_axi_rdma_send_write_payload_rresp   (axi_rdma_completion_rresp),
+  .s_axi_rdma_send_write_payload_rlast   (axi_rdma_completion_rlast),
+  .s_axi_rdma_send_write_payload_rvalid  (axi_rdma_completion_rvalid),
+  .s_axi_rdma_send_write_payload_rready  (axi_rdma_completion_rready),
+  .s_axi_rdma_send_write_payload_arlock  (axi_rdma_completion_arlock),
+  .s_axi_rdma_send_write_payload_arqos   (axi_rdma_completion_arqos),
+
+  .s_axi_rdma_rsp_payload_awid           (m_axi_init_sys_awid),
+  .s_axi_rdma_rsp_payload_awaddr         (m_axi_init_sys_awaddr),
+  .s_axi_rdma_rsp_payload_awqos          (m_axi_init_sys_awqos),
+  .s_axi_rdma_rsp_payload_awlen          (m_axi_init_sys_awlen),
+  .s_axi_rdma_rsp_payload_awsize         (m_axi_init_sys_awsize),
+  .s_axi_rdma_rsp_payload_awburst        (m_axi_init_sys_awburst),
+  .s_axi_rdma_rsp_payload_awcache        (m_axi_init_sys_awcache),
+  .s_axi_rdma_rsp_payload_awprot         (m_axi_init_sys_awprot),
+  .s_axi_rdma_rsp_payload_awvalid        (m_axi_init_sys_awvalid),
+  .s_axi_rdma_rsp_payload_awready        (m_axi_init_sys_awready),
+  .s_axi_rdma_rsp_payload_wdata          (m_axi_init_sys_wdata),
+  .s_axi_rdma_rsp_payload_wstrb          (m_axi_init_sys_wstrb),
+  .s_axi_rdma_rsp_payload_wlast          (m_axi_init_sys_wlast),
+  .s_axi_rdma_rsp_payload_wvalid         (m_axi_init_sys_wvalid),
+  .s_axi_rdma_rsp_payload_wready         (m_axi_init_sys_wready),
+  .s_axi_rdma_rsp_payload_awlock         (m_axi_init_sys_awlock),
+  .s_axi_rdma_rsp_payload_bid            (m_axi_init_sys_bid),
+  .s_axi_rdma_rsp_payload_bresp          (m_axi_init_sys_bresp),
+  .s_axi_rdma_rsp_payload_bvalid         (m_axi_init_sys_bvalid),
+  .s_axi_rdma_rsp_payload_bready         (m_axi_init_sys_bready),
+  .s_axi_rdma_rsp_payload_arid           (m_axi_veri_sys_arid),
+  .s_axi_rdma_rsp_payload_araddr         (m_axi_veri_sys_araddr),
+  .s_axi_rdma_rsp_payload_arlen          (m_axi_veri_sys_arlen),
+  .s_axi_rdma_rsp_payload_arsize         (m_axi_veri_sys_arsize),
+  .s_axi_rdma_rsp_payload_arburst        (m_axi_veri_sys_arburst),
+  .s_axi_rdma_rsp_payload_arcache        (m_axi_veri_sys_arcache),
+  .s_axi_rdma_rsp_payload_arprot         (m_axi_veri_sys_arprot),
+  .s_axi_rdma_rsp_payload_arvalid        (m_axi_veri_sys_arvalid),
+  .s_axi_rdma_rsp_payload_arready        (m_axi_veri_sys_arready),
+  .s_axi_rdma_rsp_payload_rid            (m_axi_veri_sys_rid),
+  .s_axi_rdma_rsp_payload_rdata          (m_axi_veri_sys_rdata),
+  .s_axi_rdma_rsp_payload_rresp          (m_axi_veri_sys_rresp),
+  .s_axi_rdma_rsp_payload_rlast          (m_axi_veri_sys_rlast),
+  .s_axi_rdma_rsp_payload_rvalid         (m_axi_veri_sys_rvalid),
+  .s_axi_rdma_rsp_payload_rready         (m_axi_veri_sys_rready),
+  .s_axi_rdma_rsp_payload_arlock         (m_axi_veri_sys_arlock),
+  .s_axi_rdma_rsp_payload_arqos          (m_axi_veri_sys_arqos),
+
+  .s_axi_qdma_mm_awid                    (4'd0),
+  .s_axi_qdma_mm_awaddr                  (64'd0),
+  .s_axi_qdma_mm_awqos                   (4'd0),
+  .s_axi_qdma_mm_awlen                   (8'd0),
+  .s_axi_qdma_mm_awsize                  (3'd0),
+  .s_axi_qdma_mm_awburst                 (2'd0),
+  .s_axi_qdma_mm_awcache                 (4'd0),
+  .s_axi_qdma_mm_awprot                  (3'd0),
+  .s_axi_qdma_mm_awvalid                 (1'b0),
+  .s_axi_qdma_mm_awready                 (),
+  .s_axi_qdma_mm_wdata                   (512'd0),
+  .s_axi_qdma_mm_wstrb                   (64'd0),
+  .s_axi_qdma_mm_wlast                   (1'b0),
+  .s_axi_qdma_mm_wvalid                  (1'b0),
+  .s_axi_qdma_mm_wready                  (),
+  .s_axi_qdma_mm_awlock                  (1'b0),
+  .s_axi_qdma_mm_bid                     (),
+  .s_axi_qdma_mm_bresp                   (),
+  .s_axi_qdma_mm_bvalid                  (),
+  .s_axi_qdma_mm_bready                  (1'b1),
+  .s_axi_qdma_mm_arid                    (4'd0),
+  .s_axi_qdma_mm_araddr                  (64'd0),
+  .s_axi_qdma_mm_arlen                   (8'd0),
+  .s_axi_qdma_mm_arsize                  (3'd0),
+  .s_axi_qdma_mm_arburst                 (2'd0),
+  .s_axi_qdma_mm_arcache                 (4'd0),
+  .s_axi_qdma_mm_arprot                  (3'd0),
+  .s_axi_qdma_mm_arvalid                 (1'b0),
+  .s_axi_qdma_mm_arready                 (),
+  .s_axi_qdma_mm_rid                     (),
+  .s_axi_qdma_mm_rdata                   (),
+  .s_axi_qdma_mm_rresp                   (),
+  .s_axi_qdma_mm_rlast                   (),
+  .s_axi_qdma_mm_rvalid                  (),
+  .s_axi_qdma_mm_rready                  (1'b1),
+  .s_axi_qdma_mm_arlock                  (1'b0),
+  .s_axi_qdma_mm_arqos                   (4'd0),
+
+  .s_axi_compute_logic_awid              (4'd0),
+  .s_axi_compute_logic_awaddr            (64'd0),
+  .s_axi_compute_logic_awqos             (4'd0),
+  .s_axi_compute_logic_awlen             (8'd0),
+  .s_axi_compute_logic_awsize            (3'd0),
+  .s_axi_compute_logic_awburst           (2'd0),
+  .s_axi_compute_logic_awcache           (4'd0),
+  .s_axi_compute_logic_awprot            (3'd0),
+  .s_axi_compute_logic_awvalid           (1'b0),
+  .s_axi_compute_logic_awready           (),
+  .s_axi_compute_logic_wdata             (512'd0),
+  .s_axi_compute_logic_wstrb             (64'd0),
+  .s_axi_compute_logic_wlast             (1'b0),
+  .s_axi_compute_logic_wvalid            (1'b0),
+  .s_axi_compute_logic_wready            (),
+  .s_axi_compute_logic_awlock            (1'b0),
+  .s_axi_compute_logic_bid               (),
+  .s_axi_compute_logic_bresp             (),
+  .s_axi_compute_logic_bvalid            (),
+  .s_axi_compute_logic_bready            (1'b1),
+  .s_axi_compute_logic_arid              (4'd0),
+  .s_axi_compute_logic_araddr            (64'd0),
+  .s_axi_compute_logic_arlen             (8'd0),
+  .s_axi_compute_logic_arsize            (3'd0),
+  .s_axi_compute_logic_arburst           (2'd0),
+  .s_axi_compute_logic_arcache           (4'd0),
+  .s_axi_compute_logic_arprot            (3'd0),
+  .s_axi_compute_logic_arvalid           (1'b0),
+  .s_axi_compute_logic_arready           (),
+  .s_axi_compute_logic_rid               (),
+  .s_axi_compute_logic_rdata             (),
+  .s_axi_compute_logic_rresp             (),
+  .s_axi_compute_logic_rlast             (),
+  .s_axi_compute_logic_rvalid            (),
+  .s_axi_compute_logic_rready            (1'b1),
+  .s_axi_compute_logic_arlock            (1'b0),
+  .s_axi_compute_logic_arqos             (4'd0),
+
+  .m_axi_dev_mem_awaddr                  (axi_rdma_completion_or_init_sys_awaddr),
+  .m_axi_dev_mem_awprot                  (axi_rdma_completion_or_init_sys_awprot),
+  .m_axi_dev_mem_awvalid                 (axi_rdma_completion_or_init_sys_awvalid),
+  .m_axi_dev_mem_awready                 (axi_rdma_completion_or_init_sys_awready),
+  .m_axi_dev_mem_awsize                  (axi_rdma_completion_or_init_sys_awsize),
+  .m_axi_dev_mem_awburst                 (axi_rdma_completion_or_init_sys_awburst),
+  .m_axi_dev_mem_awcache                 (axi_rdma_completion_or_init_sys_awcache),
+  .m_axi_dev_mem_awlen                   (axi_rdma_completion_or_init_sys_awlen),
+  .m_axi_dev_mem_awlock                  (axi_rdma_completion_or_init_sys_awlock),
+  .m_axi_dev_mem_awqos                   (axi_rdma_completion_or_init_sys_awqos),
+  .m_axi_dev_mem_awregion                (),
+  .m_axi_dev_mem_awid                    (axi_rdma_completion_or_init_sys_awid),
+  .m_axi_dev_mem_wdata                   (axi_rdma_completion_or_init_sys_wdata),
+  .m_axi_dev_mem_wstrb                   (axi_rdma_completion_or_init_sys_wstrb),
+  .m_axi_dev_mem_wvalid                  (axi_rdma_completion_or_init_sys_wvalid),
+  .m_axi_dev_mem_wready                  (axi_rdma_completion_or_init_sys_wready),
+  .m_axi_dev_mem_wlast                   (axi_rdma_completion_or_init_sys_wlast),
+  .m_axi_dev_mem_bresp                   (axi_rdma_completion_or_init_sys_bresp),
+  .m_axi_dev_mem_bvalid                  (axi_rdma_completion_or_init_sys_bvalid),
+  .m_axi_dev_mem_bready                  (axi_rdma_completion_or_init_sys_bready),
+  .m_axi_dev_mem_bid                     ({1'b0,axi_rdma_completion_or_init_sys_bid}),
+  .m_axi_dev_mem_araddr                  (axi_rdma_completion_or_init_sys_araddr),
+  .m_axi_dev_mem_arprot                  (axi_rdma_completion_or_init_sys_arprot),
+  .m_axi_dev_mem_arvalid                 (axi_rdma_completion_or_init_sys_arvalid),
+  .m_axi_dev_mem_arready                 (axi_rdma_completion_or_init_sys_arready),
+  .m_axi_dev_mem_arsize                  (axi_rdma_completion_or_init_sys_arsize),
+  .m_axi_dev_mem_arburst                 (axi_rdma_completion_or_init_sys_arburst),
+  .m_axi_dev_mem_arcache                 (axi_rdma_completion_or_init_sys_arcache),
+  .m_axi_dev_mem_arlock                  (axi_rdma_completion_or_init_sys_arlock),
+  .m_axi_dev_mem_arlen                   (axi_rdma_completion_or_init_sys_arlen),
+  .m_axi_dev_mem_arqos                   (axi_rdma_completion_or_init_sys_arqos),
+  .m_axi_dev_mem_arregion                (),
+  .m_axi_dev_mem_arid                    (axi_rdma_completion_or_init_sys_arid),
+  .m_axi_dev_mem_rdata                   (axi_rdma_completion_or_init_sys_rdata),
+  .m_axi_dev_mem_rresp                   (axi_rdma_completion_or_init_sys_rresp),
+  .m_axi_dev_mem_rvalid                  (axi_rdma_completion_or_init_sys_rvalid),
+  .m_axi_dev_mem_rready                  (axi_rdma_completion_or_init_sys_rready),
+  .m_axi_dev_mem_rlast                   (axi_rdma_completion_or_init_sys_rlast),
+  .m_axi_dev_mem_rid                     ({1'b0,axi_rdma_completion_or_init_sys_rid}), 
 
   .axis_aclk   (axis_clk),
   .axis_arestn (axis_rstn)   
@@ -2177,171 +2509,94 @@ xpm_fifo_sync #(
   .wr_rst_busy   ()
 );
 
+xpm_fifo_sync #(
+  .DOUT_RESET_VALUE    ("0"),
+  .ECC_MODE            ("no_ecc"),
+  .FIFO_MEMORY_TYPE    ("auto"),
+  .FIFO_READ_LATENCY   (0),
+  .FIFO_WRITE_DEPTH    (1024),
+  .PROG_FULL_THRESH    (1024-5),
+  .READ_DATA_WIDTH     (1),
+  .READ_MODE           ("std"),
+  .WRITE_DATA_WIDTH    (1)
+) rdma_init_sys_awid_fifo (
+  .wr_en         (axi_rdma_completion_or_init_sys_awready && axi_rdma_completion_or_init_sys_awvalid),
+  .din           (axi_rdma_completion_or_init_sys_awid),
+  .wr_ack        (),
+  .rd_en         (axi_rdma_completion_or_init_sys_bvalid),//axi_rdma_completion_or_init_sys_wready && axi_rdma_completion_or_init_sys_wvalid && axi_rdma_completion_or_init_sys_wlast
+  .data_valid    (),
+  .dout          (axi_rdma_completion_or_init_sys_bid),
+
+  .wr_data_count (),
+  .rd_data_count (),
+
+  .empty         (),
+  .full          (),
+  .almost_empty  (),
+  .almost_full   (),
+  .overflow      (),
+  .underflow     (),
+  .prog_empty    (),
+  .prog_full     (),
+  .sleep         (1'b0),
+
+  .sbiterr       (),
+  .dbiterr       (),
+  .injectsbiterr (1'b0),
+  .injectdbiterr (1'b0),
+
+  .wr_clk        (axis_clk),
+  .rst           (~axis_rstn),
+  .rd_rst_busy   (),
+  .wr_rst_busy   ()
+);
+
+xpm_fifo_sync #(
+  .DOUT_RESET_VALUE    ("0"),
+  .ECC_MODE            ("no_ecc"),
+  .FIFO_MEMORY_TYPE    ("auto"),
+  .FIFO_READ_LATENCY   (0),
+  .FIFO_WRITE_DEPTH    (1024),
+  .PROG_FULL_THRESH    (1024-5),
+  .READ_DATA_WIDTH     (1),
+  .READ_MODE           ("std"),
+  .WRITE_DATA_WIDTH    (1)
+) rdma_init_sys_arid_fifo (
+  .wr_en         (axi_rdma_completion_or_init_sys_arready && axi_rdma_completion_or_init_sys_arvalid),
+  .din           (axi_rdma_completion_or_init_sys_arid),
+  .wr_ack        (),
+  .rd_en         (axi_rdma_completion_or_init_sys_rready && axi_rdma_completion_or_init_sys_rvalid && axi_rdma_completion_or_init_sys_rlast),
+  .data_valid    (),
+  .dout          (axi_rdma_completion_or_init_sys_rid),
+
+  .wr_data_count (),
+  .rd_data_count (),
+
+  .empty         (),
+  .full          (),
+  .almost_empty  (),
+  .almost_full   (),
+  .overflow      (),
+  .underflow     (),
+  .prog_empty    (),
+  .prog_full     (),
+  .sleep         (1'b0),
+
+  .sbiterr       (),
+  .dbiterr       (),
+  .injectsbiterr (1'b0),
+  .injectdbiterr (1'b0),
+
+  .wr_clk        (axis_clk),
+  .rst           (~axis_rstn),
+  .rd_rst_busy   (),
+  .wr_rst_busy   ()
+);
+
 assign m_axi_rdma1_get_payload_awqos = 4'd0;
 assign m_axi_rdma1_get_payload_arqos = 4'd0;
 assign m_axi_rdma2_get_payload_awqos = 4'd0;
 assign m_axi_rdma2_get_payload_arqos = 4'd0;
-
-/*
-axi_interconnect_to_sys_mem axi_interconnect_to_sys_mem_inst(
-  .s_axi_rdma_get_wqe_awid        (axi_rdma_get_wqe_awid),
-  .s_axi_rdma_get_wqe_awaddr      (axi_rdma_get_wqe_awaddr),
-  .s_axi_rdma_get_wqe_awqos       (axi_rdma_get_wqe_awqos),
-  .s_axi_rdma_get_wqe_awlen       (axi_rdma_get_wqe_awlen),
-  .s_axi_rdma_get_wqe_awsize      (axi_rdma_get_wqe_awsize),
-  .s_axi_rdma_get_wqe_awburst     (axi_rdma_get_wqe_awburst),
-  .s_axi_rdma_get_wqe_awcache     (axi_rdma_get_wqe_awcache),
-  .s_axi_rdma_get_wqe_awprot      (axi_rdma_get_wqe_awprot),
-  .s_axi_rdma_get_wqe_awvalid     (axi_rdma_get_wqe_awvalid),
-  .s_axi_rdma_get_wqe_awready     (axi_rdma_get_wqe_awready),
-  .s_axi_rdma_get_wqe_wdata       (axi_rdma_get_wqe_wdata),
-  .s_axi_rdma_get_wqe_wstrb       (axi_rdma_get_wqe_wstrb),
-  .s_axi_rdma_get_wqe_wlast       (axi_rdma_get_wqe_wlast),
-  .s_axi_rdma_get_wqe_wvalid      (axi_rdma_get_wqe_wvalid),
-  .s_axi_rdma_get_wqe_wready      (axi_rdma_get_wqe_wready),    
-  .s_axi_rdma_get_wqe_awlock      (axi_rdma_get_wqe_awlock),
-  .s_axi_rdma_get_wqe_bid         (axi_rdma_get_wqe_bid),
-  .s_axi_rdma_get_wqe_bresp       (axi_rdma_get_wqe_bresp),
-  .s_axi_rdma_get_wqe_bvalid      (axi_rdma_get_wqe_bvalid),
-  .s_axi_rdma_get_wqe_bready      (axi_rdma_get_wqe_bready),
-  .s_axi_rdma_get_wqe_arid        (axi_rdma_get_wqe_arid),
-  .s_axi_rdma_get_wqe_araddr      (axi_rdma_get_wqe_araddr),
-  .s_axi_rdma_get_wqe_arlen       (axi_rdma_get_wqe_arlen),
-  .s_axi_rdma_get_wqe_arsize      (axi_rdma_get_wqe_arsize),
-  .s_axi_rdma_get_wqe_arburst     (axi_rdma_get_wqe_arburst),
-  .s_axi_rdma_get_wqe_arcache     (axi_rdma_get_wqe_arcache),
-  .s_axi_rdma_get_wqe_arprot      (axi_rdma_get_wqe_arprot),
-  .s_axi_rdma_get_wqe_arvalid     (axi_rdma_get_wqe_arvalid),
-  .s_axi_rdma_get_wqe_arready     (axi_rdma_get_wqe_arready),
-  .s_axi_rdma_get_wqe_rid         (axi_rdma_get_wqe_rid),
-  .s_axi_rdma_get_wqe_rdata       (axi_rdma_get_wqe_rdata),
-  .s_axi_rdma_get_wqe_rresp       (axi_rdma_get_wqe_rresp),
-  .s_axi_rdma_get_wqe_rlast       (axi_rdma_get_wqe_rlast),
-  .s_axi_rdma_get_wqe_rvalid      (axi_rdma_get_wqe_rvalid),
-  .s_axi_rdma_get_wqe_rready      (axi_rdma_get_wqe_rready),
-  .s_axi_rdma_get_wqe_arlock      (axi_rdma_get_wqe_arlock),
-  .s_axi_rdma_get_wqe_arqos       (axi_rdma_get_wqe_arqos),
-
-  .s_axi_rdma_get_payload_awid    (axi_rdma_get_payload_awid),
-  .s_axi_rdma_get_payload_awaddr  (axi_rdma_get_payload_awaddr),
-  .s_axi_rdma_get_payload_awqos   (axi_rdma_get_payload_awqos),
-  .s_axi_rdma_get_payload_awlen   (axi_rdma_get_payload_awlen),
-  .s_axi_rdma_get_payload_awsize  (axi_rdma_get_payload_awsize),
-  .s_axi_rdma_get_payload_awburst (axi_rdma_get_payload_awburst),
-  .s_axi_rdma_get_payload_awcache (axi_rdma_get_payload_awcache),
-  .s_axi_rdma_get_payload_awprot  (axi_rdma_get_payload_awprot),
-  .s_axi_rdma_get_payload_awvalid (axi_rdma_get_payload_awvalid),
-  .s_axi_rdma_get_payload_awready (axi_rdma_get_payload_awready),
-  .s_axi_rdma_get_payload_wdata   (axi_rdma_get_payload_wdata),
-  .s_axi_rdma_get_payload_wstrb   (axi_rdma_get_payload_wstrb),
-  .s_axi_rdma_get_payload_wlast   (axi_rdma_get_payload_wlast),
-  .s_axi_rdma_get_payload_wvalid  (axi_rdma_get_payload_wvalid),
-  .s_axi_rdma_get_payload_wready  (axi_rdma_get_payload_wready),
-  .s_axi_rdma_get_payload_awlock  (axi_rdma_get_payload_awlock),
-  .s_axi_rdma_get_payload_bid     (axi_rdma_get_payload_bid),
-  .s_axi_rdma_get_payload_bresp   (axi_rdma_get_payload_bresp),
-  .s_axi_rdma_get_payload_bvalid  (axi_rdma_get_payload_bvalid),
-  .s_axi_rdma_get_payload_bready  (axi_rdma_get_payload_bready),
-  .s_axi_rdma_get_payload_arid    (axi_rdma_get_payload_arid),
-  .s_axi_rdma_get_payload_araddr  (axi_rdma_get_payload_araddr),
-  .s_axi_rdma_get_payload_arlen   (axi_rdma_get_payload_arlen),
-  .s_axi_rdma_get_payload_arsize  (axi_rdma_get_payload_arsize),
-  .s_axi_rdma_get_payload_arburst (axi_rdma_get_payload_arburst),
-  .s_axi_rdma_get_payload_arcache (axi_rdma_get_payload_arcache),
-  .s_axi_rdma_get_payload_arprot  (axi_rdma_get_payload_arprot),
-  .s_axi_rdma_get_payload_arvalid (axi_rdma_get_payload_arvalid),
-  .s_axi_rdma_get_payload_arready (axi_rdma_get_payload_arready),
-  .s_axi_rdma_get_payload_rid     (axi_rdma_get_payload_rid),
-  .s_axi_rdma_get_payload_rdata   (axi_rdma_get_payload_rdata),
-  .s_axi_rdma_get_payload_rresp   (axi_rdma_get_payload_rresp),
-  .s_axi_rdma_get_payload_rlast   (axi_rdma_get_payload_rlast),
-  .s_axi_rdma_get_payload_rvalid  (axi_rdma_get_payload_rvalid),
-  .s_axi_rdma_get_payload_rready  (axi_rdma_get_payload_rready),
-  .s_axi_rdma_get_payload_arlock  (axi_rdma_get_payload_arlock),
-  .s_axi_rdma_get_payload_arqos   (axi_rdma_get_payload_arqos),
-
-  .s_axi_rdma_completion_awid     (axi_rdma_completion_awid),
-  .s_axi_rdma_completion_awaddr   (axi_rdma_completion_awaddr),
-  .s_axi_rdma_completion_awqos    (axi_rdma_completion_awqos),
-  .s_axi_rdma_completion_awlen    (axi_rdma_completion_awlen),
-  .s_axi_rdma_completion_awsize   (axi_rdma_completion_awsize),
-  .s_axi_rdma_completion_awburst  (axi_rdma_completion_awburst),
-  .s_axi_rdma_completion_awcache  (axi_rdma_completion_awcache),
-  .s_axi_rdma_completion_awprot   (axi_rdma_completion_awprot),
-  .s_axi_rdma_completion_awvalid  (axi_rdma_completion_awvalid),
-  .s_axi_rdma_completion_awready  (axi_rdma_completion_awready),
-  .s_axi_rdma_completion_wdata    (axi_rdma_completion_wdata),
-  .s_axi_rdma_completion_wstrb    (axi_rdma_completion_wstrb),
-  .s_axi_rdma_completion_wlast    (axi_rdma_completion_wlast),
-  .s_axi_rdma_completion_wvalid   (axi_rdma_completion_wvalid),
-  .s_axi_rdma_completion_wready   (axi_rdma_completion_wready),
-  .s_axi_rdma_completion_awlock   (axi_rdma_completion_awlock),
-  .s_axi_rdma_completion_bid      (axi_rdma_completion_bid),
-  .s_axi_rdma_completion_bresp    (axi_rdma_completion_bresp),
-  .s_axi_rdma_completion_bvalid   (axi_rdma_completion_bvalid),
-  .s_axi_rdma_completion_bready   (axi_rdma_completion_bready),
-  .s_axi_rdma_completion_arid     (axi_rdma_completion_arid),
-  .s_axi_rdma_completion_araddr   (axi_rdma_completion_araddr),
-  .s_axi_rdma_completion_arlen    (axi_rdma_completion_arlen),
-  .s_axi_rdma_completion_arsize   (axi_rdma_completion_arsize),
-  .s_axi_rdma_completion_arburst  (axi_rdma_completion_arburst),
-  .s_axi_rdma_completion_arcache  (axi_rdma_completion_arcache),
-  .s_axi_rdma_completion_arprot   (axi_rdma_completion_arprot),
-  .s_axi_rdma_completion_arvalid  (axi_rdma_completion_arvalid),
-  .s_axi_rdma_completion_arready  (axi_rdma_completion_arready),
-  .s_axi_rdma_completion_rid      (axi_rdma_completion_rid),
-  .s_axi_rdma_completion_rdata    (axi_rdma_completion_rdata),
-  .s_axi_rdma_completion_rresp    (axi_rdma_completion_rresp),
-  .s_axi_rdma_completion_rlast    (axi_rdma_completion_rlast),
-  .s_axi_rdma_completion_rvalid   (axi_rdma_completion_rvalid),
-  .s_axi_rdma_completion_rready   (axi_rdma_completion_rready),
-  .s_axi_rdma_completion_arlock   (axi_rdma_completion_arlock),
-  .s_axi_rdma_completion_arqos    (axi_rdma_completion_arqos),
-
-  .m_axi_sys_mem_awaddr           (axi_sys_mem_awaddr),
-  .m_axi_sys_mem_awprot           (axi_sys_mem_awprot),
-  .m_axi_sys_mem_awvalid          (axi_sys_mem_awvalid),
-  .m_axi_sys_mem_awready          (axi_sys_mem_awready),
-  .m_axi_sys_mem_awsize           (axi_sys_mem_awsize),
-  .m_axi_sys_mem_awburst          (axi_sys_mem_awburst),
-  .m_axi_sys_mem_awcache          (axi_sys_mem_awcache),
-  .m_axi_sys_mem_awlen            (axi_sys_mem_awlen),
-  .m_axi_sys_mem_awlock           (axi_sys_mem_awlock),
-  .m_axi_sys_mem_awqos            (axi_sys_mem_awqos),
-  .m_axi_sys_mem_awregion         (axi_sys_mem_awregion),
-  .m_axi_sys_mem_awid             (axi_sys_mem_awid),
-  .m_axi_sys_mem_wdata            (axi_sys_mem_wdata),
-  .m_axi_sys_mem_wstrb            (axi_sys_mem_wstrb),
-  .m_axi_sys_mem_wvalid           (axi_sys_mem_wvalid),
-  .m_axi_sys_mem_wready           (axi_sys_mem_wready),
-  .m_axi_sys_mem_wlast            (axi_sys_mem_wlast),
-  .m_axi_sys_mem_bresp            (axi_sys_mem_bresp),
-  .m_axi_sys_mem_bvalid           (axi_sys_mem_bvalid),
-  .m_axi_sys_mem_bready           (axi_sys_mem_bready),
-  .m_axi_sys_mem_bid              (axi_sys_mem_bid),
-  .m_axi_sys_mem_araddr           (axi_sys_mem_araddr),
-  .m_axi_sys_mem_arprot           (axi_sys_mem_arprot),
-  .m_axi_sys_mem_arvalid          (axi_sys_mem_arvalid),
-  .m_axi_sys_mem_arready          (axi_sys_mem_arready),
-  .m_axi_sys_mem_arsize           (axi_sys_mem_arsize),
-  .m_axi_sys_mem_arburst          (axi_sys_mem_arburst),
-  .m_axi_sys_mem_arcache          (axi_sys_mem_arcache),
-  .m_axi_sys_mem_arlock           (axi_sys_mem_arlock),
-  .m_axi_sys_mem_arlen            (axi_sys_mem_arlen),
-  .m_axi_sys_mem_arqos            (axi_sys_mem_arqos),
-  .m_axi_sys_mem_arregion         (axi_sys_mem_arregion),
-  .m_axi_sys_mem_arid             (axi_sys_mem_arid),
-  .m_axi_sys_mem_rdata            (axi_sys_mem_rdata),
-  .m_axi_sys_mem_rresp            (axi_sys_mem_rresp),
-  .m_axi_sys_mem_rvalid           (axi_sys_mem_rvalid),
-  .m_axi_sys_mem_rready           (axi_sys_mem_rready),
-  .m_axi_sys_mem_rlast            (axi_sys_mem_rlast),
-  .m_axi_sys_mem_rid              (axi_sys_mem_rid), 
-
-  .axis_aclk   (axis_clk),
-  .axis_arestn (axis_rstn)   
-);
-*/
 
 // Memory subsytem
 // -- used AXI-MM BRAM to replace device DDR at the moment
@@ -2389,10 +2644,11 @@ axi_mm_bram axi_dev_mem_inst (
 // Memory subsytem
 // -- used AXI-MM BRAM to replace system DDR at the moment
 // -- 1024KB for system memory
+
 axi_sys_mm axi_sys_mem_inst (
   .s_axi_aclk      (axis_clk),
   .s_axi_aresetn   (axis_rstn),
-  .s_axi_awid      (axi_sys_mem_awid),
+  .s_axi_awid      ({2'd0,axi_sys_mem_awid}),//{2'd0,axi_sys_mem_awid}
   .s_axi_awaddr    (axi_sys_mem_awaddr[19:0]),
   .s_axi_awlen     (axi_sys_mem_awlen),
   .s_axi_awsize    (axi_sys_mem_awsize),
@@ -2407,11 +2663,11 @@ axi_sys_mm axi_sys_mem_inst (
   .s_axi_wlast     (axi_sys_mem_wlast),
   .s_axi_wvalid    (axi_sys_mem_wvalid),
   .s_axi_wready    (axi_sys_mem_wready),
-  .s_axi_bid       (axi_sys_mem_bid),
+  .s_axi_bid       ({two_unused_bit0,axi_sys_mem_bid}),
   .s_axi_bresp     (axi_sys_mem_bresp),
   .s_axi_bvalid    (axi_sys_mem_bvalid),
   .s_axi_bready    (axi_sys_mem_bready),
-  .s_axi_arid      (axi_sys_mem_arid),
+  .s_axi_arid      ({2'd0,axi_sys_mem_arid}),
   .s_axi_araddr    (axi_sys_mem_araddr[19:0]),
   .s_axi_arlen     (axi_sys_mem_arlen),
   .s_axi_arsize    (axi_sys_mem_arsize),
@@ -2421,7 +2677,7 @@ axi_sys_mm axi_sys_mem_inst (
   .s_axi_arprot    (axi_sys_mem_arprot),
   .s_axi_arvalid   (axi_sys_mem_arvalid),
   .s_axi_arready   (axi_sys_mem_arready),
-  .s_axi_rid       (axi_sys_mem_rid),
+  .s_axi_rid       ({two_unused_bit1,axi_sys_mem_rid}),
   .s_axi_rdata     (axi_sys_mem_rdata),
   .s_axi_rresp     (axi_sys_mem_rresp),
   .s_axi_rlast     (axi_sys_mem_rlast),
@@ -2654,7 +2910,7 @@ init_mem init_sys_mem (
   .tag_string        ("sys"),
   .axi_mem_filename  (axi_sys_mem_filename),
 
-  .m_axi_init_awid   (m_axi_init_sys_awid),
+  .m_axi_init_awid   ({two_unused_bit2,m_axi_init_sys_awid}),
   .m_axi_init_awaddr (m_axi_init_sys_awaddr),
   .m_axi_init_awqos  (m_axi_init_sys_awqos),
   .m_axi_init_awlen  (m_axi_init_sys_awlen),
@@ -2670,7 +2926,7 @@ init_mem init_sys_mem (
   .m_axi_init_wvalid (m_axi_init_sys_wvalid),
   .m_axi_init_wready (m_axi_init_sys_wready),
   .m_axi_init_awlock (m_axi_init_sys_awlock),
-  .m_axi_init_bid    (m_axi_init_sys_bid),
+  .m_axi_init_bid    ({1'd0,m_axi_init_sys_bid}),
   .m_axi_init_bresp  (m_axi_init_sys_bresp),
   .m_axi_init_bvalid (m_axi_init_sys_bvalid),
   .m_axi_init_bready (m_axi_init_sys_bready),

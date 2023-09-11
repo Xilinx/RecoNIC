@@ -10,7 +10,7 @@ module axi_read_verify (
   input string axi_read_filename,
 
   // AXI MM read interface to verify memory
-  output       [3 :0] m_axi_arid,
+  output       [4 :0] m_axi_arid,
   output logic [63:0] m_axi_araddr,
   output logic [7 :0] m_axi_arlen,
   output       [2 :0] m_axi_arsize,
@@ -20,7 +20,7 @@ module axi_read_verify (
   output       [2 :0] m_axi_arprot,
   output logic        m_axi_arvalid,
   input               m_axi_arready,
-  input        [3 :0] m_axi_rid,
+  input        [4 :0] m_axi_rid,
   input       [511:0] m_axi_rdata,
   input        [1 :0] m_axi_rresp,
   input               m_axi_rlast,
@@ -193,7 +193,7 @@ always_comb begin
 end
 
 // Set default values to specific signals
-assign m_axi_arid    = 4'd0;
+assign m_axi_arid    = 5'd0;
 assign m_axi_arsize  = 3'b110; // 64 bytes per beat
 assign m_axi_arburst = 2'b01;  // INCR mode
 assign m_axi_arlock  = 1'b0;
