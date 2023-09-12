@@ -2952,7 +2952,7 @@ index cfd0dca..0417dad 100644
      .axis_c2h_status_cmp                  (),     // output wire axis_c2h_status_cmp
 diff --git a/src/qdma_subsystem/vivado_ip/axi_mm_bram.tcl b/src/qdma_subsystem/vivado_ip/axi_mm_bram.tcl
 new file mode 100755
-index 0000000..83b7d23
+index 0000000..1fa4940
 --- /dev/null
 +++ b/src/qdma_subsystem/vivado_ip/axi_mm_bram.tcl
 @@ -0,0 +1,30 @@
@@ -2983,7 +2983,7 @@ index 0000000..83b7d23
 +    CONFIG.Component_Name {$axi_mm_mem}
 +    CONFIG.BMG_INSTANCE {INTERNAL}
 +    CONFIG.MEM_DEPTH {8192}
-+    CONFIG.ID_WIDTH {4}
++    CONFIG.ID_WIDTH {5}
 +    CONFIG.RD_CMD_OPTIMIZATION {0}
 +} [get_ips $axi_mm_mem]
 \ No newline at end of file
