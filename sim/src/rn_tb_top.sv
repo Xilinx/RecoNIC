@@ -577,6 +577,11 @@ logic           dev_pc_asserted;
 
 logic start_config_rdma;
 
+logic [2:0]     three_unused_bit0;
+logic [2:0]     three_unused_bit1;
+logic [2:0]     three_unused_bit2;
+logic [2:0]     three_unused_bit3;
+
 rn_tb_generator generator (
   .traffic_filename(traffic_filename),
   .num_pkts        (num_pkts),
@@ -1561,7 +1566,7 @@ axi_interconnect_to_sys_mem axi_interconnect_to_sys_mem_inst(
 axi_mm_bram axi_dev_mem_inst (
   .s_axi_aclk      (axis_clk),
   .s_axi_aresetn   (axis_rstn),
-  .s_axi_awid      (axi_dev_mem_awid),
+  .s_axi_awid      ({3'd0,axi_dev_mem_awid}),
   .s_axi_awaddr    (axi_dev_mem_awaddr[18:0]),
   .s_axi_awlen     (axi_dev_mem_awlen),
   .s_axi_awsize    (axi_dev_mem_awsize),
@@ -1576,11 +1581,11 @@ axi_mm_bram axi_dev_mem_inst (
   .s_axi_wlast     (axi_dev_mem_wlast),
   .s_axi_wvalid    (axi_dev_mem_wvalid),
   .s_axi_wready    (axi_dev_mem_wready),
-  .s_axi_bid       (axi_dev_mem_bid),
+  .s_axi_bid       ({three_unused_bit2,axi_dev_mem_bid}),
   .s_axi_bresp     (axi_dev_mem_bresp),
   .s_axi_bvalid    (axi_dev_mem_bvalid),
   .s_axi_bready    (axi_dev_mem_bready),
-  .s_axi_arid      (axi_dev_mem_arid),
+  .s_axi_arid      ({3'd0,axi_dev_mem_arid}),
   .s_axi_araddr    (axi_dev_mem_araddr[18:0]),
   .s_axi_arlen     (axi_dev_mem_arlen),
   .s_axi_arsize    (axi_dev_mem_arsize),
@@ -1590,7 +1595,7 @@ axi_mm_bram axi_dev_mem_inst (
   .s_axi_arprot    (axi_dev_mem_arprot),
   .s_axi_arvalid   (axi_dev_mem_arvalid),
   .s_axi_arready   (axi_dev_mem_arready),
-  .s_axi_rid       (axi_dev_mem_rid),
+  .s_axi_rid       ({three_unused_bit3,axi_dev_mem_rid}),
   .s_axi_rdata     (axi_dev_mem_rdata),
   .s_axi_rresp     (axi_dev_mem_rresp),
   .s_axi_rlast     (axi_dev_mem_rlast),
@@ -1604,7 +1609,7 @@ axi_mm_bram axi_dev_mem_inst (
 axi_sys_mm axi_sys_mem_inst (
   .s_axi_aclk      (axis_clk),
   .s_axi_aresetn   (axis_rstn),
-  .s_axi_awid      (axi_sys_mem_awid),
+  .s_axi_awid      ({3'd0,axi_sys_mem_awid}),
   .s_axi_awaddr    (axi_sys_mem_awaddr[19:0]),
   .s_axi_awlen     (axi_sys_mem_awlen),
   .s_axi_awsize    (axi_sys_mem_awsize),
@@ -1619,11 +1624,11 @@ axi_sys_mm axi_sys_mem_inst (
   .s_axi_wlast     (axi_sys_mem_wlast),
   .s_axi_wvalid    (axi_sys_mem_wvalid),
   .s_axi_wready    (axi_sys_mem_wready),
-  .s_axi_bid       (axi_sys_mem_bid),
+  .s_axi_bid       ({three_unused_bit0,axi_sys_mem_bid}),
   .s_axi_bresp     (axi_sys_mem_bresp),
   .s_axi_bvalid    (axi_sys_mem_bvalid),
   .s_axi_bready    (axi_sys_mem_bready),
-  .s_axi_arid      (axi_sys_mem_arid),
+  .s_axi_arid      ({3'd0,axi_sys_mem_arid}),
   .s_axi_araddr    (axi_sys_mem_araddr[19:0]),
   .s_axi_arlen     (axi_sys_mem_arlen),
   .s_axi_arsize    (axi_sys_mem_arsize),
@@ -1633,7 +1638,7 @@ axi_sys_mm axi_sys_mem_inst (
   .s_axi_arprot    (axi_sys_mem_arprot),
   .s_axi_arvalid   (axi_sys_mem_arvalid),
   .s_axi_arready   (axi_sys_mem_arready),
-  .s_axi_rid       (axi_sys_mem_rid),
+  .s_axi_rid       ({three_unused_bit1,axi_sys_mem_rid}),
   .s_axi_rdata     (axi_sys_mem_rdata),
   .s_axi_rresp     (axi_sys_mem_rresp),
   .s_axi_rlast     (axi_sys_mem_rlast),

@@ -140,6 +140,25 @@ vlog -64 -sv +define+DEBUG -L xpm -work reco \
 "../src/rn_tb_top.sv" \
 "../src/cl_tb_top.sv" \
 "../src/rn_tb_2rdma_top.sv" \
+"../src/axi_3to1_interconnect_to_dev_mem.sv" \
+"../src/axi_5to2_interconnect_to_sys_mem.sv" \
+
+
+vlog -64 -work reco -L fifo_generator_v13_2_6 "+incdir+../build/ip/dev_mem_3to1_axi_crossbar/hdl" \
+"../build/ip/dev_mem_3to1_axi_crossbar/hdl/axi_crossbar_v2_1_vl_rfs.v" \
+"../build/ip/dev_mem_3to1_axi_crossbar/hdl/axi_data_fifo_v2_1_vl_rfs.v" \
+"../build/ip/dev_mem_3to1_axi_crossbar/hdl/axi_infrastructure_v1_1_vl_rfs.v" \
+"../build/ip/dev_mem_3to1_axi_crossbar/hdl/axi_register_slice_v2_1_vl_rfs.v" \
+"../build/ip/dev_mem_3to1_axi_crossbar/hdl/generic_baseblocks_v2_1_vl_rfs.v" \
+"../build/ip/dev_mem_3to1_axi_crossbar/synth/dev_mem_3to1_axi_crossbar.v" \
+
+vlog -64 -work reco -L fifo_generator_v13_2_6 "+incdir+../build/ip/sys_mem_5to2_axi_crossbar/hdl" \
+"../build/ip/sys_mem_5to2_axi_crossbar/hdl/axi_crossbar_v2_1_vl_rfs.v" \
+"../build/ip/sys_mem_5to2_axi_crossbar/hdl/axi_data_fifo_v2_1_vl_rfs.v" \
+"../build/ip/sys_mem_5to2_axi_crossbar/hdl/axi_infrastructure_v1_1_vl_rfs.v" \
+"../build/ip/sys_mem_5to2_axi_crossbar/hdl/axi_register_slice_v2_1_vl_rfs.v" \
+"../build/ip/sys_mem_5to2_axi_crossbar/hdl/generic_baseblocks_v2_1_vl_rfs.v" \
+"../build/ip/sys_mem_5to2_axi_crossbar/synth/sys_mem_5to2_axi_crossbar.v" \
 
 vlog -64 -work reco \
 "$VIVADO_DATA_DIR/verilog/src/glbl.v"

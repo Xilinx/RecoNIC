@@ -44,7 +44,7 @@ module rn_tb_checker #(
   input                       s_axis_roce_tlast,
 
   // AXI MM read interface to verify device memory
-  output       [3 :0] m_axi_veri_dev_arid,
+  output       [4 :0] m_axi_veri_dev_arid,
   output logic [63:0] m_axi_veri_dev_araddr,
   output logic [7 :0] m_axi_veri_dev_arlen,
   output       [2 :0] m_axi_veri_dev_arsize,
@@ -54,7 +54,7 @@ module rn_tb_checker #(
   output       [2 :0] m_axi_veri_dev_arprot,
   output logic        m_axi_veri_dev_arvalid,
   input               m_axi_veri_dev_arready,
-  input        [3 :0] m_axi_veri_dev_rid,
+  input        [4 :0] m_axi_veri_dev_rid,
   input       [511:0] m_axi_veri_dev_rdata,
   input        [1 :0] m_axi_veri_dev_rresp,
   input               m_axi_veri_dev_rlast,
@@ -62,7 +62,7 @@ module rn_tb_checker #(
   output logic        m_axi_veri_dev_rready,
 
   // AXI MM read interface to verify system memory
-  output       [3 :0] m_axi_veri_sys_arid,
+  output       [2 :0] m_axi_veri_sys_arid,
   output logic [63:0] m_axi_veri_sys_araddr,
   output logic [7 :0] m_axi_veri_sys_arlen,
   output       [2 :0] m_axi_veri_sys_arsize,
@@ -72,7 +72,7 @@ module rn_tb_checker #(
   output       [2 :0] m_axi_veri_sys_arprot,
   output logic        m_axi_veri_sys_arvalid,
   input               m_axi_veri_sys_arready,
-  input        [3 :0] m_axi_veri_sys_rid,
+  input        [2 :0] m_axi_veri_sys_rid,
   input       [511:0] m_axi_veri_sys_rdata,
   input        [1 :0] m_axi_veri_sys_rresp,
   input               m_axi_veri_sys_rlast,
@@ -172,6 +172,9 @@ logic sys_axi_read_passed;
 // Signals used for verifying device memory
 logic start_axi_veri_dev_read;
 logic dev_axi_read_passed;
+
+logic [1:0] two_unused_bits0;
+
 
 initial begin
   start_read = 1'b0;
@@ -441,7 +444,7 @@ axi_read_verify axi_read_verify_sys_mem (
   .axi_read_filename (axi_sys_read_filename),
 
   // AXI MM read interface to verify system memory
-  .m_axi_arid        (m_axi_veri_sys_arid),
+  .m_axi_arid        ({two_unused_bits0,m_axi_veri_sys_arid}),
   .m_axi_araddr      (m_axi_veri_sys_araddr),
   .m_axi_arlen       (m_axi_veri_sys_arlen),
   .m_axi_arsize      (m_axi_veri_sys_arsize),
@@ -451,7 +454,7 @@ axi_read_verify axi_read_verify_sys_mem (
   .m_axi_arprot      (m_axi_veri_sys_arprot),
   .m_axi_arvalid     (m_axi_veri_sys_arvalid),
   .m_axi_arready     (m_axi_veri_sys_arready),
-  .m_axi_rid         (m_axi_veri_sys_rid),
+  .m_axi_rid         ({2'd0,m_axi_veri_sys_rid}),
   .m_axi_rdata       (m_axi_veri_sys_rdata),
   .m_axi_rresp       (m_axi_veri_sys_rresp),
   .m_axi_rlast       (m_axi_veri_sys_rlast),

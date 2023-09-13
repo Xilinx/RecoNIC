@@ -281,6 +281,7 @@ class GenRoCEClass(pktGenClass):
     self.eth_dst_noise    = 'cd:ab:ef:be:ad:de'
     self.ip_dst_seed      = '10.10.0.0'
     self.ip_src_seed      = '10.20.0.0'
+    self.src_baseaddr_location = ''
     self.src_baseaddr     = 0
     self.dst_baseaddr     = 0
     self.num_data_buffer  = 4
@@ -409,6 +410,8 @@ class GenRoCEClass(pktGenClass):
         self.udp_dport = config_dict[item]
       if (item == 'payload_size'):
         self.paylaod_size = config_dict[item]
+      if (item == 'src_baseaddr_location'):
+        self.src_baseaddr_location = config_dict[item]
       if (item == 'src_baseaddr'):
         self.src_baseaddr = config_dict[item]
       if (item == 'dst_baseaddr'):
@@ -938,7 +941,12 @@ class GenRoCEClass(pktGenClass):
 
       # generate a WQE
       wrid = i+1
-      payload_addr = self.src_baseaddr + pd_num*self.mr_buf_size
+      assert(self.src_baseaddr_location in eh.location_lst), "Please provide a correct location from ['dev_mem','sys_mem']"
+      if(self.src_baseaddr_location == 'dev_mem'):
+        #adding offset of 0xa35
+        payload_addr = eh.dev_offset + self.src_baseaddr + pd_num*self.mr_buf_size
+      else:
+        payload_addr = self.src_baseaddr + pd_num*self.mr_buf_size
       payload_len = self.paylaod_size
       assert(payload_len>=16), "Please provide a payload > 16B, as we always set 'send_data' to 0 in a WQE"
       #remote_offset = self.dst_baseaddr + pd_num*self.mr_buf_size
