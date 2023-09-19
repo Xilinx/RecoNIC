@@ -7,7 +7,7 @@ To address these challenges, we propose RecoNIC, an RDMA-enabled SmartNIC platfo
 
 ## RecoNIC System Overview
 
-<img src="doc/image/RecoNIC.png" width=70% height=70%>
+<img src="doc/image/RecoNIC.png">
 
 The above figure shows the hardware shell architecture and software stacks of RecoNIC. The hardware shell consists of a basic NIC module (including a MAC subsystem and DMA subsystem - QDMA), a packet classification module, an RDMA engine, two programmable compute logic modules (Lookaside Compute and Streaming Compute), along with supplementary modules such as system/memory crossbars and an arbiter.
 
@@ -34,6 +34,7 @@ ERNIC license is required in this project. You can either purchase or apply for 
   $ export BOARD_REPO=/your/path/to/XilinxBoardStore
   ```
 * netplan : We are using netplan to configure static IPs for RecoNIC
+* Doxygen
 
 ## Hardware Generation and Programming
 
@@ -183,7 +184,64 @@ PING 192.100.51.1 (192.100.51.1) 56(84) bytes of data.
 64 bytes from 192.100.51.1: icmp_seq=3 ttl=64 time=0.201 ms
 ```
 
-If everything works fine, it should return similar output from your terminals. After verifying, you can stop *ping*. The system is now up and we're ready to play with applications.
+If everything works fine, it should return similar output from your terminals. After verifying, you can stop *ping*. The system is now up.
+
+## RecoNIC user-space library
+RecoNIC user-space library (green boxes shown in the above RecoNIC system overview figure) contains all necessary APIs for RDMA, memory and control operations. To obtain the document for source codes, you can simply run with
+```
+$ cd ./lib
+$ doxygen
+```
+The source code documents will be generated at ./lib/html.
+
+Before we run test cases and applications, we need to build the libreconic library.
+```
+$ make
+$ export LD_LIBRARY_PATH=/your/path/to/RecoNIC/lib:$LD_LIBRARY_PATH
+```
+The generated static, *libreconic.a*, and shared library, *libreconic.so*, is located at ./lib folder. We are ready to play test cases and applications.
+
+## RDMA Test Cases
+The *rdma_test* folder contains RDMA send/receive test case using libreconic. read and write test cases will be added soon.
+
+### RDMA Send/Receive
+Build RDMA send/receive program
+```
+$ cd examples/rdma_test
+$ make
+$ ./send_recv -h
+  usage: ./send_recv [OPTIONS]
+
+    -d (--device) character device name (defaults to /dev/reconic-mm)
+    -p (--pcie_resource) PCIe resource
+    -r (--src_ip) Source IP address
+    -i (--dst_ip) Destination IP address
+    -u (--udp_sport) UDP source port
+    -t (--tcp_sport) TCP source port
+    -q (--dst_qp) Destination QP number
+    -z (--payload_size) Payload size in bytes
+    -l (--qp_location) QP/mem-registered buffers' location: [host_mem | dev_mem]
+    -s (--server) Server node
+    -c (--client) Client node
+    -g (--debug) Debug mode
+    -h (--help) print usage help and exit 
+```
+
+#### On the receiver node (192.100.51.1)
+Run the program in the receiver mode
+```
+sudo ./send_recv -r 192.100.51.1 -i 192.100.52.1 -p /sys/bus/pci/devices/0000\:d8\:00.0/resource2 -z 128 -l host_mem -d /dev/reconic-mm -c -u 22222 --dst_qp 2 -g 2>&1 | tee client_debug.log
+```
+
+#### On the sender node (192.100.52.1)
+Run the program in the sender mode
+```
+sudo ./send_recv -r 192.100.52.1 -i 192.100.51.1 -p /sys/bus/pci/devices/0000\:d8\:00.0/resource2 -z 16384 -l dev_mem -d /dev/reconic-mm -s -u 22222 --dst_qp 2 -g 2>&1 | tee server_debug.log
+```
+
+If the program exits with an error saying libreconic.so is not found, you can try with "sudo env LD_LIBRARY_PATH=$LD_LIBRARY_PATH ./send_recv", instead of "sudo ./send_recv".
+
+The above example allocates the QP (SQ, CQ and RQ) in the host memory. If you want the QP to be allocated in the host memory, you can simply replace "-l host_mem" with "-l dev_mem" on both receiver and sender nodes.
 
 ## Applications
 

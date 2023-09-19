@@ -1,0 +1,10 @@
+# ==============================================================================
+#  Copyright (C) 2023, Advanced Micro Devices, Inc. All rights reserved.
+#  SPDX-License-Identifier: MIT
+# 
+# ==============================================================================
+
+PROJECT_NAME   = "RecoNIC User-space Library"
+PROJECT_BRIEF  = "RecoNIC library containing RDMA APIs, memory APIs and control APIs"
+RECURSIVE      = NO
+GENERATE_LATEX = NO
