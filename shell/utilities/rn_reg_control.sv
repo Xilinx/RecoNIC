@@ -72,8 +72,8 @@ localparam TRNONROCE_HIGH_REG          = 12'h018;
 localparam TRNONROCE_LOW_REG           = 12'h01C;
 localparam TRNONROCE_NO_RESET_HIGH_REG = 12'h020;
 localparam TRNONROCE_NO_RESET_LOW_REG  = 12'h024;
-localparam rn_TIMER_HIGH_REG           = 12'h028;
-localparam rn_TIMER_LOW_REG            = 12'h02C;
+localparam RN_TIMER_HIGH_REG           = 12'h028;
+localparam RN_TIMER_LOW_REG            = 12'h02C;
 
 logic [AXIL_DATA_WIDTH-1:0] rn_version_reg;
 logic [AXIL_DATA_WIDTH-1:0] fatal_err_reg;
@@ -246,8 +246,8 @@ begin
             TRNONROCE_LOW_REG          : s_axil_reg_rdata <= trnonroce_low_reg;
             TRNONROCE_NO_RESET_HIGH_REG: s_axil_reg_rdata <= trnonroce_no_reset_high_reg;
             TRNONROCE_NO_RESET_LOW_REG : s_axil_reg_rdata <= trnonroce_no_reset_low_reg;
-            rn_TIMER_HIGH_REG          : s_axil_reg_rdata <= rn_reg_ctl_timer[63:32];
-            rn_TIMER_LOW_REG           : s_axil_reg_rdata <= rn_reg_ctl_timer[31:0];
+            RN_TIMER_HIGH_REG          : s_axil_reg_rdata <= rn_reg_ctl_timer[63:32];
+            RN_TIMER_LOW_REG           : s_axil_reg_rdata <= rn_reg_ctl_timer[31:0];
             TEMPLATE_REG               : s_axil_reg_rdata <= template_reg;
             default                    : s_axil_reg_rdata <= DEFAULT_VALUE;
           endcase

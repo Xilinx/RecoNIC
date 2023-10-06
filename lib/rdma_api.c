@@ -815,6 +815,7 @@ void create_a_wqe(struct rdma_dev_t* rdma_dev,
     } else {
       Debug("DEBUG: successfully write WQE to the device memory!\n");
     }
+    free(wqe);
   }
 }
 

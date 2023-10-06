@@ -199,7 +199,7 @@ Before we run test cases and applications, we need to build the libreconic libra
 $ make
 $ export LD_LIBRARY_PATH=/your/path/to/RecoNIC/lib:$LD_LIBRARY_PATH
 ```
-The generated static, *libreconic.a*, and shared library, *libreconic.so*, is located at ./lib folder. We are ready to play test cases and applications.
+The generated static, *libreconic.a*, and shared library, *libreconic.so*, are located at ./lib folder. We are ready to play test cases and applications.
 
 ## RDMA Test Cases
 The *rdma_test* folder contains RDMA send/receive test case using libreconic. read and write test cases will be added soon.

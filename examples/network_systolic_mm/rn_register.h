@@ -177,10 +177,9 @@
 // - [31:30] Read/Write Access permission, set to 2'b11
 // - [29] : R0 access Error, set to 1'b0
 // - [28:26] Protection ID, set to 3'd0
-// - [25:0] Window Size in unit of 4K. we use 256MB mapping, so set it to 65536
+// - [25:0] Window Size in unit of 4K. we use 64GB mapping, so set it to 0x1000000
 #define AXIB_BDF_MAP_CONTROL_ADDR        RN_QDMA_CSR_BASE_ADDRESS + 0x00002430
 #define AXIB_BDF_RESERVED_ADDR           RN_QDMA_CSR_BASE_ADDRESS + 0x00002434
-//#define AXIB_BDF_MAP_CONTROL             0xC0010000 
 #define AXIB_BDF_MAP_CONTROL             0xC1000000 
 
 #endif  /* _RN_REGISTERS_H_ */

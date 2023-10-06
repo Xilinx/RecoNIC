@@ -228,7 +228,7 @@ static int test_dma(char *devname, uint64_t addr, uint64_t size,
 	        rc = read_to_buffer(devname, fpga_fd, buffer, size, addr);
 	        if (rc < 0)
 	            goto out;
-	        clock_gettime(CLOCK_MONOTONIC, &ts_end);			
+	        clock_gettime(CLOCK_MONOTONIC, &ts_end);
 		}
 		else{
 			clock_gettime(CLOCK_MONOTONIC, &ts_start);
@@ -256,8 +256,8 @@ static int test_dma(char *devname, uint64_t addr, uint64_t size,
 	}
 	avg_time = (double)total_time/(double)count;
 	result = ((double)size)/avg_time;
-	if (verbose){
-		printf("** Avg time device %s, total time %f sec, avg_time = %f, size = %lu, BW = %f bytes/sec\n",	devname, total_time, avg_time, size, result);
+	if (verbose) {
+		printf("** Avg time device %s, total time %f sec, avg_time = %f sec, size = %lu bytes, BW = %f bytes/sec\n",	devname, total_time, avg_time, size, result);
 	}
 	dump_throughput_result(size, result);
 

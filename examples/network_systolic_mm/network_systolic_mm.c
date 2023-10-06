@@ -730,7 +730,7 @@ struct rdma_buff_t* rdma_register_memory_region(struct rn_dev_t* rn_dev, struct 
     //rdma_pd->mr_buffer->buffer = (void* ) dev_buf_offset;
     //rdma_pd->mr_buffer->dma_addr = dev_buf_offset;
     rdma_pd->mr_buffer->buffer = (void* ) 0;
-    rdma_pd->mr_buffer->dma_addr = (uint64_t) 0;
+    rdma_pd->mr_buffer->dma_addr = (uint64_t) dev_buf_offset;
     buffer_size = dev_buf_size;
     rdma_pd->dma_addr_lsb = (uint32_t) (rdma_pd->mr_buffer->dma_addr & 0x00000000ffffffff);
     rdma_pd->dma_addr_msb = (uint32_t) ((rdma_pd->mr_buffer->dma_addr >> 32) & 0x00000000ffffffff);
@@ -1329,7 +1329,7 @@ int main(int argc, char *argv[])
 	FILE *dst_mac_fp;
 	char *line = NULL;
 	size_t len = 0;
-	char *tmp_mac_addr_ptr = NULL;
+	unsigned char tmp_mac_addr_ptr[6];
 	char tmp_mac_addr_str[18] = "";
 	ssize_t command_read;
 
@@ -1460,7 +1460,7 @@ int main(int argc, char *argv[])
 					// Get the MAC address from the line
 					tmp_mac_addr_ptr = strstr(line, "at")+3;
 					strncpy(tmp_mac_addr_str, tmp_mac_addr_ptr, 17);
-					dst_mac = convert_mac_addr_str_to_uint((char *) tmp_mac_addr_str);
+					dst_mac = convert_mac_addr_str_to_uint((unsigned char *) tmp_mac_addr_str);
 					break;
 				}
 			}
@@ -1550,8 +1550,8 @@ int main(int argc, char *argv[])
   struct rdma_pd_t* rdma_pd = allocate_rdma_pd(rn_dev, pd_num, R_KEY);
   fprintf(stderr, "Info: rdma_pd is allocated\n");
 
-	qdepth    = 64;
-	qpid      = 2;
+	qdepth = 64;
+	qpid   = 2;
 	sq_psn = 0xabc;
 
   // Copy data from host memory to device memory

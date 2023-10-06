@@ -281,7 +281,8 @@ class GenRoCEClass(pktGenClass):
     self.eth_dst_noise    = 'cd:ab:ef:be:ad:de'
     self.ip_dst_seed      = '10.10.0.0'
     self.ip_src_seed      = '10.20.0.0'
-    self.src_baseaddr_location = ''
+    # Use dev_mem as the default src_baseaddr location
+    self.src_baseaddr_location = 'dev_mem'
     self.src_baseaddr     = 0
     self.dst_baseaddr     = 0
     self.num_data_buffer  = 4
@@ -941,11 +942,14 @@ class GenRoCEClass(pktGenClass):
 
       # generate a WQE
       wrid = i+1
+
       assert(self.src_baseaddr_location in eh.location_lst), "Please provide a correct location from ['dev_mem','sys_mem']"
       if(self.src_baseaddr_location == 'dev_mem'):
         #adding offset of 0xa35
+        logger.info('Payload is stored at the device memory')
         payload_addr = eh.dev_offset + self.src_baseaddr + pd_num*self.mr_buf_size
       else:
+        logger.info('Payload is stored at the host memory')
         payload_addr = self.src_baseaddr + pd_num*self.mr_buf_size
       payload_len = self.paylaod_size
       assert(payload_len>=16), "Please provide a payload > 16B, as we always set 'send_data' to 0 in a WQE"
@@ -1663,168 +1667,6 @@ class GenEthClass(pktGenClass):
     s_src    = self.conv_str_ip_addr_2_hexstr(ip_src)
     s_sport = str(format(sport, '#06x'))[2:]
     return (s_src + s_sport)
-
-  def conv_fiveTup_2_hexstr_from_object(self, packet):
-    """Generate five tuple from a given packet
-    Args:
-      packet (scapy packet): a packet data
-    Returns:
-      fiveTup (hex string): a five tuple consists of
-          Source IP address       32 bytes
-          Destination IP address  32 bytes
-          IP protocol             8  bytes
-          TCP source port         16 bytes
-          TCP destination port    16 bytes
-        Total ------------------ 104 bytes
-    Note:
-      IP protocol: TCP = 0x06 (6); UDP = 0x11 (17)
-      For more information, please refer to https://en.wikipedia.org/wiki/List_of_IP_protocol_numbers
-    """
-    ip_dst_addr = packet[IP].dst
-    ip_src_addr = packet[IP].src
-    ip_proto    = packet[IP].proto
-    tcp_sport   = packet[TCP].sport
-    tcp_dport   = packet[TCP].dport
-    # Convert to hex strings
-    s_dst    = self.conv_str_ip_addr_2_hexstr(ip_dst_addr)
-    s_src    = self.conv_str_ip_addr_2_hexstr(ip_src_addr)
-    s_proto  = str(format(ip_proto, '#04x'))[2:]
-    s_sport = str(format(tcp_sport, '#06x'))[2:]
-    s_dport = str(format(tcp_dport, '#E06x'))[2:]
-    return (s_dst + s_src + s_proto + s_sport + s_dport)
-
-  def pkts_generation_rxm(self):
-    """ Generate rxm packet
-    We include the typical Ether, IP and TCP headers as part of the RxM packet
-    Additionally, we include  tcpx, rxm_op & rxm_ctrl headers which will be included
-    in the payload
-
-    Args:
-      none
-    Return:
-      none
-      
-    Note:
-      Total size of rxm packet >= 134 Bytes (inclusive of header + payload headers) 
-    """
-    # handle flow addresses
-    dst_mac = self.eth_dst_seed
-    dst_mac_str = dst_mac.replace(":", " ")
-    src_mac = self.eth_src_seed
-    src_mac_str = src_mac.replace(":", " ")
-    ether_type = 0x0800
-    logger.debug("dst_mac = %s, src_mac = %s" % (dst_mac_str, src_mac_str))
-
-    dst_ip = self.ip_dst_seed
-    src_ip = self.ip_src_seed
-    dst_port = self.dport
-    src_port = self.sport
-    logger.debug("dst_ip = %s, src_ip = %s" % (dst_ip, src_ip))
-    
-    # handle packet size
-    total_pkt_header_size = 134 # rxm header = 64B/ tcpx_header = 16B/ Ether,IP,TCP = 54B
-    pkt_size = self.pkt_size
-    Ether_IP_TCP_hdr_size = 54
-    rxm_hdr_size = 80
-    payload_size = pkt_size - total_pkt_header_size
-    logger.debug("pkt_size = %s, payload size = %s" % (pkt_size, payload_size))
-    if (pkt_size < total_pkt_header_size):
-      logger.error('Please increase pkt_size (packet size should be > %d) in configuration file' % total_pkt_header_size)
-      exit() 
-
-    # append tuple info
-    ip_src = self.ip_src_seed
-    self.twoTuple.append((ip_src, self.dport))
-    twoTuple_str = self.conv_twoTup_2_hexstr(ip_src, self.sport)
-    self.twoTuple_hexs_dict[self.twoTuple[0]] = twoTuple_str
-    logger.debug("twoTuple_str = %s" % (twoTuple_str))
-
-
-    for i in range(0, self.num_pkts):
-      # create ether/ip/tcp base layers
-      pkt_ether = Ether(dst=dst_mac, src=src_mac, type = ether_type)
-      pkt_ip = IP(dst=dst_ip, src=src_ip)
-      pkt_tcp = TCP(sport=src_port, dport=dst_port)
-      pkt = pkt_ether/pkt_ip/pkt_tcp
-      # Tests for ether/ip/tcp
-      pkt_ether_str = str(raw(pkt_ether).encode('HEX'))
-      pkt_ip_str = str(raw(pkt_ip).encode('HEX'))
-      pkt_tcp_str = str(raw(pkt_tcp).encode('HEX'))
-      # end test for ether/ip/tcp
-
-      # create tcpx base header: size = 16B
-      tcpx_version = str(format(3, '02x')) # version 3
-      tcpx_op = str(format(0, '02x'))
-      tcpx_flags = str(format(0, '04x'))
-      tcpx_op_data = str(format(0, '02x'))
-      tcpx_rma_iov_cnt = str(format(0, '02x'))
-      tcpx_hdr_size = str(format(0, '02x'))
-      tcpx_rsvd = str(format(0, '02x'))
-      tcpx_size = str(format(payload_size + rxm_hdr_size, '016x')) # packet bytes = 
-      tcpx_header_str = tcpx_version + tcpx_op + tcpx_flags + tcpx_op_data + tcpx_rma_iov_cnt + tcpx_hdr_size + tcpx_rsvd + tcpx_size
-      tcpx_header_hex = tcpx_header_str.decode("HEX")
-      tcpx_header = Raw(load = tcpx_header_hex)
-      tcpx_raw = raw(tcpx_header)
-
-      # create rxm packet header = rxm_ctrl_h + rxm_op_h = 64B
-      # create rxm control header = 32B
-      rxm_ctrl_version = str(format(4, '02x'))# version 4
-      rxm_ctrl_type = str(format(0, '02x'))
-      rxm_ctrl_seg_size = str(format(0, '04x'))
-      rxm_ctrl_seg_no = str(format(0, '08x')) 
-      rxm_ctrl_conn_id = str(format(0, '016x'))
-      rxm_ctrl_msg_id = str(format(0, '016x'))
-      rxm_ctrl_hdr_data = str(format(0, '016x'))
-      rxm_ctrl_str = rxm_ctrl_version + rxm_ctrl_type + rxm_ctrl_seg_size + rxm_ctrl_seg_no + rxm_ctrl_conn_id + rxm_ctrl_msg_id + rxm_ctrl_hdr_data
-      rxm_ctrl_hex = rxm_ctrl_str.decode("HEX")
-      rxm_ctrl = Raw(load = rxm_ctrl_hex)
-      rxm_ctrl_raw = raw(rxm_ctrl)
-
-      # create rxm operation header = 32B
-      rxm_op_version = str(format(2, '02x')) # version 3
-      rxm_op_rx_index = str(format(0, '02x')) 
-      rxm_op_op = str(format(2, '02x')) # TODO: change to accept multiple inputs
-      rxm_op_op_data = str(format(0, '02x'))
-      rxm_op_flags = str(format(0, '08x'))
-      rxm_op_size = str(format(payload_size + rxm_hdr_size, '016x')) #TODO: op_size logic
-      rxm_op_data = str(format(0, '016x'))
-      rxm_op_reserved = str(format(0, '08x'))
-      rxm_op_tag = str(format(0, '08x'))
-      rxm_op_str = rxm_op_version + rxm_op_rx_index + rxm_op_op + rxm_op_op_data + rxm_op_flags + rxm_op_size + rxm_op_data + rxm_op_reserved + rxm_op_tag
-      rxm_op_hex = rxm_op_str.decode("HEX")
-      rxm_op = Raw(load = rxm_op_hex)
-      rxm_op_raw = raw(rxm_op)
-
-      # combining packet
-      logger.debug("payload_size = %d" % payload_size)
-      # generate random payload of payload_size
-      tcpx_rxm_raw = Raw(load = (tcpx_header_hex + rxm_ctrl_hex + rxm_op_hex))
-      payload_raw = Raw(RandString(size=payload_size))
-      pkt = pkt/tcpx_rxm_raw/payload_raw
-      raw_pkt = raw(pkt)
-      pkt_str_tmp = str(raw_pkt.encode('HEX'))
-      pkt_str = ''
-      for j in range(0, len(pkt_str_tmp)):
-        if (j%2 == 1) and (j!=len(pkt_str_tmp)-1):
-          pkt_str = pkt_str + pkt_str_tmp[j] + ' '
-        else:
-          pkt_str = pkt_str + pkt_str_tmp[j]
-
-      # storing back packet
-      self.rxm_pkt_obj_dict[i] = []
-      self.rxm_pkt_hex_dict[i] = []
-      self.rxm_pkt_obj_dict[i].append(pkt)
-      self.rxm_pkt_hex_dict[i].append(pkt_str)
-
-      
-      logger.debug("rxm_pkt_str (size = %d) = %s" % (len(pkt_str_tmp)/2,pkt_str))
-      logger.debug("rxm_pkt -> tcpx_raw = %s" % tcpx_raw.encode('HEX'))
-      logger.debug("rxm_pkt -> rxm_ctrl_raw = %s" % rxm_ctrl_raw.encode('HEX'))
-      logger.debug("rxm_pkt -> rxm_op_raw = %s" % rxm_op_raw.encode('HEX'))
-      logger.debug("    IP src: %s" % (self.conv_str_ip_addr_2_hexstr(src_ip)))
-      logger.debug("    IP dst: %s" % (self.conv_str_ip_addr_2_hexstr(dst_ip)))
-      logger.debug("    TCP sport: %s" % (str(pkt[TCP].sport)))
-      logger.debug("    TCP dport: %s" % (str(pkt[TCP].dport)))
 
 if __name__ == "__main__":
   argv_len = len(sys.argv)
