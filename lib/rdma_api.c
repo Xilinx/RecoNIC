@@ -776,6 +776,7 @@ void create_a_wqe(struct rdma_dev_t* rdma_dev,
     // SQ is allocated at host memory
     wqe = &(((struct rdma_wqe_t*) sq->buffer)[wqe_idx]);
   }
+  memset(wqe, 0, sizeof(struct rdma_wqe_t));
 
   wqe->wrid = wrid;
   //wqe->laddr = masked_buf_addr;

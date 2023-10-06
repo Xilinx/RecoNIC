@@ -224,7 +224,7 @@ struct rdma_buff_t* allocate_rdma_buffer(struct rn_dev_t* rn_dev, uint64_t buf_s
       rdma_buffer->buf_size = buf_size;
       // TODO: We need to put assert here later to make sure we won't exceed device memory.
       Debug("Info: allocated device buffer physical addr = %lx, rn_dev->dev_buffer_offset = 0x%lx\n", rdma_buffer->dma_addr, rn_dev->dev_buffer_offset);
-      assert(rn_dev->dev_buffer_offset <= DEVICE_MEM_SIZE);
+      assert(rn_dev->dev_buffer_offset <= (uint64_t) DEVICE_MEM_SIZE);
     Debug("Info: allocate_rdma_buffer - successfully allocated rdma device buffer\n");
     } else {
       fprintf(stderr, "Error: please provide correct buffer location: [host_mem | dev_mem]\n");

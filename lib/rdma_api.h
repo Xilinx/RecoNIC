@@ -19,9 +19,10 @@
 /*! \def RQE_SIZE
     \brief Number of an RQ entry.
 
-    Size RQ entry is aligned with 256B.
+    Size RQ entry is aligned with 256B. Setting RQE_SIZE 512 indicates each RQE entry has 
+    512*256 = 128KB
 */
-#define RQE_SIZE 256
+#define RQE_SIZE 512
 
 /*! \struct rdma_glb_csr_t
     \brief Structure used to store RDMA global control status registers.

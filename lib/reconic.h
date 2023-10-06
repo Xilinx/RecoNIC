@@ -41,10 +41,10 @@ extern int fpga_fd;
 /*! \def DEVICE_MEM_SIZE
     \brief A macro string to indicate device memory size in bytes.
 
-    The current implement leverages 512KB AXI-BRAM as the device memory. In the near
-    future, we will release a version which has 4GB DDR4 memory support.
+    The current implement leverages only one 4GB DDR4 memory on U250. Maximum number of 
+    DDR4 allowed on Alveo U250 is 4.
 */
-#define DEVICE_MEM_SIZE 524288
+#define DEVICE_MEM_SIZE 4294967296
 
 /*! \def PAGE_SHIFT
     \brief PAGE_SHIFT is used to determine the page size.
