@@ -16,6 +16,8 @@
 
 #define TCP_PORT 11111
 
+#define LISTENQ 8
+
 #define QP_LOCATION_DEFAULT HOST_MEM
 
 // Hardcoded some of the configurations

@@ -202,15 +202,19 @@ $ export LD_LIBRARY_PATH=/your/path/to/RecoNIC/lib:$LD_LIBRARY_PATH
 The generated static, *libreconic.a*, and shared library, *libreconic.so*, are located at ./lib folder. We are ready to play test cases and applications.
 
 ## RDMA Test Cases
-The *rdma_test* folder contains RDMA send/receive test case using libreconic. read and write test cases will be added soon.
+The *rdma_test* folder contains RDMA read, write and send/receive test cases using libreconic.
 
-### RDMA Send/Receive
-Build RDMA send/receive program
+Build RDMA read, write and send/recv program.
 ```
 $ cd examples/rdma_test
 $ make
-$ ./send_recv -h
-  usage: ./send_recv [OPTIONS]
+```
+
+### RDMA Read
+RDMA Read operation: The client node issues RDMA read request to the server node first. The server node then replies with the RDMA read response packet.
+```
+$ ./read -h
+  usage: ./read [OPTIONS]
 
     -d (--device) character device name (defaults to /dev/reconic-mm)
     -p (--pcie_resource) PCIe resource
@@ -227,6 +231,44 @@ $ ./send_recv -h
     -h (--help) print usage help and exit 
 ```
 
+#### On the client node (192.100.51.1)
+Run the program
+```
+sudo ./read -r 192.100.51.1 -i 192.100.52.1 -p /sys/bus/pci/devices/0000\:d8\:00.0/resource2 -z 128 -l host_mem -d /dev/reconic-mm -c -u 22222 -t 11111 --dst_qp 2 -g 2>&1 | tee client_debug.log
+```
+
+#### On the server node (192.100.52.1)
+Run the program
+```
+sudo ./read -r 192.100.52.1 -i 192.100.51.1 -p /sys/bus/pci/devices/0000\:d8\:00.0/resource2 -z 128 -l host_mem -d /dev/reconic-mm -s -u 22222 -t 11111 --dst_qp 2 -g 2>&1 | tee server_debug.log
+```
+
+If the program exits with an error saying libreconic.so is not found, you can try with "sudo env LD_LIBRARY_PATH=$LD_LIBRARY_PATH ./read", instead of "sudo ./read".
+
+The above example allocates the QP (SQ, CQ and RQ) in the host memory. If you want the QP to be allocated in the host memory, you can simply replace "-l host_mem" with "-l dev_mem" on both receiver and sender nodes.
+
+### RDMA Write
+RDMA Write operation: The client node issues RDMA write request to the server node directly. Usage of the RDMA write program is the same with RDMA read program above.
+
+#### On the client node (192.100.51.1)
+Run the program
+```
+sudo ./write -r 192.100.51.1 -i 192.100.52.1 -p /sys/bus/pci/devices/0000\:d8\:00.0/resource2 -z 128 -l host_mem -d /dev/reconic-mm -c -u 22222 -t 11111 --dst_qp 2 -g 2>&1 | tee client_debug.log
+```
+
+#### On the server node (192.100.52.1)
+Run the program
+```
+sudo ./write -r 192.100.52.1 -i 192.100.51.1 -p /sys/bus/pci/devices/0000\:d8\:00.0/resource2 -z 128 -l host_mem -d /dev/reconic-mm -s -u 22222 -t 11111 --dst_qp 2 -g 2>&1 | tee server_debug.log
+```
+
+If the program exits with an error saying libreconic.so is not found, you can try with "sudo env LD_LIBRARY_PATH=$LD_LIBRARY_PATH ./write", instead of "sudo ./write".
+
+The above example allocates the QP (SQ, CQ and RQ) in the host memory. You can allocate QPs on device memory as well by using "-l dev_mem" on both receiver and sender nodes.
+
+### RDMA Send/Receive
+RDMA send/recv operation: The server node posts an RDMA receive request, waiting for a RDMA send request to its allocated receive queue. The client node then issues an RDMA send request to the server node. Usage of the RDMA send/receive program is the same iwth RDMA read program above.
+
 #### On the receiver node (192.100.51.1)
 Run the program in the receiver mode
 ```
@@ -241,7 +283,7 @@ sudo ./send_recv -r 192.100.52.1 -i 192.100.51.1 -p /sys/bus/pci/devices/0000\:d
 
 If the program exits with an error saying libreconic.so is not found, you can try with "sudo env LD_LIBRARY_PATH=$LD_LIBRARY_PATH ./send_recv", instead of "sudo ./send_recv".
 
-The above example allocates the QP (SQ, CQ and RQ) in the host memory. If you want the QP to be allocated in the host memory, you can simply replace "-l host_mem" with "-l dev_mem" on both receiver and sender nodes.
+The above example allocates the QP (SQ, CQ and RQ) in the host memory. You can allocate QPs on device memory as well by using "-l dev_mem" on both receiver and sender nodes.
 
 ## Applications
 
