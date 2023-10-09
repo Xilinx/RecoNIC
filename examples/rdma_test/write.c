@@ -457,6 +457,11 @@ if(client) {
 	close(sockfd);	
 
 out:
+  free(cidb_buffer);
+  free(data_buf);
+  free(ipkterr_buf);
+  free(err_buf);
+  free(resp_err_pkt_buf);
   free(sw_golden);
 	close(fpga_fd);
   close(pcie_resource_fd);
