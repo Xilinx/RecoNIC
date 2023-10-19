@@ -6,7 +6,8 @@
 #  Program local FPGA board without rebooting the server
 # 
 #  Usage ./program_fpga.sh -b|--bdf pcie_bdf_num -t|--target_id target_name
-#                         [-p|--prog_file *.bit|*.mcs] 
+#                         [-p|--prog_file *.bit|*.mcs]
+#                         [-c|--config_file *.ltx]
 #                         [-r|--remote_host hostname|IP_address]
 #                         
 #
@@ -28,6 +29,7 @@ usage_func() {
   -b, --bdf          PCIe BDF (Bus, Device, Function) number
   -t, --target_id    FPGA target device name or ID
   -p, --prog_file    FPGA programming file in \"bit\" or \"mcs\" format
+  -c, --config_file  DDR Configuration file in \"ltx\" format
   -r, --remote_host  Remote hostname or IP address used to program FPGA board\n"                   
   echo "Info: This script should be executed locally on a host server with the target FPGA board."
   echo "Info: For mcs programming, user has to provide /your/path/to/your_file.mcs."
@@ -37,6 +39,7 @@ usage_func() {
 
 pcie_bdf=""
 prog_file=""
+config_file=""
 target_id=""
 remote_host=""
 
@@ -46,8 +49,8 @@ if [ $# -lt 4 ]; then
 fi
 
 # Process command-line options and arguments
-OPTIONS="b:p:t:r:"
-LONGOPTS="bdf:,prog_file:,target_id:,remote_host:"
+OPTIONS="b:p:c:t:r:"
+LONGOPTS="bdf:,prog_file:,config_file:,target_id:,remote_host:"
 
 # Parsing command-line options
 PARSED=$(getopt --options=$OPTIONS --longoptions=$LONGOPTS --name "$0" -- "$@")
@@ -64,6 +67,10 @@ while true; do
       ;;
     -p|--prog_file)
       prog_file=$(realpath $2)
+      shift 2
+      ;;
+    -c|--config_file)
+      config_file=$(realpath $2)
       shift 2
       ;;
     -t|--target_id)
@@ -96,6 +103,7 @@ fi
 
 echo "bdf_num: $pcie_bdf_num"
 echo "prog_file: $prog_file"
+echo "config_file: $config_file"
 echo "target_id: $target_id"
 echo "remote_host: $remote_host"
 
@@ -130,14 +138,14 @@ sudo setpci -s $slot_num CAP_EXP+8.w=$(printf "%04x" $(("0x$ctrl_reg" & ~0x0004)
 # program fpga
 if [[ ${prog_file} == *.mcs ]]; then
   echo "vivado -mode tcl -source program_hw.tcl -tclargs -prog_file $prog_file -target_id $target_id -remote_host $remote_host"
-  vivado -mode tcl -source program_hw.tcl -tclargs -prog_file $prog_file -target_id $target_id -remote_host $remote_host
+  vivado -mode tcl -source program_hw.tcl -tclargs -prog_file $prog_file -config_file $config_file -target_id $target_id -remote_host $remote_host
 else
   if [ "$prog_file" == "" ]; then
     echo "vivado -mode tcl -source program_hw.tcl -tclargs -target_id $target_id -remote_host $remote_host"
     vivado -mode tcl -source program_hw.tcl -tclargs -target_id $target_id -remote_host $remote_host
   else
     echo "vivado -mode tcl -source program_hw.tcl -tclargs -target_id $target_id -prog_file $prog_file -remote_host $remote_host"
-    vivado -mode tcl -source program_hw.tcl -tclargs -target_id $target_id -prog_file $prog_file -remote_host $remote_host
+    vivado -mode tcl -source program_hw.tcl -tclargs -target_id $target_id -prog_file $prog_file -config_file $config_file -remote_host $remote_host
   fi
 fi
 

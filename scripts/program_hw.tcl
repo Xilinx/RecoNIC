@@ -15,6 +15,7 @@ set root_dir [file normalize ..]
 set script_dir ${root_dir}/script
 set nic_dir ${root_dir}/base_nics/open-nic-shell
 set default_bitstream ${nic_dir}/build/au250/open_nic_shell/open_nic_shell.runs/impl_1/open_nic_shell.bit
+set default_config_file ${nic_dir}/build/au250/open_nic_shell/open_nic_shell.runs/impl_1/open_nic_shell.ltx
 
 puts "root_dir   : $root_dir"
 puts "script_dir : $script_dir"
@@ -29,12 +30,14 @@ proc getFileSuffix {filename} {
 
 # Programming options
 #   prog_file  : A file in *.bit or *.mcs used to program FPGA
+#   config_file : A file in *.ltx used to configure DDR
 #   remote_host: hostname or IP address for a remote hw_server
 #   target_id  : Hardware target name ID. User can get it when 
 #                "Open New Target" under "Open Hardware Manager"
 #                in Vivado
 array set prog_options {
     -prog_file   ""
+    -config_file ""
     -remote_host ""
     -target_id   ""
 }
@@ -64,9 +67,14 @@ if {[string equal $prog_file ""]} {
     set prog_file $default_bitstream
 }
 
+if {[string equal $config_file ""]} {
+    set config_file $default_config_file
+}
+
 set file_type [getFileSuffix $prog_file]
 
 puts "Programming file: $prog_file"
+puts "Configuration file: $config_file"
 puts "Hardware target name ID: $target_id"
 
 puts "Open hardware manager and connect to hardware server"
@@ -86,6 +94,8 @@ current_hw_device [get_hw_devices $hw_device_id]
 if {[string equal $file_type "bit"]} {
     puts "Program FPGA with bitstream..."
     set_property PROGRAM.FILE ${prog_file} [get_hw_devices $hw_device_id]
+    set_property PROBES.FILE ${config_file} [get_hw_devices $hw_device_id]
+    set_property FULL_PROBES.FILE ${config_file} [get_hw_devices $hw_device_id]
     puts "Start programming FPGA..."
     program_hw_devices [get_hw_devices $hw_device_id]
     refresh_hw_device [lindex [get_hw_devices $hw_device_id] 0]
