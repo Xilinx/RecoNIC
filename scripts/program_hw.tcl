@@ -102,6 +102,8 @@ if {[string equal $file_type "bit"]} {
     puts "Success: Programming is done"
 } elseif {[string equal $file_type "mcs"]} {
     puts "Program FPGA with configuration memory devices..."
+    set_property PROBES.FILE ${config_file} [get_hw_devices $hw_device_id]
+    set_property FULL_PROBES.FILE ${config_file} [get_hw_devices $hw_device_id]
     create_hw_cfgmem -hw_device [get_hw_devices $hw_device_id] -mem_dev [lindex [get_cfgmem_parts {mt25qu01g-spi-x1_x2_x4}] 0]
     set_property PROGRAM.ADDRESS_RANGE  {use_file} [ get_property PROGRAM.HW_CFGMEM [lindex [get_hw_devices $hw_device_id] 0]]
     set_property PROGRAM.FILES [list "$prog_file" ] [ get_property PROGRAM.HW_CFGMEM [lindex [get_hw_devices $hw_device_id] 0]]

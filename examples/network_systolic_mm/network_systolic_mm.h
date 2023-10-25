@@ -3,8 +3,8 @@
 // SPDX-License-Identifier: MIT
 //
 //==============================================================================
-#ifndef __NETWORK_SYSTOLIC_MM__
-#define __NETWORK_SYSTOLIC_MM__
+#ifndef __SYSTOLIC_MM__
+#define __SYSTOLIC_MM__
 
 #include <assert.h>
 #include <fcntl.h>
@@ -21,14 +21,8 @@
 #include <sys/stat.h>
 #include <sys/time.h>
 #include <sys/types.h>
-#include <sys/socket.h>
-#include <sys/ioctl.h>
-#include <arpa/inet.h>
-#include <netinet/in.h>
-#include <net/if.h>
 #include <unistd.h>
-#include <ifaddrs.h>
-#include <netdb.h>
+
 
 #define SIZE_DEFAULT (32)
 #define COUNT_DEFAULT (1)
@@ -44,17 +38,6 @@
 
 //Maximum Array Size
 #define MAX_SIZE 16
-
-typedef struct {
-	uint32_t ctl_cmd_size;
-	uint32_t a_baseaddr;
-	uint32_t b_baseaddr;
-	uint32_t c_baseaddr;
-	uint16_t a_row;
-	uint16_t a_col;
-	uint16_t b_col;
-	uint16_t work_id;
-} ctl_cmd_t;
 
 /* Subtract timespec t2 from t1
  *
@@ -92,4 +75,4 @@ void timespec_sub(struct timespec *t1, struct timespec *t2)
 	}
 }
 
-#endif //__NETWORK_SYSTOLIC_MM__
+#endif

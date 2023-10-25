@@ -3,33 +3,47 @@
 # SPDX-License-Identifier: MIT
 #
 #==============================================================================
-# 
-#  This file is part of the RecoNIC's systolic-array-based matrix 
-#  multiplication test application
 #
+#   This file is part of the RecoNIC's systolic-array-based matrix 
+#   multiplication test application
+#   
 #==============================================================================
 
-CC ?= gcc
+# Compiler and flags
+CC = gcc
+CFLAGS = -Wall -Werror
+LDFLAGS = -L../../lib
+LDLIBS = -lreconic
 
-CFLAGS += -g
-CFLAGS += -I.
-CFLAGS += $(EXTRA_FLAGS)
+# Directories
+SRC_DIR = $(CURDIR)
+OBJ_DIR = $(CURDIR)/obj
+BIN_DIR = $(CURDIR)
 
-MM = network_systolic_mm
-MM_OBJS := network_systolic_mm.o
+# Source files
+SRCS = $(wildcard $(SRC_DIR)/*.c)
+OBJS = $(patsubst $(SRC_DIR)/%.c,$(OBJ_DIR)/%.o,$(SRCS))
 
-ifneq ($(CROSS_COMPILE_FLAG),)
-	CC=$(CROSS_COMPILE_FLAG)gcc
-endif
+# Library path
+LIB_INCLUDE = -I../../lib
 
-all: clean network_systolic_mm
+# Generate target names from source file names
+TARGETS = $(patsubst $(SRC_DIR)/%.c,$(BIN_DIR)/%,$(SRCS))
 
-network_systolic_mm: $(MM_OBJS)
-	$(CC) -lrt -o $@ $< -D_FILE_OFFSET_BITS=64 -D_GNU_SOURCE -D_LARGE_FILE_SOURCE
+# Default target
+all: $(TARGETS)
 
-%.o: %.c
-	$(CC) $(CFLAGS) -c -std=c99 -o $@ $< -D_FILE_OFFSET_BITS=64 -D_GNU_SOURCE -D_LARGE_FILE_SOURCE -D_AIO_AIX_SOURCE
+# Rule to build each target
+$(BIN_DIR)/%: $(OBJ_DIR)/%.o
+	@mkdir -p $(BIN_DIR)
+	$(CC) $(CFLAGS) $(LDFLAGS) -o $@ $^ $(LDLIBS)
+
+# Rule to build object files from source files
+$(OBJ_DIR)/%.o: $(SRC_DIR)/%.c
+	@mkdir -p $(OBJ_DIR)
+	$(CC) $(CFLAGS) $(LIB_INCLUDE) -c -o $@ $<
 
 clean:
-	@rm -f *.o */*.o
-	rm -rf *.o *.bin network_systolic_mm
+	rm -rf $(OBJ_DIR) $(TARGETS)
+
+.PHONY: all clean
