@@ -7,7 +7,6 @@
 #include "reconic.h"
 #include "rdma_api.h"
 #include "rdma_test.h"
-#include <unistd.h>
 
 #define DEVICE_NAME_DEFAULT "/dev/reconic-mm"
 
@@ -72,10 +71,13 @@ int main(int argc, char *argv[])
   char *pcie_resource = NULL;
   char *qp_location = QP_LOCATION_DEFAULT;
   double total_time = 0.0;
-  struct timespec ts_start, ts_end;
+  struct timespec ts_start;
+  struct timespec ts_end;
   double bandwidth  = 0.0;
   //payload size in bytes
-  uint32_t payload_size = 4;
+  uint32_t payload_size = 128;
+  uint32_t total_payload_size;
+  uint32_t WQE_count = 1;
   int   pcie_resource_fd;
   char  val = 0;
 
@@ -100,11 +102,12 @@ int main(int argc, char *argv[])
   uint32_t qdepth;
   uint16_t wrid;
   uint32_t wqe_idx;
+  //uint32_t transfer_size;
 
-  uint64_t write_offset_client;
+  uint64_t read_A_offset;
   int      ret_val;
 
-  uint64_t write_offset_server;
+  uint64_t read_offset;
   uint32_t* sw_golden;
   ssize_t rc;
 
@@ -114,7 +117,7 @@ int main(int argc, char *argv[])
 
   sockfd = socket(AF_INET, SOCK_STREAM, 0);
 
-  while ((cmd_opt = getopt_long(argc, argv, "d:p:r:i:u:t:q:z:l:scgh", \
+  while ((cmd_opt = getopt_long(argc, argv, "d:p:r:i:u:t:q:z:n:l:scgh", \
           long_opts, NULL)) != -1) {
     switch (cmd_opt) {
     case 'd':
@@ -175,6 +178,9 @@ int main(int argc, char *argv[])
     case 'z':
       payload_size = (uint32_t) atoi(optarg);
       break;
+    case 'n':
+      WQE_count = (uint32_t) atoi(optarg);
+      break;
     case 'l':
       /* QP allocated at host memory or device memory */
       fprintf(stderr, "Info: QP allocated at: %s\n", optarg);
@@ -206,6 +212,7 @@ int main(int argc, char *argv[])
   }
 
   src_mac = get_mac_addr_from_str_ip(sockfd, src_ip_str);
+  total_payload_size = WQE_count * payload_size;
 
   /* 
    * 1. Create an RecoNIC device instance
@@ -255,7 +262,6 @@ int main(int argc, char *argv[])
   qpid   = 2;
 
   fprintf(stderr, "Info: OPEN DEVICE FILE\n");
-  
   // Open the character device, reconic-mm, for data communication between host and device memory
   fpga_fd = open(device, O_RDWR);
   if (fpga_fd < 0) {
@@ -276,7 +282,7 @@ int main(int argc, char *argv[])
   //  -- 128KB RQ (8 RQs, each has 16KB and can accommodate 64 RQE)
   // All SQ, CQ and RQ resources can be used for a single QP.
     //struct rdma_qp_t* qp = 
-  allocate_rdma_qp(rdma_dev,qpid,dst_qpid,rdma_pd,cq_cidb_addr,rq_cidb_addr,qdepth,qp_location,&dst_mac,dst_ip,P_KEY,R_KEY);
+  allocate_rdma_qp(rdma_dev, qpid, dst_qpid, rdma_pd, cq_cidb_addr, rq_cidb_addr, qdepth, qp_location, &dst_mac, dst_ip, P_KEY, R_KEY);
 
   /* 
    * 7. Configure last_rq_psn, so that the RDMA packets can be accepted at the remote side
@@ -286,13 +292,20 @@ int main(int argc, char *argv[])
   config_sq_psn(rdma_dev, qpid, sq_psn);
 
   // Get golden data for verification
-  fprintf(stderr, "payload_size = %d, payload_size>>2 = %d\n", payload_size, payload_size>>2);
-  sw_golden = (uint32_t* ) malloc(payload_size);
-  for (uint32_t i = 0; i < payload_size>>2; i++) {
+  fprintf(stderr, "total_payload_size = %d, total_payload_size>>2 = %d\n", total_payload_size, total_payload_size>>2);
+  sw_golden = (uint32_t* ) malloc(total_payload_size);
+  for (uint32_t i = 0; i < total_payload_size>>2; i++) {
     sw_golden[i] = i % 10;
   }
 
-if(client) {
+
+  if(client) {
+
+    uint64_t  ipkterr_buf_value;
+    uint64_t* err_buf_addr;
+    uint64_t* ipkterr_buf_addr;
+    uint64_t read_values[2];
+
     memset(&server_addr, '\0', sizeof(struct sockaddr_in));
     server_addr.sin_family = AF_INET;
     server_addr.sin_port   = htons(tcp_sport);
@@ -303,76 +316,67 @@ if(client) {
 
     fprintf(stderr, "Info: Client is connected to a remote server\n");
 
-    rc = read(sockfd, &write_offset_client, sizeof(write_offset_client));
+    rc = read(sockfd, &read_A_offset, sizeof(read_A_offset));
 
     if(rc > 0) {
-      fprintf(stderr, "Info: client received remote offset of A = 0x%lx\n", ntohll(write_offset_client));
+      fprintf(stderr, "Info: client received remote offset of A = 0x%lx\n", ntohll(read_A_offset));
     } else {
       fprintf(stderr, "Error: Can't receive remote offset of A from the remote peer\n");
       close(sockfd);
       return -1;
     }
 
-    write_offset_client = ntohll(write_offset_client);
+    read_A_offset = ntohll(read_A_offset);
 
     wqe_idx   = 0;
     wrid      = 0;
+    device_buffer = allocate_rdma_buffer(rn_dev, (uint64_t) total_payload_size, "dev_mem");
 
-    device_buffer = allocate_rdma_buffer(rn_dev, (uint64_t) payload_size, "dev_mem");
-
-    if(is_device_address(device_buffer->dma_addr)) {
-      // Device memory address
-      fprintf(stderr, "Info: copy payload data to the device memory\n");
-      rc = write_from_buffer(device, fpga_fd, (char* ) sw_golden, (uint32_t)(payload_size), device_buffer->dma_addr);
-      fprintf(stderr, "Info: copied payload data to the device memory succesfully rc = %ld\n", rc);
-      if (rc < 0){
-        goto out;
-      }
-    } else {
-      // Host memory address
-      fprintf(stderr, "Info: Initialize payload data on the host memory\n");
-      for (uint32_t i = 0; i < payload_size>>2; i++) {
-        *((uint32_t* )(device_buffer->buffer) + i) = i % 10;
-      }
+    for(int i=0; i < WQE_count; i++)
+    {
+      fprintf(stderr, "Info: creating an RDMA read WQE for getting data\n");
+      create_a_wqe(rn_dev->rdma_dev, qpid, wrid, wqe_idx, device_buffer->dma_addr, payload_size, RNIC_OP_READ, read_A_offset, R_KEY, 0, 0, 0, 0, 0);
+      wqe_idx = wqe_idx + 1;
+      fprintf(stderr, "Info: Adding delay of 1s\n");
+      sleep(1);
     }
+    fprintf(stderr, "Info: All data has been received!\n");
     fprintf(stderr, "Info: buffer physical address is 0x%lx\n",device_buffer->dma_addr);
 
-    fprintf(stderr, "Info: creating an RDMA write WQE for writing data\n");
-    
-    create_a_wqe(rn_dev->rdma_dev, qpid, wrid, wqe_idx, device_buffer->dma_addr, payload_size, RNIC_OP_WRITE, write_offset_client, R_KEY, 0, 0, 0, 0, 0);
-    if (!strcmp(qp_location, DEVICE_MEM))
-      {
-        fprintf(stderr, "Info: Adding delay of 1s\n");
-        sleep(1);
-      }
     clock_gettime(CLOCK_MONOTONIC, &ts_start);
-    ret_val = rdma_post_send(rn_dev->rdma_dev, qpid);
+    ret_val = rdma_post_batch_send(rn_dev->rdma_dev, qpid, WQE_count);
     clock_gettime(CLOCK_MONOTONIC, &ts_end);
-    
     if(ret_val>=0) {
-      fprintf(stderr, "Successfully sent an RDMA write operation\n");
-    } else {
-      fprintf(stderr, "Failed to send an RDMA write operation\n");
-    }
-
-    /* subtract the start time from the end time */
+      fprintf(stderr, "Successfully sent an RDMA read operation\n");
+      } else {
+      fprintf(stderr, "Failed to send an RDMA read operation\n");
+      }
+      /* subtract the start time from the end time */
     timespec_sub(&ts_end, &ts_start);
     total_time = (ts_end.tv_sec + ((double)ts_end.tv_nsec/NSEC_DIV));
-    bandwidth = ((double) payload_size) / total_time;
-    fprintf(stderr, "Info: Time spent %f usec, size = %d bytes, Bandwidth = %f gigabits/sec\n",	(total_time*1000000), payload_size, ((bandwidth*8)/1000000000));
+    bandwidth = ((double) payload_size) / (total_time/WQE_count);
+    fprintf(stderr, "Info: Total Time spent %f usec, Average Time spent on each WQE %f usec, Size per WQE = %d bytes, Bandwidth per WQE = %f gigabits/sec\n",	(total_time*1000000), (total_time*1000000)/WQE_count, payload_size, ((bandwidth*8)/1000000000));
+      
+    fprintf(stderr, "Info: Data read successfully\n");
 
     fprintf(stderr, "Info: Printing RDMA registers from the client side\n");
-
-    // Dump RDMA registers
+      // Dump RDMA registers
     dump_registers(rdma_dev, 1, qpid);
+      
+    err_buf_addr = (uint64_t*) err_buf->buffer;
+    
+    for (int i = 0; i < 2; i++) {
+    read_values[i] = *((uint64_t*)(err_buf_addr + i * sizeof(uint64_t)));
+    }
+    fprintf(stderr, "Info: Value of error buffer at location 1 is , 0x%016lx%016lx\n", read_values[1], read_values[0]);
+
+    ipkterr_buf_addr = (uint64_t*) ipkterr_buf->buffer;
+    ipkterr_buf_value = *ipkterr_buf_addr;
+    fprintf(stderr,"Info: Value of ipkterr_buf at location 1 is , 0x%lx\n", ipkterr_buf_value);
   }
 
   if(server) {
     // Connect to the remote peer via TCP/IP
-    uint32_t buf_size;
-    buf_size = payload_size;
-    uint32_t* recv_tmp = malloc(buf_size);
-
     memset(&server_addr, '\0', sizeof(struct sockaddr_in));
     server_addr.sin_family = AF_INET;
     server_addr.sin_port = htons(tcp_sport);
@@ -380,8 +384,22 @@ if(client) {
 
     bind(sockfd, (struct sockaddr*) &server_addr, sizeof(struct sockaddr_in));
 
+    uint64_t  ipkterr_buf_value;
+    uint64_t* err_buf_addr;
+    uint64_t* ipkterr_buf_addr;
+
+    err_buf_addr = (uint64_t*) err_buf->buffer;
+    uint64_t read_values[2];
+    for (int i = 0; i < 2; i++) {
+      read_values[i] = *((uint64_t*)(err_buf_addr + i * sizeof(uint64_t)));
+    }
+    fprintf(stderr, "Info: Value of error buffer at location 1 is , 0x%016lx%016lx\n", read_values[1], read_values[0]);
+
+    ipkterr_buf_addr = (uint64_t*) ipkterr_buf->buffer;
+    ipkterr_buf_value = *ipkterr_buf_addr;
+    fprintf(stderr,"Info: Value of ipkterr_buf at location 1 is , 0x%lx\n", ipkterr_buf_value);
+
     fprintf(stderr, "Info: Server is listening to a remote peer\n");
-    
     listen(sockfd, LISTENQ);
 
     addr_size = sizeof(client_addr);
@@ -389,59 +407,51 @@ if(client) {
 
     fprintf(stderr, "Info: Server is connected to a remote peer\n");
 
-    dump_registers(rn_dev->rdma_dev, 0, qpid);
-
-    tmp_buffer = allocate_rdma_buffer(rn_dev, payload_size, /*qp_location*/"dev_mem");
-    fprintf(stderr,"tmp_buffer size is %d\n", tmp_buffer->buf_size);
+    tmp_buffer = allocate_rdma_buffer(rn_dev, total_payload_size, /*qp_location*/"dev_mem");
     rdma_register_memory_region(rdma_dev, rdma_pd, R_KEY, tmp_buffer);
     fprintf(stderr, "Info: allocating buffer for payload data\n");
     fprintf(stderr, "Info: tmp_buffer->buffer = %p, tmp_buffer->dma_addr = 0x%lx\n", (uint64_t *) tmp_buffer->buffer, tmp_buffer->dma_addr);
-    
-    write_offset_server = htonll((uint64_t) tmp_buffer->buffer);
-    write(accepted_sockfd, &write_offset_server, sizeof(uint64_t));
-    dump_registers(rn_dev->rdma_dev, 0, qpid);
-    fprintf(stderr, "Sending write_offset (%lx) to the remote client\n", ntohll(write_offset_server));
 
-    fprintf(stderr, "Does the client finish its RDMA write operation? If yes, please press any key\n");
+    if(is_device_address(tmp_buffer->dma_addr)) {
+      // Device memory address
+      fprintf(stderr, "Info: copy payload data to the device memory\n");
+      rc = write_from_buffer(device, fpga_fd, (char* ) sw_golden, (uint32_t)(total_payload_size), tmp_buffer->dma_addr);
+      fprintf(stderr, "Info: copied payload data to the device memory succesfully rc = %ld\n", rc);
+      if (rc < 0){
+        goto out;
+      }
+    } else {
+      // Host memory address
+      fprintf(stderr, "Info: Initialize payload data on the host memory\n");
+      for (uint32_t i = 0; i < total_payload_size>>2; i++) {
+        *((uint32_t* )(tmp_buffer->buffer) + i) = i % 10;
+      }
+    }
+
+    read_offset = htonll((uint64_t) tmp_buffer->buffer);
+    write(accepted_sockfd, &read_offset, sizeof(uint64_t));
+    fprintf(stderr, "Sending read_offset (%lx) to the remote client\n", ntohll(read_offset));
+    
+
+    fprintf(stderr, "Does the client finish its RDMA read operation? If yes, please press any key\n");
     
     while(val != '\r' && val != '\n') {
       val = getchar();
     }
     fprintf(stderr, "\n");
 
-    
-    if(is_device_address(tmp_buffer->dma_addr)) {
-      // Copy data from device memory to host memory
-      rc = read_to_buffer(device, fpga_fd, (char* ) recv_tmp, (uint64_t) payload_size, (uint64_t) tmp_buffer->dma_addr);
-      fprintf(stderr, "Info: The value of rc is %ld\n",rc);
-      if(rc < 0) {
-        fprintf(stderr, "Error: read_to_buffer failed with rc = %ld\n", rc);
-        goto out;
-      }
-    } else {
-      recv_tmp = (uint32_t* ) tmp_buffer->buffer;
-      fprintf(stderr,"Buffer contents: %ls\n", recv_tmp);
-    }
-
-    /* 
-    * 10. Check received data.
-    */
-    fprintf(stderr, "Info: CHECK RECEIVED DATA\n");
-    for (uint32_t i = 0; i < payload_size>>2; i++) {
-      if(recv_tmp[i] != sw_golden[i]) {
-        fprintf(stderr, "Error: received data mismatched: recv[%d]=%d, sw_golden[%d]=%d\n", i, recv_tmp[i], i, sw_golden[i]);
-        goto out;
-      }
-    }
-
-    fprintf(stderr, "Info: Data write successfully\n");
-
-    // Free buffer
-    if(is_device_address(tmp_buffer->dma_addr)) {
-      free(recv_tmp);
-    }
-    
     dump_registers(rn_dev->rdma_dev, 0, qpid);
+
+    err_buf_addr = (uint64_t*) err_buf->buffer;
+    for (int i = 0; i < 2; i++) {
+    read_values[i] = *((uint64_t*)(err_buf_addr + i * sizeof(uint64_t)));
+    }
+    fprintf(stderr, "Info: Value of error buffer at location 1 is , 0x%016lx%016lx\n", read_values[1], read_values[0]);
+    
+
+    ipkterr_buf_addr = (uint64_t*) ipkterr_buf->buffer;
+    ipkterr_buf_value = *ipkterr_buf_addr;
+    fprintf(stderr,"Info: Value of ipkterr_buf at location 1 is , 0x%lx\n", ipkterr_buf_value);
 
     if(shutdown(accepted_sockfd, SHUT_RDWR) < 0){
       fprintf(stderr, "accepted_sockfd shutdown failed\n");
@@ -468,4 +478,5 @@ out:
   destroy_rn_dev(rn_dev);
   return 0;
 }
+
 

@@ -913,9 +913,9 @@ int rdma_post_batch_send(struct rdma_dev_t* rdma_dev, uint32_t qpid, uint32_t ba
   Debug("[Register] RN_RDMA_QCSR_SQPIi=0x%x, qpid=%d, value=0x%x\n", get_rdma_per_q_config_addr(RN_RDMA_QCSR_SQPIi, qpid), qpid, qp->sq_pidb);
   Debug("DEBUG: Update hardware sq db idx from software = %d\n", qp->sq_pidb);
   Debug("DEBUG: Reading hardware SQPIi (0x%x) = 0x%x\n", get_rdma_per_q_config_addr(RN_RDMA_QCSR_SQPIi, qpid), read32_data(rdma_dev->axil_ctl, get_rdma_per_q_config_addr(RN_RDMA_QCSR_SQPIi, qpid)));
-  
+  Debug("[Register] RN_RDMA_QCSR_CQHEADi=0x%x, qpid=%d, value=0x%x\n", get_rdma_per_q_config_addr(RN_RDMA_QCSR_CQHEADi, qpid), qpid, qp->cq_cidb);
   // polling on completion, by checking CQ doorbell
-  while(qp->cq_cidb == qp->sq_pidb) {
+  while(qp->cq_cidb < qp->sq_pidb) {
     // Wait for all WQE to be completed
     qp->cq_cidb = poll_cq_cidb(rdma_dev, qpid, qp->sq_cidb);
     qp->sq_cidb = qp->cq_cidb;

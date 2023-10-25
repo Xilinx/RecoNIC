@@ -53,22 +53,22 @@ struct rn_dev_t* rn_dev;
 
 int main(int argc, char *argv[])
 {
-	int sockfd;
-	int accepted_sockfd;
-	struct sockaddr_in server_addr;
-	struct sockaddr_in client_addr;
-	socklen_t addr_size;
+  int sockfd;
+  int accepted_sockfd;
+  struct sockaddr_in server_addr;
+  struct sockaddr_in client_addr;
+  socklen_t addr_size;
   char command[64];
-	FILE *dst_mac_fp;
-	char *line = NULL;
-	size_t len = 0;
-	char *tmp_mac_addr_ptr = NULL;
-	char tmp_mac_addr_str[18] = "";
-	ssize_t command_read;
+  FILE *dst_mac_fp;
+  char *line = NULL;
+  size_t len = 0;
+  char *tmp_mac_addr_ptr = NULL;
+  char tmp_mac_addr_str[18] = "";
+  ssize_t command_read;
 
-	int cmd_opt;
-	device = DEVICE_NAME_DEFAULT;
-	char *pcie_resource = NULL;
+  int cmd_opt;
+  device = DEVICE_NAME_DEFAULT;
+  char *pcie_resource = NULL;
   char *qp_location = QP_LOCATION_DEFAULT;
   double total_time = 0.0;
   struct timespec ts_start, ts_end;
@@ -203,15 +203,15 @@ int main(int argc, char *argv[])
       exit(0);
       break;
     }
-	}
+  }
 
   src_mac = get_mac_addr_from_str_ip(sockfd, src_ip_str);
 
   /* 
    * 1. Create an RecoNIC device instance
    */  
-	fprintf(stderr, "Info: Creating rn_dev\n");
-	rn_dev = create_rn_dev(pcie_resource, &pcie_resource_fd, preallocated_hugepages, num_qp);
+  fprintf(stderr, "Info: Creating rn_dev\n");
+  rn_dev = create_rn_dev(pcie_resource, &pcie_resource_fd, preallocated_hugepages, num_qp);
 
   /* 
    * 2. Create an RDMA device instance
@@ -245,14 +245,14 @@ int main(int argc, char *argv[])
                 data_buf->dma_addr, ipkt_err_stat_q_size, ipkterr_buf->dma_addr, num_err_buf,
                 per_err_buf_size, err_buf->dma_addr, resp_err_pkt_buf_size, resp_err_pkt_buf->dma_addr);
 
-	/* 
+  /* 
    * 5. Allocate protection domain for queues and memory regions
    */
   fprintf(stderr, "Info: ALLOCATE PD\n");
   struct rdma_pd_t* rdma_pd = allocate_rdma_pd(rdma_dev, 0 /* pd_num */);
 
-	qdepth = 64;
-	qpid   = 2;
+  qdepth = 64;
+  qpid   = 2;
 
   fprintf(stderr, "Info: OPEN DEVICE FILE\n");
   // Open the character device, reconic-mm, for data communication between host and device memory
@@ -324,7 +324,7 @@ int main(int argc, char *argv[])
     read_A_offset = ntohll(read_A_offset);
 
     wqe_idx   = 0;
-	  wrid      = 0;
+    wrid      = 0;
 
     device_buffer = allocate_rdma_buffer(rn_dev, (uint64_t) payload_size, "dev_mem");
 
@@ -347,7 +347,7 @@ int main(int argc, char *argv[])
     fprintf(stderr, "Info: buffer physical address is 0x%lx\n",buf_phy_addr);
 
     /* subtract the start time from the end time */
-		timespec_sub(&ts_end, &ts_start);
+    timespec_sub(&ts_end, &ts_start);
     total_time = (ts_end.tv_sec + ((double)ts_end.tv_nsec/NSEC_DIV));
     bandwidth = ((double) payload_size) / total_time;
     fprintf(stderr, "Info: Time spent %f usec, size = %d bytes, Bandwidth = %f gigabits/sec\n",	total_time*1000000, payload_size, ((bandwidth*8)/1000000000));
@@ -365,6 +365,10 @@ int main(int argc, char *argv[])
       recv_tmp = (uint32_t* ) device_buffer->buffer;
       fprintf(stderr,"Buffer contents: %ls\n", recv_tmp);
     }
+/*
+    for (uint32_t i = 0; i < payload_size>>2; i++) {
+        fprintf(stderr, "Info: received data: recv[%d]=%d\n", i, recv_tmp[i]);
+    }*/
 
     /* 
     * 10. Check received data.
@@ -392,6 +396,7 @@ int main(int argc, char *argv[])
 
   if(server) {
     // Connect to the remote peer via TCP/IP
+    //uint32_t* sent_tmp = malloc(payload_size);
     memset(&server_addr, '\0', sizeof(struct sockaddr_in));
     server_addr.sin_family = AF_INET;
     server_addr.sin_port = htons(tcp_sport);
@@ -430,8 +435,12 @@ int main(int argc, char *argv[])
 
     read_offset = htonll((uint64_t) tmp_buffer->buffer);
     write(accepted_sockfd, &read_offset, sizeof(uint64_t));
-	  fprintf(stderr, "Sending read_offset (%lx) to the remote client\n", ntohll(read_offset));
-    
+    fprintf(stderr, "Sending read_offset (%lx) to the remote client\n", ntohll(read_offset));
+    /*
+    rc = read_to_buffer(device, fpga_fd, (char* ) sent_tmp, (uint64_t) payload_size, (uint64_t) tmp_buffer->dma_addr);
+    for (uint32_t i = 0; i < payload_size>>2; i++) {
+        fprintf(stderr, "Info: sent data: sent[%d]=%d\n", i, sent_tmp[i]);
+    }*/
 
     fprintf(stderr, "Does the client finish its RDMA read operation? If yes, please press any key\n");
     
@@ -453,7 +462,7 @@ int main(int argc, char *argv[])
     fprintf(stderr, "sockfd shutdown failed\n");
     fprintf(stderr, "Error: %s\n", strerror(errno));
   }
-	close(sockfd);	
+  close(sockfd);	
 
 out:
   free(cidb_buffer);
@@ -462,10 +471,10 @@ out:
   free(err_buf);
   free(resp_err_pkt_buf);
   free(sw_golden);
-	close(fpga_fd);
+  close(fpga_fd);
   close(pcie_resource_fd);
   destroy_rn_dev(rn_dev);
-	return 0;
+  return 0;
 }
 
 
