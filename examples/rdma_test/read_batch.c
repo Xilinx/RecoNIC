@@ -117,7 +117,7 @@ int main(int argc, char *argv[])
 
   sockfd = socket(AF_INET, SOCK_STREAM, 0);
 
-  while ((cmd_opt = getopt_long(argc, argv, "d:p:r:i:u:t:q:z:n:l:scgh", \
+  while ((cmd_opt = getopt_long(argc, argv, "d:p:r:i:u:t:q:z:b:l:scgh", \
           long_opts, NULL)) != -1) {
     switch (cmd_opt) {
     case 'd':
@@ -178,7 +178,7 @@ int main(int argc, char *argv[])
     case 'z':
       payload_size = (uint32_t) atoi(optarg);
       break;
-    case 'n':
+    case 'b':
       WQE_count = (uint32_t) atoi(optarg);
       break;
     case 'l':

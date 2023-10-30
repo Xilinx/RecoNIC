@@ -37,6 +37,7 @@ static struct option const long_opts[] = {
 	{"tcp_sport"     , required_argument, NULL, 't'},
 	{"dst_qp"        , required_argument, NULL, 'q'},
 	{"payload_size"  , required_argument, NULL, 'z'},
+	{"batch_size"    , required_argument, NULL, 'b'},
 	{"qp_location"   , required_argument, NULL, 'l'},
 	{"server"        , no_argument      , NULL, 's'},
 	{"client"        , no_argument      , NULL, 'c'},
@@ -72,6 +73,9 @@ static void usage(const char *name)
 		long_opts[i].val, long_opts[i].name);
 	i++;
 	fprintf(stdout, "  -%c (--%s) Payload size in bytes \n",
+		long_opts[i].val, long_opts[i].name);
+	i++;
+	fprintf(stdout, "  -%c (--%s) Batch size, number of WQEs per QP \n",
 		long_opts[i].val, long_opts[i].name);
 	i++;
 	fprintf(stdout, "  -%c (--%s) QP/mem-registered buffers' location: [host_mem | dev_mem] \n",
