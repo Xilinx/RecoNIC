@@ -24,7 +24,8 @@ The software encompasses the network stack driver, utilized to handle non-RDMA t
 ## Preliminary Installation
 
 * Vivado 2021.2
-* vitis_net_p4 version 1.0
+* vitis_net_p4 <br/>
+How to enable vitis_net_p4: (1) before Vivado installation, we need to '$ export VitisNetP4_Option_VISIBLE=true'; (2) When running Vivado installer, you should be able to see the option for Vitis Networking P4. Make sure you select the vitis_net_p4 option.
 * ERNIC license <br/>
 ERNIC license is required in this project. You can either purchase or apply for it through [AMD University Program](https://www.xilinx.com/support/university.html). For further details, please visit [AMD ERNIC](https://www.xilinx.com/products/intellectual-property/ef-di-ernic.html) website.
 * Questa simulator 2021.3 (if available)
