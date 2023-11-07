@@ -77,7 +77,14 @@ The PCIe BDF (Bus, Device, Function) number and device ID might be different dep
 
 &emsp;&emsp;**Using scripts for FPGA programming**
 
-*[program_fpga.sh](scripts/program_fpga.sh)* is a bash script used to program FPGA either with *.bit or *.mcs file. In order to use the script, you have to first get the PCIe BDF number and FPGA target device ID/name. You can obtain the FPGA target device name from "Open New Target" under "Open Hardware Manager" of "PROGRAM AND DEBUG" in Vivado GUI. If your jtag cable for programming is connected to other remote host, then you need to provide IP address or hostname of that remote machine as well.
+*[program_fpga.sh](scripts/program_fpga.sh)* is a bash script used to program FPGA either with *.bit or *.mcs file. In order to use the script, you have to first get the PCIe BDF number and FPGA target device ID/name. You can obtain the FPGA target device name from "Open New Target" under "Open Hardware Manager" of "PROGRAM AND DEBUG" in Vivado GUI. Or you can use this command
+```
+$ echo 'open_hw_manager; connect_hw_server -allow_non_jtag; puts [get_hw_targets]' > temp.tcl && vivado -nolog -nojournal -mode batch -source temp.tcl | grep 'xilinx_tcf/Xilinx/' && rm temp.tcl
+localhost:3121/xilinx_tcf/Xilinx/21770433G01YA
+```
+In this case, the FPGA target device ID/name is "21770433G01YA".
+
+If your jtag cable for programming is connected to other remote host, then you need to provide IP address or hostname of that remote machine as well.
 ```
 $ cd scripts
 $ ./program_fpga.sh
