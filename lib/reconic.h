@@ -46,6 +46,27 @@ extern int fpga_fd;
 */
 #define DEVICE_MEM_SIZE 4294967296
 
+/*! \def HARDWARE_PAGE_SIZE
+    \brief HARDWARE_PAGE_SIZE is used to determine payload size per AXI4-MM transaction on hardware.
+
+    HARDWARE_PAGE_SIZE = 4096 (4KB)
+*/
+#define HARDWARE_PAGE_SIZE 4096
+
+/*! \def HARDWARE_PAGE_SIZE_ALIGNMENT_MASK
+    \brief HARDWARE_PAGE_SIZE_ALIGNMENT_MASK is used to get address aligned with HARDWARE_PAGE_SIZE.
+
+    HARDWARE_PAGE_SIZE_ALIGNMENT_MASK = 0xfffffffffffff000
+*/
+#define HARDWARE_PAGE_SIZE_ALIGNMENT_MASK 0xfffffffffffff000
+
+/*! \def HARDWARE_PAGE_SIZE_ADDRESS_MASK
+    \brief HARDWARE_PAGE_SIZE_ADDRESS_MASK is used to get address within HARDWARE_PAGE_SIZE.
+
+    HARDWARE_PAGE_SIZE_ADDRESS_MASK = 0x0000000000000fff
+*/
+#define HARDWARE_PAGE_SIZE_ADDRESS_MASK 0x0000000000000fff
+
 /*! \def PAGE_SHIFT
     \brief PAGE_SHIFT is used to determine the page size.
 

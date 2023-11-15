@@ -206,7 +206,19 @@ struct rdma_buff_t* allocate_rdma_buffer(struct rn_dev_t* rn_dev, uint64_t buf_s
 
   if(!strcmp(buf_location, HOST_MEM)) {
     // Allocate the buffer in the host memory
-    rdma_buffer->buffer = rn_dev->base_buf->buffer + rn_dev->buffer_offset;
+    // Check the buffer_offset and buf_size whether it meets 4KB alignment or not
+    if (buf_size <= HARDWARE_PAGE_SIZE) {
+      if (((rn_dev->buffer_offset & HARDWARE_PAGE_SIZE_ADDRESS_MASK) + buf_size) > HARDWARE_PAGE_SIZE) {
+        rn_dev->buffer_offset =  (rn_dev->buffer_offset + HARDWARE_PAGE_SIZE) & HARDWARE_PAGE_SIZE_ALIGNMENT_MASK;
+      }
+    } else {
+      // buf_size > HARDWARE_PAGE_SIZE
+      if((rn_dev->buffer_offset & HARDWARE_PAGE_SIZE_ADDRESS_MASK) != 0) {
+        // buffer_offset is not aligned with HARDWARE_PAGE_SIZE
+        rn_dev->buffer_offset =  (rn_dev->buffer_offset + HARDWARE_PAGE_SIZE) & HARDWARE_PAGE_SIZE_ALIGNMENT_MASK;
+      }
+    }
+    rdma_buffer->buffer = (void*)((uint64_t) rn_dev->base_buf->buffer + rn_dev->buffer_offset);
     rn_dev->buffer_offset += buf_size;
     rdma_buffer->buf_size = buf_size;
 
@@ -217,11 +229,24 @@ struct rdma_buff_t* allocate_rdma_buffer(struct rn_dev_t* rn_dev, uint64_t buf_s
   } else {
     if (!strcmp(buf_location, DEVICE_MEM)) {
       // Allocate the buffer in the device memory
-      rdma_buffer->buffer = (void* ) (rn_dev->dev_buffer_offset | DEVICE_MEM_OFFSET);
       // TODO: We need to implement user-space device memory management function
+      // Check the buffer_offset and buf_size whether it meets 4KB alignment or not
+      if (buf_size <= HARDWARE_PAGE_SIZE) {
+        if (((rn_dev->dev_buffer_offset & HARDWARE_PAGE_SIZE_ADDRESS_MASK) + buf_size) > HARDWARE_PAGE_SIZE) {
+          rn_dev->dev_buffer_offset =  (rn_dev->dev_buffer_offset + HARDWARE_PAGE_SIZE) & HARDWARE_PAGE_SIZE_ALIGNMENT_MASK;
+        }
+      } else {
+        // buf_size > HARDWARE_PAGE_SIZE
+        if((rn_dev->dev_buffer_offset & HARDWARE_PAGE_SIZE_ADDRESS_MASK) != 0) {
+          // buffer_offset is not aligned with HARDWARE_PAGE_SIZE
+          rn_dev->dev_buffer_offset =  (rn_dev->dev_buffer_offset + HARDWARE_PAGE_SIZE) & HARDWARE_PAGE_SIZE_ALIGNMENT_MASK;
+        }
+      }
+      rdma_buffer->buffer = (void*)(rn_dev->dev_buffer_offset | DEVICE_MEM_OFFSET);
       rdma_buffer->dma_addr = (uint64_t) (rn_dev->dev_buffer_offset | DEVICE_MEM_OFFSET);
       rn_dev->dev_buffer_offset += buf_size;
       rdma_buffer->buf_size = buf_size;
+
       // TODO: We need to put assert here later to make sure we won't exceed device memory.
       Debug("Info: allocated device buffer physical addr = %lx, rn_dev->dev_buffer_offset = 0x%lx\n", rdma_buffer->dma_addr, rn_dev->dev_buffer_offset);
       assert(rn_dev->dev_buffer_offset <= (uint64_t) DEVICE_MEM_SIZE);
