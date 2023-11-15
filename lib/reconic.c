@@ -230,7 +230,7 @@ struct rdma_buff_t* allocate_rdma_buffer(struct rn_dev_t* rn_dev, uint64_t buf_s
     if (!strcmp(buf_location, DEVICE_MEM)) {
       // Allocate the buffer in the device memory
       // TODO: We need to implement user-space device memory management function
-      // Check the buffer_offset and buf_size whether it meets 4KB alignment or not
+      // Check the dev_buffer_offset and buf_size whether it meets 4KB alignment or not
       if (buf_size <= HARDWARE_PAGE_SIZE) {
         if (((rn_dev->dev_buffer_offset & HARDWARE_PAGE_SIZE_ADDRESS_MASK) + buf_size) > HARDWARE_PAGE_SIZE) {
           rn_dev->dev_buffer_offset =  (rn_dev->dev_buffer_offset + HARDWARE_PAGE_SIZE) & HARDWARE_PAGE_SIZE_ALIGNMENT_MASK;
@@ -238,7 +238,7 @@ struct rdma_buff_t* allocate_rdma_buffer(struct rn_dev_t* rn_dev, uint64_t buf_s
       } else {
         // buf_size > HARDWARE_PAGE_SIZE
         if((rn_dev->dev_buffer_offset & HARDWARE_PAGE_SIZE_ADDRESS_MASK) != 0) {
-          // buffer_offset is not aligned with HARDWARE_PAGE_SIZE
+          // dev_buffer_offset is not aligned with HARDWARE_PAGE_SIZE
           rn_dev->dev_buffer_offset =  (rn_dev->dev_buffer_offset + HARDWARE_PAGE_SIZE) & HARDWARE_PAGE_SIZE_ALIGNMENT_MASK;
         }
       }
