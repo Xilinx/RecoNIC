@@ -81,7 +81,7 @@ axis_pkt_queue_t packets;
 logic start_reading;
 logic reading_done;
 logic [63:0] pkt_idx;
-logic [63:0] actual_pkt_cnt;
+logic [63:0] axis_beat_idx;
 
 logic [AXIS_DATA_WIDTH-1:0] m_axis_tdata_reg;
 logic [AXIS_KEEP_WIDTH-1:0] m_axis_tkeep_reg;
@@ -129,13 +129,18 @@ always_ff @(posedge axis_clk) begin
   if(!axis_rstn) begin
     reading_done <= 1'b0;
     pkt_idx       <= 0;
-    actual_pkt_cnt<= 0;
+    axis_beat_idx <= 0;
   end
   else begin
-    if(m_axis_tready && start_sim && start_send && !reading_done) begin
+    if(m_axis_tready && start_sim && start_send && !reading_done)
+    begin
+      axis_beat_idx <= axis_beat_idx + 1;
+    end
+
+    if(m_axis_tready && packets[axis_beat_idx].tlast && start_sim && start_send && !reading_done) begin
       pkt_idx <= pkt_idx + 1;
 
-      if(pkt_idx == num_pkts-1) begin
+      if((pkt_idx == num_pkts-1) && (axis_beat_idx == (packets.size()-1))) begin
         reading_done <= 1'b1;
         $display("INFO: [rn_tb_driver] Got all the input stimululs");
       end
@@ -162,12 +167,12 @@ always_ff @(posedge axis_clk) begin
   end
   else begin
     if((packets.size()!=0) && start_sim && start_send && start_reading && !reading_done && m_axis_tready) begin
-      m_axis_tdata_reg      <= packets[pkt_idx].tdata;
-      m_axis_tkeep_reg      <= packets[pkt_idx].tkeep;
-      m_axis_tuser_size_reg <= packets[pkt_idx].pkt_len;
-      m_axis_tlast_reg      <= packets[pkt_idx].tlast;
-      m_axis_tvalid_reg     <= (packets[pkt_idx].tdata[63:0] != 64'hdddddddddddddddd) ? 1'b1 : 1'b0;
-      $display("INFO: [rn_tb_driver] time=%0t Reading %d-th packet = %x", $time, pkt_idx, packets[pkt_idx].tdata);
+      m_axis_tdata_reg      <= packets[axis_beat_idx].tdata;
+      m_axis_tkeep_reg      <= packets[axis_beat_idx].tkeep;
+      m_axis_tuser_size_reg <= packets[axis_beat_idx].pkt_len;
+      m_axis_tlast_reg      <= packets[axis_beat_idx].tlast;
+      m_axis_tvalid_reg     <= (packets[axis_beat_idx].tdata[63:0] != 64'hdddddddddddddddd) ? 1'b1 : 1'b0;
+      $display("INFO: [rn_tb_driver] time=%0t Reading %d-th packet = %x", $time, pkt_idx, packets[axis_beat_idx].tdata);
     end
     else begin
       m_axis_tvalid_reg     <= 1'b0;
@@ -246,8 +251,10 @@ function automatic axis_pkt_queue_t get_pkt_in_axis (
   ref mbox_pkt_str_t mbox_pkt_str
 );
 
-  longint pkts_read = 0;
+  //longint pkts_read = 0;
   longint pkt_processed = 0;
+  longint glb_beat_cnt = 0;
+  longint local_beat_cnt = 0;
   int byte_read = 0;
   string pkt_str;
   string pkt_byte;
@@ -259,22 +266,23 @@ function automatic axis_pkt_queue_t get_pkt_in_axis (
   while(pkt_processed < num_pkts) begin
     if(mbox_pkt_str.try_get(pkt_str)) begin
       pkt_bytes = split(pkt_str, " ");
-      $display("INFO: [rn_tb_driver] the %d-th packet: pkts_read=%d, pkt_bytes=%d", pkt_processed, pkts_read, pkt_bytes.size());
       for(int i=0; i<pkt_bytes.size(); i++) begin
         pkt_byte = pkt_bytes[i];
-        if(byte_read == AXIS_KEEP_WIDTH) begin
-          byte_read = 0;
-          pkts_read++;
-        end
-        axis_pkts[pkts_read].tdata = pkt_byte.atohex() << (8* byte_read) | (byte_read > 0 ? axis_pkts[pkts_read].tdata : 0);
-        axis_pkts[pkts_read].tkeep = (1'b1 << byte_read) | (byte_read > 0 ? axis_pkts[pkts_read].tkeep : 0);
-        axis_pkts[pkts_read].tlast = (i == pkt_bytes.size()-1) ? 1'b1 : 1'b0;
+        axis_pkts[glb_beat_cnt+local_beat_cnt].tdata = pkt_byte.atohex() << (8* byte_read) | (byte_read > 0 ? axis_pkts[glb_beat_cnt+local_beat_cnt].tdata : 0);
+        axis_pkts[glb_beat_cnt+local_beat_cnt].tkeep = (1'b1 << byte_read) | (byte_read > 0 ? axis_pkts[glb_beat_cnt+local_beat_cnt].tkeep : 0);
+        axis_pkts[glb_beat_cnt+local_beat_cnt].tlast = (i == pkt_bytes.size()-1) ? 1'b1 : 1'b0;
         byte_read++;
         pkt_processed = (i == pkt_bytes.size()-1) ? (pkt_processed + 1) : pkt_processed;
-        axis_pkts[pkts_read].pkt_len = pkt_bytes.size();
+        axis_pkts[glb_beat_cnt+local_beat_cnt].pkt_len = pkt_bytes.size();
+
+        if((byte_read == AXIS_KEEP_WIDTH) || (i == pkt_bytes.size()-1)) begin
+          byte_read = 0;
+          local_beat_cnt++;
+        end
+        glb_beat_cnt = (i == pkt_bytes.size()-1) ? (glb_beat_cnt + local_beat_cnt) : glb_beat_cnt;
       end
-      pkts_read++;
-      byte_read = 0;
+      $display("INFO: [rn_tb_driver] the %d-th packet: local_beat_cnt=%d, pkt_bytes=%d, global_beat_cnt=%d", pkt_processed, local_beat_cnt, pkt_bytes.size(), glb_beat_cnt);
+      local_beat_cnt = 0;
     end
   end
   return axis_pkts;
