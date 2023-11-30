@@ -7,6 +7,7 @@
 #include <core.p4>
 #include <xsa.p4>
 
+const bit<16> ETH_VLAN = 0x8100;
 const bit<16> ETH_IPV4 = 0x0800;
 const bit<16> ETH_IPV6 = 0x86DD;
 
@@ -117,6 +118,14 @@ header eth_h {
   bit<16> type;
 }
 
+/* Vlan header */
+header vlan_h {
+    bit<3>  pcp;  // Priority code point
+    bit<1>  cfi;  // Drop eligible indicator
+    bit<12> vid;  // VLAN identifier
+    bit<16> tpid; // Tag protocol identifier
+}
+
 /* ipv4 header */
 header ipv4_h {
   bit<4>  version;
@@ -132,6 +141,18 @@ header ipv4_h {
   bit<16> chksum;
   bit<32> src;
   bit<32> dst;
+}
+
+/* ipv6 header */
+header ipv6_h {
+    bit<4>   version;    // Version = 6
+    bit<8>   priority;   // Traffic class
+    bit<20>  flow_label; // Flow label
+    bit<16>  length;     // Payload length
+    bit<8>   protocol;   // Next protocol
+    bit<8>   hop_limit;  // Hop limit
+    bit<128> src;        // Source address
+    bit<128> dst;        // Destination address
 }
 
 /* IPv4 options - length = (ipv4.ihl - 5)*32 */
@@ -150,8 +171,10 @@ header udp_h {
 /* Headers of interest */
 struct headers_t {
   eth_h      eth;
+  vlan_h[2]  vlan;
   ipv4_h     ipv4;
   ipv4_opt_t ipv4_opt;
+  ipv6_h     ipv6;
   udp_h      udp;
   bth_h      bth;
   reth_h     reth;
@@ -211,8 +234,20 @@ parser parser_inst(packet_in pkt,
     pkt.extract<eth_h>(hdr.eth);
 
     transition select(hdr.eth.type) {
+      ETH_VLAN: parse_vlan;
       ETH_IPV4: parse_ipv4;
+      ETH_IPV6: parse_ipv6;
       default : accept;
+    }
+  }
+
+  state parse_vlan {
+    pkt.extract(hdr.vlan.next);
+    transition select(hdr.vlan.last.tpid) {
+      ETH_VLAN : parse_vlan;
+      ETH_IPV4 : parse_ipv4;
+      ETH_IPV6 : parse_ipv6;
+      default  : accept;
     }
   }
 
@@ -235,6 +270,15 @@ parser parser_inst(packet_in pkt,
     transition select(hdr.ipv4.proto) {
       IPPROTO_UDP : parse_udp;
       default     : accept;
+    }
+  }
+
+  state parse_ipv6 {
+    pkt.extract(hdr.ipv6);
+    verify(hdr.ipv6.version == 6, error.InvalidIPpacket);
+    transition select(hdr.ipv6.protocol) {
+      IPPROTO_UDP : parse_udp;
+      default     : accept; 
     }
   }
 
@@ -325,8 +369,14 @@ control forward_inst(inout headers_t hdr,
     pktlen  = pc_meta.pktlen;
 
     if (hdr.udp.isValid()) {
-      ip_src = hdr.ipv4.src;
-      ip_dst = hdr.ipv4.dst;
+      if (hdr.ipv6.isValid()){
+        ip_src = (bit<32>) 6;
+        ip_dst = (bit<32>) 6;
+      } else {
+        ip_src = hdr.ipv4.src;
+        ip_dst = hdr.ipv4.dst;
+      }
+      
       udp_sport = hdr.udp.sport;
       udp_dport = hdr.udp.dport;
 
@@ -381,8 +431,10 @@ control deparser_inst(packet_out pkt,
 {
   apply {
     pkt.emit(hdr.eth);
+    pkt.emit(hdr.vlan);
     pkt.emit(hdr.ipv4);
     pkt.emit(hdr.ipv4_opt);
+    pkt.emit(hdr.ipv6);
     pkt.emit(hdr.udp);
     pkt.emit(hdr.bth);
     pkt.emit(hdr.reth);
