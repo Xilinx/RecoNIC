@@ -4,6 +4,7 @@ To meet the explosive growth of data and scale-out workloads/applications, today
 
 To address these challenges, we propose RecoNIC, an RDMA-enabled SmartNIC platform with compute acceleration, designed to minimize the overhead associated with data copies and to bring data as close to computation as feasible. The platform consists of a hardware shell and software stacks. The hardware shell of RecoNIC encompasses basic NIC functionalities, an RDMA engine, and two programmable compute logic modules for lookaside and streaming computations, respectively. Developers have the flexibility to design their accelerators using RTL, HLS or Vitis Networking P4 within the RecoNIC's programmable compute logic modules. This allows for the processing of network data without resorting to the multiple copies’ characteristic of traditional CPU-centric solutions. The logic executed within these programmable modules can access both RecoNIC and host memory in remote peers via RDMA.
 
+For more information, please refer to the [RecoNIC primer](https://arxiv.org/abs/2312.06207).
 
 ## RecoNIC System Overview
 
@@ -490,7 +491,21 @@ User can specify their own configuraiton file to construct a new testcase. The c
 
 The simulation source code is located at [sim/src](sim/src).
 
-Enjoy!
+## Citation
+
+If you use RecoNIC in your research and projects, please cite
+```
+@misc{zhong2023primer,
+      title={A Primer on RecoNIC: RDMA-enabled Compute Offloading on SmartNIC}, 
+      author={Guanwen Zhong and Aditya Kolekar and Burin Amornpaisannon and Inho Choi and Haris Javaid and Mario Baldi},
+      year={2023},
+      eprint={2312.06207},
+      archivePrefix={arXiv},
+      primaryClass={cs.DC}
+}
+```
+
+If you find this project helpful, please consider giving it a star! Your support is greatly appreciated.⭐
 
 -----
 
