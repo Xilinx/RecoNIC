@@ -259,7 +259,7 @@ static int test_dma(char *devname, uint64_t addr, uint64_t size,
 	if (verbose) {
 		printf("** Avg time device %s, total time %f sec, avg_time = %f sec, size = %lu bytes, BW = %f bytes/sec\n",	devname, total_time, avg_time, size, result);
 	}
-	dump_throughput_result(size, result);
+	dump_throughput_result(size, result, avg_time);
 
 	rc = 0;
 

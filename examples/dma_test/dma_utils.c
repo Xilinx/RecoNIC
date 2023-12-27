@@ -28,16 +28,16 @@ uint64_t getopt_integer(char *optarg)
 	return value;
 }
 
-void dump_throughput_result(uint64_t size, float result) {
+void dump_throughput_result(uint64_t size, float result, float lat_result) {
 	printf("size=%lu ", size);
 	if (((long long)(result)/GB_DIV)) {
-		printf("Average BW = %f GB/sec\n", ((double)result/GB_DIV));
+		printf("Average BW = %f GB/sec, average latency = %f us\n", ((double)result/GB_DIV), ((double) lat_result * 1000000.0));
 	} else if (((long long)(result)/MB_DIV)) {
-		printf("Average BW = %f MB/sec\n", ((double)result/MB_DIV));
+		printf("Average BW = %f MB/sec, average latency = %f us\n", ((double)result/MB_DIV), ((double) lat_result * 1000000.0));
 	} else if (((long long)(result)/KB_DIV)) {
-		printf("Average BW = %f KB/sec\n", ((double)result/KB_DIV));
+		printf("Average BW = %f KB/sec, average latency = %f us\n", ((double)result/KB_DIV), ((double) lat_result * 1000000.0));
 	} else
-		printf("Average BW = %f Bytes/sec\n", ((double)result));
+		printf("Average BW = %f Bytes/sec, average latency = %f us\n", ((double)result), ((double) lat_result * 1000000.0));
 }
 
 static int timespec_check(struct timespec *t)

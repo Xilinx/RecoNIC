@@ -43,7 +43,7 @@ extern int verbose;
 
 uint64_t getopt_integer(char *optarg);
 
-void dump_throughput_result(uint64_t size, float result);
+void dump_throughput_result(uint64_t size, float result, float lat_result);
 
 void timespec_sub(struct timespec *t1, struct timespec *t2);
 

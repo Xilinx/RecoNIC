@@ -14,7 +14,7 @@ The above figure shows the hardware shell architecture and software stacks of Re
 
 The RDMA engine is responsible for processing RDMA traffic, allowing payload data from the network to be stored in either the host's memory or the RecoNIC device's memory. User defined accelerators implemented in the Streaming Compute and Lookaside Compute modules can directly process data, including network-received data, within the device memory.
 
-The software encompasses the network stack driver, utilized to handle non-RDMA traffic (such as TCP/IP, UDP/IP, and ARP). Additionally, the memory driver facilitates seamless memory transfers between the host and RecoNIC memory. Finally, the control driver serves to configure and control various components in the hardware shell.
+The software encompasses the network stack, consisting of RDMA APIs and network driver to handle non-RDMA traffic (such as TCP/IP, UDP/IP, and ARP). Additionally, the memory driver facilitates seamless memory transfers between the host and RecoNIC memory. Finally, the control driver serves to configure and control various components in the hardware shell.
 
 ## System Requirement
 
@@ -398,13 +398,13 @@ $ cat /sys/devices/system/node/node1/cpulist
 
 Now, we are ready to test the bandwidth
 ```
-$ taskset -c 1,3,5,7 ./measure_bw.sh /dev/reconic-mm 4
+$ taskset -c 1,3,5,7 ./measure_dma.sh /dev/reconic-mm 4 write 65536000
 
 Number of dma_test (write) threads: 4
 Calculate total write bandwidth achieved:
 -- The total write bandwidth is: 13.065046 GB/sec
 
-$ taskset -c 1,3,5,7 ./measure_bw.sh /dev/reconic-mm 4 read
+$ taskset -c 1,3,5,7 ./measure_dma.sh /dev/reconic-mm 4 read 65536000
 
 Number of dma_test (read) threads: 4
 Calculate total read bandwidth achieved:
