@@ -6234,7 +6234,7 @@ index 0000000..9d6ee40
 +
 +// AXI slave signals for storing payload from RDMA send or write
 +//assign axi_awid   [C_RDMA_GET_SEND_WRITE_PAYLOAD_IDX *2 +: 2]         = {1'b0, s_axi_rdma_send_write_payload_awid};
-+assign s_axi_awid   [C_RDMA_GET_SEND_WRITE_PAYLOAD_IDX *3 +: 3]         = s_axi_rdma_send_write_payload_awvalid ? 3'd3 : 3'd0;
++assign s_axi_awid   [C_RDMA_GET_SEND_WRITE_PAYLOAD_IDX *3 +: 3]         = s_axi_rdma_send_write_payload_awvalid ? 3'd4 : 3'd0;
 +assign s_axi_awaddr [C_RDMA_GET_SEND_WRITE_PAYLOAD_IDX *64 +: 64]       = s_axi_rdma_send_write_payload_awaddr;
 +assign s_axi_awqos  [C_RDMA_GET_SEND_WRITE_PAYLOAD_IDX *4 +: 4]         = s_axi_rdma_send_write_payload_awqos;
 +assign s_axi_awlen  [C_RDMA_GET_SEND_WRITE_PAYLOAD_IDX *8 +: 8]         = s_axi_rdma_send_write_payload_awlen;
@@ -6255,7 +6255,7 @@ index 0000000..9d6ee40
 +assign s_axi_rdma_send_write_payload_bvalid                             = s_axi_bvalid[C_RDMA_GET_SEND_WRITE_PAYLOAD_IDX *1 +: 1];
 +assign s_axi_bready [C_RDMA_GET_SEND_WRITE_PAYLOAD_IDX *1 +: 1]         = s_axi_rdma_send_write_payload_bready;
 +//assign s_axi_arid   [C_RDMA_GET_SEND_WRITE_PAYLOAD_IDX *2 +: 2]         = {1'b0, s_axi_rdma_send_write_payload_arid};
-+assign s_axi_arid   [C_RDMA_GET_SEND_WRITE_PAYLOAD_IDX *3 +: 3]         = s_axi_rdma_send_write_payload_arvalid ? 3'd3 : 3'd0;
++assign s_axi_arid   [C_RDMA_GET_SEND_WRITE_PAYLOAD_IDX *3 +: 3]         = s_axi_rdma_send_write_payload_arvalid ? 3'd4 : 3'd0;
 +assign s_axi_araddr [C_RDMA_GET_SEND_WRITE_PAYLOAD_IDX *64 +: 64]       = s_axi_rdma_send_write_payload_araddr;
 +assign s_axi_arlen  [C_RDMA_GET_SEND_WRITE_PAYLOAD_IDX *8  +: 8]        = s_axi_rdma_send_write_payload_arlen;
 +assign s_axi_arsize [C_RDMA_GET_SEND_WRITE_PAYLOAD_IDX *3  +: 3]        = s_axi_rdma_send_write_payload_arsize;
@@ -6275,7 +6275,7 @@ index 0000000..9d6ee40
 +
 +// AXI slave signals for storing payload from RDMA read response
 +//assign axi_awid   [C_RDMA_RSP_PAYLOAD_IDX*2 +: 2]       = {1'b0, s_axi_rdma_rsp_payload_awid};
-+assign s_axi_awid   [C_RDMA_RSP_PAYLOAD_IDX*3 +: 3]       = s_axi_rdma_rsp_payload_awvalid ? 3'd4 : 3'd0;
++assign s_axi_awid   [C_RDMA_RSP_PAYLOAD_IDX*3 +: 3]       = s_axi_rdma_rsp_payload_awvalid ? 3'd3 : 3'd0;
 +assign s_axi_awaddr [C_RDMA_RSP_PAYLOAD_IDX *64 +: 64]    = s_axi_rdma_rsp_payload_awaddr;
 +assign s_axi_awqos  [C_RDMA_RSP_PAYLOAD_IDX *4 +: 4]      = s_axi_rdma_rsp_payload_awqos;
 +assign s_axi_awlen  [C_RDMA_RSP_PAYLOAD_IDX *8 +: 8]      = s_axi_rdma_rsp_payload_awlen;
@@ -6296,7 +6296,7 @@ index 0000000..9d6ee40
 +assign s_axi_rdma_rsp_payload_bvalid                      = s_axi_bvalid[C_RDMA_RSP_PAYLOAD_IDX *1 +: 1];
 +assign s_axi_bready [C_RDMA_RSP_PAYLOAD_IDX *1 +: 1]      = s_axi_rdma_rsp_payload_bready;
 +//assign axi_arid   [C_RDMA_RSP_PAYLOAD_IDX *2 +: 2]      = {1'b0, s_axi_rdma_rsp_payload_arid};
-+assign s_axi_arid   [C_RDMA_RSP_PAYLOAD_IDX *3 +: 3]      = s_axi_rdma_rsp_payload_arvalid ? 3'd4 : 3'd0;
++assign s_axi_arid   [C_RDMA_RSP_PAYLOAD_IDX *3 +: 3]      = s_axi_rdma_rsp_payload_arvalid ? 3'd3 : 3'd0;
 +assign s_axi_araddr [C_RDMA_RSP_PAYLOAD_IDX *64 +: 64]    = s_axi_rdma_rsp_payload_araddr;
 +assign s_axi_arlen  [C_RDMA_RSP_PAYLOAD_IDX *8  +: 8]     = s_axi_rdma_rsp_payload_arlen;
 +assign s_axi_arsize [C_RDMA_RSP_PAYLOAD_IDX *3  +: 3]     = s_axi_rdma_rsp_payload_arsize;
