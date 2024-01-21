@@ -23,17 +23,17 @@ index b8a3f57..130c765 100644
 +#	install -d /lib/firmware/xilinx/
 +#	install -m 644 json/*.json /lib/firmware/xilinx/
 diff --git a/README.md b/README.md
-index a52daa2..8981c4b 100644
+index a52daa2..f3327ce 100644
 --- a/README.md
 +++ b/README.md
-@@ -1,102 +1,25 @@
+@@ -1,102 +1,24 @@
  # onic-driver
  
 -onic-driver is the brand-new driver for [open-nic-shell](https://github.com/Xilinx/open-nic-shell).
 -It is written refering to [qep-driver](https://github.com/Xilinx/qep-drivers/tree/master/linux-kernel/driver)
 -based on [libqdma](https://github.com/Xilinx/dma_ip_drivers/tree/master/QDMA/linux-kernel/driver/libqdma)<br>
 -Because libqdma has the full-blown functions for qdma, we can treat it in high level in the application driver.<br>
-+**[onic-driver](https://github.com/Hyunok-Kim/onic-driver)** is yet another open-source driver developed by [Hyunok Kim](https://github.com/Hyunok-Kim) for the AMD [OpenNIC shell](https://github.com/Xilinx/open-nic-shell), adapted from AMD [QDMA Ethernet Platform (QEP) driver](https://github.com/Xilinx/qep-drivers) and [OpenNIC driver](https://github.com/Xilinx/open-nic-driver). 
++**[onic-driver](https://github.com/Hyunok-Kim/onic-driver)** is yet another open-source driver developed by [Hyunok Kim](https://github.com/Hyunok-Kim) for the AMD [OpenNIC shell](https://github.com/Xilinx/open-nic-shell), adapted from AMD [QDMA Ethernet Platform (QEP) driver](https://github.com/Xilinx/qep-drivers) and [OpenNIC driver](https://github.com/Xilinx/open-nic-driver).
  
 -However, two modifications are required.
 -1. [open-nic-shell patch](https://github.com/Hyunok-Kim/open-nic-shell/commit/a1ba78308efded589967431eddf0a397f69f2806)
@@ -80,7 +80,7 @@ index a52daa2..8981c4b 100644
 -$ sudo ip link set enp2s0f1 netns ns_enp2s0f1
 -$ sudo ip netns exec ns_enp2s0f1 ip addr add dev enp2s0f1 192.168.253.2/24
 -$ sudo ip netns exec ns_enp2s0f1 ip link set dev enp2s0f1 up
-+$ make 
++$ make
 +$ sudo insmod onic.ko
  ```
  
@@ -142,7 +142,7 @@ index a52daa2..8981c4b 100644
 +## How to test data copy feature
 +
 +Please refer to RecoNIC's README file.
-+
+\ No newline at end of file
 diff --git a/jsmn/jsmn.c b/jsmn/jsmn.c
 deleted file mode 100644
 index 853c3f1..0000000
@@ -741,10 +741,10 @@ index e2b8865..3921b6e 100644
  #endif /* ONIC_H */
 diff --git a/onic_cdev.c b/onic_cdev.c
 new file mode 100755
-index 0000000..4ec940e
+index 0000000..0489c85
 --- /dev/null
 +++ b/onic_cdev.c
-@@ -0,0 +1,457 @@
+@@ -0,0 +1,458 @@
 +/*
 + * Copyright (c) 2021 Xilinx, Inc.
 + * All rights reserved.
@@ -811,32 +811,33 @@ index 0000000..4ec940e
 +}
 +
 +static long onic_cdev_ioctl(
-+		 struct file *file,	/* ditto */
-+		 unsigned int ioctl_num,	/* number and param for ioctl */
-+		 unsigned long ioctl_param){
++  struct file *file,	/* ditto */
++  unsigned int ioctl_num,	/* number and param for ioctl */
++  unsigned long ioctl_param){
 +	return 0;
 +}
 +
 +static void unmap_user_buf(struct cdev_io_cb *iocb, bool write)
 +{
-+    int i;
++  int i;
 +
-+    if (!iocb->pages || !iocb->page_nb)
-+        return;
++  if (!iocb->pages || !iocb->page_nb)
++    return;
 +
-+    for (i = 0; i < iocb->page_nb; i++) {
-+        if (iocb->pages[i]) {
-+            if (!write)
-+                set_page_dirty(iocb->pages[i]);
-+            put_page(iocb->pages[i]);
-+        } else
-+            break;
++  for (i = 0; i < iocb->page_nb; i++) {
++    if (iocb->pages[i]) {
++      if (!write)
++        set_page_dirty(iocb->pages[i]);
++      put_page(iocb->pages[i]);
++    } else{
++      break;
 +    }
++  }
 +
-+    if (i != iocb->page_nb)
-+        pr_err("sgl pages %d/%u.\n", i, iocb->page_nb);
++  if (i != iocb->page_nb)
++    pr_err("sgl pages %d/%u.\n", i, iocb->page_nb);
 +
-+    iocb->page_nb = 0;
++  iocb->page_nb = 0;
 +}
 +
 +/*
@@ -844,166 +845,166 @@ index 0000000..4ec940e
 + */
 +static inline void iocb_release(struct cdev_io_cb *iocb)
 +{
-+    if (iocb->pages)
-+        iocb->pages = NULL;
-+    kfree(iocb->sgl);
-+    iocb->sgl = NULL;
-+    iocb->buf = NULL;
++  if (iocb->pages)
++    iocb->pages = NULL;
++  kfree(iocb->sgl);
++  iocb->sgl = NULL;
++  iocb->buf = NULL;
 +}
 +
 +static int map_user_buf_to_sgl(struct cdev_io_cb *iocb, bool write)
 +{
-+    unsigned long len = iocb->len;
-+    char *buf = iocb->buf;
-+    struct qdma_sw_sg *sg;
-+    unsigned int pg_off = offset_in_page(buf);
-+    unsigned int pages_nr = (len + pg_off + PAGE_SIZE - 1) >> PAGE_SHIFT;
-+    int i;
-+    int rv;
++  unsigned long len = iocb->len;
++  char *buf = iocb->buf;
++  struct qdma_sw_sg *sg;
++  unsigned int pg_off = offset_in_page(buf);
++  unsigned int pages_nr = (len + pg_off + PAGE_SIZE - 1) >> PAGE_SHIFT;
++  int i;
++  int rv;
 +
-+    if (len == 0)
-+        pages_nr = 1;
-+    if (pages_nr == 0)
-+        return -EINVAL;
++  if (len == 0)
++    pages_nr = 1;
++  if (pages_nr == 0)
++    return -EINVAL;
 +
-+    iocb->page_nb = 0;
-+    sg = kmalloc(pages_nr * (sizeof(struct qdma_sw_sg) +
-+            sizeof(struct page *)), GFP_KERNEL);
-+    if (!sg) {
-+        pr_err("sgl allocation failed for %u pages", pages_nr);
-+        return -ENOMEM;
++  iocb->page_nb = 0;
++  sg = kmalloc(pages_nr * (sizeof(struct qdma_sw_sg) +
++          sizeof(struct page *)), GFP_KERNEL);
++  if (!sg) {
++    pr_err("sgl allocation failed for %u pages", pages_nr);
++    return -ENOMEM;
++  }
++
++  memset(sg, 0, pages_nr * (sizeof(struct qdma_sw_sg) +
++          sizeof(struct page *)));
++  iocb->sgl = sg;
++
++  iocb->pages = (struct page **)(sg + pages_nr);
++  rv = get_user_pages_fast((unsigned long)buf, pages_nr, 1/* write */,
++              iocb->pages);
++  /* No pages were pinned */
++  if (rv < 0) {
++    pr_err("unable to pin down %u user pages, %d.\n",
++        pages_nr, rv);
++    goto err_out;
++  }
++  /* Less pages pinned than wanted */
++  if (rv != pages_nr) {
++    pr_err("unable to pin down all %u user pages, %d.\n",
++        pages_nr, rv);
++    iocb->page_nb = rv;
++    rv = -EFAULT;
++    goto err_out;
++  }
++
++  for (i = 1; i < pages_nr; i++) {
++    if (iocb->pages[i - 1] == iocb->pages[i]) {
++      pr_err("duplicate pages, %d, %d.\n",
++          i - 1, i);
++      iocb->page_nb = pages_nr;
++      rv = -EFAULT;
++      goto err_out;
 +    }
++  }
 +
-+    memset(sg, 0, pages_nr * (sizeof(struct qdma_sw_sg) +
-+            sizeof(struct page *)));
-+    iocb->sgl = sg;
++  sg = iocb->sgl;
++  for (i = 0; i < pages_nr; i++, sg++) {
++    unsigned int offset = offset_in_page(buf);
++    unsigned int nbytes = min_t(unsigned int, PAGE_SIZE - offset,
++                    len);
++    struct page *pg = iocb->pages[i];
 +
-+    iocb->pages = (struct page **)(sg + pages_nr);
-+    rv = get_user_pages_fast((unsigned long)buf, pages_nr, 1/* write */,
-+                iocb->pages);
-+    /* No pages were pinned */
-+    if (rv < 0) {
-+        pr_err("unable to pin down %u user pages, %d.\n",
-+            pages_nr, rv);
-+        goto err_out;
-+    }
-+    /* Less pages pinned than wanted */
-+    if (rv != pages_nr) {
-+        pr_err("unable to pin down all %u user pages, %d.\n",
-+            pages_nr, rv);
-+        iocb->page_nb = rv;
-+        rv = -EFAULT;
-+        goto err_out;
-+    }
++    flush_dcache_page(pg);
 +
-+    for (i = 1; i < pages_nr; i++) {
-+        if (iocb->pages[i - 1] == iocb->pages[i]) {
-+            pr_err("duplicate pages, %d, %d.\n",
-+                i - 1, i);
-+            iocb->page_nb = pages_nr;
-+            rv = -EFAULT;
-+            goto err_out;
-+        }
-+    }
++    sg->next = sg + 1;
++    sg->pg = pg;
++    sg->offset = offset;
++    sg->len = nbytes;
++    sg->dma_addr = 0UL;
 +
-+    sg = iocb->sgl;
-+    for (i = 0; i < pages_nr; i++, sg++) {
-+        unsigned int offset = offset_in_page(buf);
-+        unsigned int nbytes = min_t(unsigned int, PAGE_SIZE - offset,
-+                        len);
-+        struct page *pg = iocb->pages[i];
++    buf += nbytes;
++    len -= nbytes;
++  }
 +
-+        flush_dcache_page(pg);
++  iocb->sgl[pages_nr - 1].next = NULL;
++  iocb->page_nb = pages_nr;
 +
-+        sg->next = sg + 1;
-+        sg->pg = pg;
-+        sg->offset = offset;
-+        sg->len = nbytes;
-+        sg->dma_addr = 0UL;
-+
-+        buf += nbytes;
-+        len -= nbytes;
-+    }
-+
-+    iocb->sgl[pages_nr - 1].next = NULL;
-+    iocb->page_nb = pages_nr;
-+
-+	return 0;
++  return 0;
 +
 +err_out:
-+    unmap_user_buf(iocb, write);
-+    iocb_release(iocb);
++  unmap_user_buf(iocb, write);
++  iocb_release(iocb);
 +
-+    return rv;
++  return rv;
 +}
 +
 +static ssize_t onic_gen_read_write(struct file *file, char __user *buf,
 +        size_t count, loff_t *pos, bool write, int target_queue)
 +{
-+    struct onic_cdev *xcdev = (struct onic_cdev *)file->private_data;
-+    struct cdev_io_cb iocb;
-+    struct qdma_request *req = &iocb.qd_req;
-+    ssize_t res = 0;
-+    int rv;
-+    unsigned long qhndl;
++  struct onic_cdev *xcdev = (struct onic_cdev *)file->private_data;
++  struct cdev_io_cb iocb;
++  struct qdma_request *req = &iocb.qd_req;
++  ssize_t res = 0;
++  int rv;
++  unsigned long qhndl;
 +
-+    if (!xcdev) {
-+        pr_err("file 0x%p, xcdev NULL, 0x%p,%llu, pos %llu, W %d.\n",
-+            file, buf, (u64)count, (u64)*pos, write);
-+        return -EINVAL;
-+    }
-+	
-+    if (!xcdev->fp_rw) {
-+        pr_err("file 0x%p, %s, NO rw, 0x%p,%llu, pos %llu, W %d.\n",
-+            file, xcdev->name, buf, (u64)count, (u64)*pos, write);
-+        return -EINVAL;
-+    }
++  if (!xcdev) {
++    pr_err("file 0x%p, xcdev NULL, 0x%p,%llu, pos %llu, W %d.\n",
++        file, buf, (u64)count, (u64)*pos, write);
++    return -EINVAL;
++  }
 +
-+    qhndl = write ? xcdev->mm_h2c_q_hndl + target_queue : xcdev->mm_c2h_q_hndl + target_queue;
++  if (!xcdev->fp_rw) {
++    pr_err("file 0x%p, %s, NO rw, 0x%p,%llu, pos %llu, W %d.\n",
++        file, xcdev->name, buf, (u64)count, (u64)*pos, write);
++    return -EINVAL;
++  }
 +
-+    pr_debug("%s, priv 0x%lx: buf 0x%p,%llu, pos %llu, W %d.\n",
-+        xcdev->name, qhndl, buf, (u64)count, (u64)*pos,
-+        write);
++  qhndl = write ? xcdev->mm_h2c_q_hndl + target_queue : xcdev->mm_c2h_q_hndl + target_queue;
 +
-+    memset(&iocb, 0, sizeof(struct cdev_io_cb));
-+    iocb.buf = buf;
-+    iocb.len = count;
-+    rv = map_user_buf_to_sgl(&iocb, write);
-+    if (rv < 0)
-+        return rv;
++  pr_debug("%s, priv 0x%lx: buf 0x%p,%llu, pos %llu, W %d.\n",
++      xcdev->name, qhndl, buf, (u64)count, (u64)*pos,
++      write);
 +
-+    req->sgcnt = iocb.page_nb;
-+    req->sgl = iocb.sgl;
-+    req->write = write ? 1 : 0;
-+    req->dma_mapped = 0;  
-+    req->udd_len = 0;
-+    req->ep_addr = (u64)*pos;
-+    req->count = count;
-+    req->timeout_ms = 10 * 1000;    /* 10 seconds */
-+    req->fp_done = NULL;        /* blocking */
-+    req->h2c_eot = 1;        /* set to 1 for STM tests */
++  memset(&iocb, 0, sizeof(struct cdev_io_cb));
++  iocb.buf = buf;
++  iocb.len = count;
++  rv = map_user_buf_to_sgl(&iocb, write);
++  if (rv < 0)
++    return rv;
 +
-+    res = xcdev->fp_rw(xcdev->dev_handle, qhndl, req);
++  req->sgcnt = iocb.page_nb;
++  req->sgl = iocb.sgl;
++  req->write = write ? 1 : 0;
++  req->dma_mapped = 0;
++  req->udd_len = 0;
++  req->ep_addr = (u64)*pos;
++  req->count = count;
++  req->timeout_ms = 10 * 1000;    /* 10 seconds */
++  req->fp_done = NULL;        /* blocking */
++  req->h2c_eot = 1;        /* set to 1 for STM tests */
 +
-+    unmap_user_buf(&iocb, write);
-+    iocb_release(&iocb);
++  res = xcdev->fp_rw(xcdev->dev_handle, qhndl, req);
 +
-+	if(!write){
-+		down(&read_mutex2);
-+		read_queue_pool[read_write_idx] = target_queue;
-+		read_write_idx = (read_write_idx + 1) % xcdev->no_mm_queues;
-+  	    up(&read_mutex2);
-+		up(&read_sem);
-+	}
-+	else{
-+		down(&write_mutex2);
-+		write_queue_pool[write_write_idx] = target_queue;
-+		write_write_idx = (write_write_idx + 1) % xcdev->no_mm_queues;
-+  	    up(&write_mutex2);
-+		up(&write_sem);
-+	}
++  unmap_user_buf(&iocb, write);
++  iocb_release(&iocb);
 +
-+ 	return res;
++  if(!write){
++    down(&read_mutex2);
++    read_queue_pool[read_write_idx] = target_queue;
++    read_write_idx = (read_write_idx + 1) % xcdev->no_mm_queues;
++    up(&read_mutex2);
++    up(&read_sem);
++  }
++  else{
++    down(&write_mutex2);
++    write_queue_pool[write_write_idx] = target_queue;
++    write_write_idx = (write_write_idx + 1) % xcdev->no_mm_queues;
++    up(&write_mutex2);
++    up(&write_sem);
++  }
++
++  return res;
 +}
 +
 +/**
@@ -1044,26 +1045,26 @@ index 0000000..4ec940e
 +
 +  loff_t newpos = 0;
 +
-+	switch (whence) {
-+	case 0: /* SEEK_SET */
-+		newpos = off;
-+		break;
-+	case 1: /* SEEK_CUR */
-+		newpos = file->f_pos + off;
-+		break;
-+	case 2: /* SEEK_END, @TODO should work from end of address space */
-+		newpos = UINT_MAX + off;
-+		break;
-+	default: /* can't happen */
-+		return -EINVAL;
-+	}
-+	if (newpos < 0)
-+		return -EINVAL;
-+	file->f_pos = newpos;
++  switch (whence) {
++  case 0: /* SEEK_SET */
++    newpos = off;
++    break;
++  case 1: /* SEEK_CUR */
++    newpos = file->f_pos + off;
++    break;
++  case 2: /* SEEK_END, @TODO should work from end of address space */
++    newpos = UINT_MAX + off;
++    break;
++  default: /* can't happen */
++    return -EINVAL;
++  }
++  if (newpos < 0)
++    return -EINVAL;
++  file->f_pos = newpos;
 +
-+	dev_dbg(&onic_cdev_ptr->qdev->pdev->dev, "%s: pos=%lld\n", onic_cdev_ptr->name, (signed long long)newpos);
++  dev_dbg(&onic_cdev_ptr->qdev->pdev->dev, "%s: pos=%lld\n", onic_cdev_ptr->name, (signed long long)newpos);
 +
-+	return newpos;
++  return newpos;
 +}
 +
 +/**
@@ -1089,13 +1090,13 @@ index 0000000..4ec940e
 +  // Create a cdev class
 +  onic_cdev_class = class_create(THIS_MODULE, ONIC_CDEV_CLASS_NAME);
 +  if(IS_ERR(onic_cdev_class)) {
-+    dev_err(&onic_cdev_ptr->qdev->pdev->dev, "%s: failed to create open-nic cdev class.", 
++    dev_err(&onic_cdev_ptr->qdev->pdev->dev, "%s: failed to create open-nic cdev class.",
 +            ONIC_CDEV_CLASS_NAME);
 +    onic_cdev_class = NULL;
 +    // return error with no such device
 +    return -ENODEV;
 +  }
-+  
++
 +  // allocate a range of character device number. The major number will be chosen dynamically
 +  err = alloc_chrdev_region(&dev, 0, onic_cdev_ptr->cdev_minor_cnt, ONIC_CDEV_CLASS_NAME);
 +  if(err) {
@@ -1117,7 +1118,7 @@ index 0000000..4ec940e
 +  read_queue_pool = (int*) kzalloc(sizeof(int) * no_mm_queues, GFP_KERNEL);
 +
 +  for(i = 0 ; i < no_mm_queues ; i++){
-+	read_queue_pool[i] = i;
++    read_queue_pool[i] = i;
 +  }
 +
 +  sema_init(&write_sem, no_mm_queues);
@@ -1127,7 +1128,7 @@ index 0000000..4ec940e
 +  write_write_idx = 0;
 +  write_queue_pool = (int*) kzalloc(sizeof(int) * no_mm_queues, GFP_KERNEL);
 +  for(i = 0 ; i < no_mm_queues ; i++){
-+	write_queue_pool[i] = i;
++    write_queue_pool[i] = i;
 +  }
 +  return 0;
 +}
@@ -1185,7 +1186,7 @@ index 0000000..4ec940e
 +  } else {
 +    dev_err(&onic_cdev_ptr->qdev->pdev->dev, "%s device_destroy failed!\n", onic_cdev_ptr->name);
 +  }
-+  
++
 +  // Remove sysfs class for this char device
 +  if(onic_cdev_class) {
 +    class_unregister(onic_cdev_class);
@@ -1566,7 +1567,7 @@ index 84fbdf2..0000000
 -
 -#endif
 diff --git a/onic_main.c b/onic_main.c
-index 1d9107e..090e207 100644
+index 1d9107e..382a3e1 100644
 --- a/onic_main.c
 +++ b/onic_main.c
 @@ -14,6 +14,15 @@ char onic_drv_name[] = "onic";
@@ -1601,7 +1602,7 @@ index 1d9107e..090e207 100644
 -	qdma_queue_update_pointers(xpriv->dev_handle, q_handle);
 +	//qdma_queue_update_pointers(xpriv->dev_handle, q_handle);
 +	// memory-mapped queues do not use this
-+	if(queue_id < 64) qdma_queue_update_pointers(xpriv->dev_handle, q_handle);
++	if(queue_id < ONIC_MAX_QUEUES) qdma_queue_update_pointers(xpriv->dev_handle, q_handle);
  
  	if (xpriv->pinfo->poll_mode || (pkt_cnt >= quota))
  		napi_reschedule(napi);
@@ -1619,16 +1620,14 @@ index 1d9107e..090e207 100644
  
  	memset(&qconf, 0, sizeof(struct qdma_queue_conf));
 -	qconf.st = 1;
-+	qconf.st = q_no >= 64 ? 0 : 1;	
++	qconf.st = q_no >= ONIC_MAX_QUEUES ? 0 : 1;
  	qconf.q_type = Q_C2H;
 -	qconf.irq_en = 0;
-+	qconf.irq_en = (xpriv->pinfo->poll_mode == 0); 
++	qconf.irq_en = (xpriv->pinfo->poll_mode == 0);
  	qconf.pfetch_en = 1;
--	qconf.fetch_credit = 1;
--	qconf.cmpl_stat_en = 1;
-+	qconf.fetch_credit = 1;	
-+	qconf.cmpl_stat_en = 1; 	
-+	qconf.wb_status_en = q_no >= 64 ? 1 : 0; 
+ 	qconf.fetch_credit = 1;
+ 	qconf.cmpl_stat_en = 1;
++	qconf.wb_status_en = q_no >= ONIC_MAX_QUEUES ? 1 : 0;
  	qconf.cmpl_desc_sz = DESC_SZ_8B;
  	qconf.cmpl_rng_sz_idx = xpriv->cmpl_rng_sz_idx;
  	qconf.desc_rng_sz_idx = xpriv->rx_desc_rng_sz_idx;
@@ -1636,7 +1635,7 @@ index 1d9107e..090e207 100644
  	if (q_no == 0)
  		xpriv->base_rx_q_handle = q_handle;
  
-+	if (q_no == 64){ 
++	if (q_no == ONIC_MAX_QUEUES){
 +		xpriv->onic_cdev_ptr->mm_c2h_q_hndl = q_handle;
 +	}
 +
@@ -1665,7 +1664,7 @@ index 1d9107e..090e207 100644
  	for (q_no = 0; q_no < xpriv->netdev->real_num_tx_queues; q_no++) {
  		memset(&qconf, 0, sizeof(struct qdma_queue_conf));
 -		qconf.st = 1;
-+		qconf.st = q_no >= 64 ? 0 : 1;
++		qconf.st = q_no >= ONIC_MAX_QUEUES ? 0 : 1;
  		qconf.q_type = Q_H2C;
  		qconf.irq_en = (xpriv->pinfo->poll_mode == 0);
  		qconf.wb_status_en = 1;
@@ -1674,7 +1673,7 @@ index 1d9107e..090e207 100644
  		if (q_no == 0)
  			xpriv->base_tx_q_handle = q_handle;
 -
-+		if (q_no == 64)
++		if (q_no == ONIC_MAX_QUEUES)
 +			xpriv->onic_cdev_ptr->mm_h2c_q_hndl = q_handle;
  	}
  	return 0;
@@ -1694,13 +1693,13 @@ index 1d9107e..090e207 100644
  		return ret;
  	}
  
-+ 	xdev = (struct xlnx_dma_dev *)xpriv->dev_handle;
++	xdev = (struct xlnx_dma_dev *)xpriv->dev_handle;
 +	no_mm_queues = xpriv->pinfo->mm_queues;
 +	onic_cdev_ptr = (struct onic_cdev*) kzalloc(sizeof(struct onic_cdev)+strlen(ONIC_CDEV_CLASS_NAME)+5,
 +									 GFP_KERNEL);
 +	onic_cdev_ptr->dev_handle = xpriv->dev_handle;
 +	xpriv->onic_cdev_ptr = onic_cdev_ptr;
-+	xpriv->onic_cdev_ptr->qdev = xdev_2_qdev(xdev); 
++	xpriv->onic_cdev_ptr->qdev = xdev_2_qdev(xdev);
 +	xpriv->onic_cdev_ptr->xpriv = xpriv;
 +	xpriv->onic_cdev_ptr->netdev = netdev;
 +	xpriv->onic_cdev_ptr->qdev->pdev = xpriv->pcidev;
@@ -1708,8 +1707,8 @@ index 1d9107e..090e207 100644
 +	rv = onic_init_cdev(xpriv->onic_cdev_ptr, no_mm_queues);
 +	rv = onic_create_cdev(xpriv->onic_cdev_ptr, 0);
 +	if(rv < 0) {
-+    	dev_err(&xpriv->onic_cdev_ptr->qdev->pdev->dev, "Error: onic_init_cdev failed\n");
-+    	goto release_queues;
++	dev_err(&xpriv->onic_cdev_ptr->qdev->pdev->dev, "Error: onic_init_cdev failed\n");
++	goto release_queues;
 +	}
 +    // end
 +
@@ -1724,16 +1723,7 @@ index 1d9107e..090e207 100644
  	netif_tx_stop_all_queues(netdev);
  	netif_carrier_off(netdev);
  
-@@ -744,6 +784,8 @@ static int onic_start_xmit(struct sk_buff *skb, struct net_device *netdev)
- 		return -EINVAL;
- 	}
- 
-+	if(q_id >= 64) return 0; // mm queue does not need to do this
-+
- 	q_handle = xpriv->base_tx_q_handle + q_id;
- 
- 	onic_req = kmem_cache_zalloc(xpriv->dma_req, GFP_ATOMIC);
-@@ -885,23 +927,13 @@ static void onic_get_stats64(struct net_device *netdev,
+@@ -885,23 +925,13 @@ static void onic_get_stats64(struct net_device *netdev,
  	}
  }
  
@@ -1758,7 +1748,7 @@ index 1d9107e..090e207 100644
  	if (num_msix <= 0) {
  		pr_err("%s:No MSIX cpability %d\n", __func__, num_msix);
  		return num_msix;
-@@ -909,6 +941,9 @@ static int onic_set_num_queue(struct onic_priv *xpriv)
+@@ -909,6 +939,9 @@ static int onic_set_num_queue(struct onic_priv *xpriv)
  
  	nb_queues = num_msix;
  	nb_queues -= xpriv->pinfo->pci_msix_user_cnt;
@@ -1768,7 +1758,15 @@ index 1d9107e..090e207 100644
  	if (xpriv->pinfo->pci_master_pf)
  		nb_queues--;
  
-@@ -1133,6 +1168,8 @@ static void onic_init_reta(struct onic_priv *xpriv)
+@@ -1108,6 +1141,7 @@ static int onic_enable_cmac(struct onic_priv *xpriv)
+ 	return 0;
+ 
+ rx_not_aligned:
++  pr_err("[ERROR] %s, rx_not_aligned\n", __func__);
+ 	onic_disable_cmac(xpriv);
+ 	return -EBUSY;
+ }
+@@ -1133,6 +1167,8 @@ static void onic_init_reta(struct onic_priv *xpriv)
  
  }
  
@@ -1777,17 +1775,17 @@ index 1d9107e..090e207 100644
  static int onic_get_pinfo(struct pci_dev *pdev, struct onic_platform_info
  			  **pinfo_ref)
  {
-@@ -1157,6 +1194,50 @@ static int onic_get_pinfo(struct pci_dev *pdev, struct onic_platform_info
+@@ -1157,6 +1193,50 @@ static int onic_get_pinfo(struct pci_dev *pdev, struct onic_platform_info
  
  	return 0;
  }
 +*/
 +
-+static int onic_config_platform(struct onic_platform_info **pinfo_ref, u8 qdma_bar, 
-+																u8 qdma_user_bar, u16 queue_base, u16 queue_max, 
-+																u16 mm_queues, int ring_sz, int c2h_tmr_cnt, 
-+																int c2h_cnt_thr, int c2h_buf_sz, u8 port_id, 
-+																u8 pci_msix_user_cnt, bool is_poll_mode, bool rsfec_en) 
++static int onic_config_platform(struct onic_platform_info **pinfo_ref, u8 qdma_bar,
++																u8 qdma_user_bar, u16 queue_base, u16 queue_max,
++																u16 mm_queues, int ring_sz, int c2h_tmr_cnt,
++																int c2h_cnt_thr, int c2h_buf_sz, u8 port_id,
++																u8 pci_msix_user_cnt, bool is_poll_mode, bool rsfec_en)
 +{
 +	struct onic_platform_info *pinfo;
 +
@@ -1801,7 +1799,7 @@ index 1d9107e..090e207 100644
 +	pinfo->queue_max = queue_max;
 +	pinfo->port_id = port_id;
 +	pinfo->mm_queues = mm_queues;
-+	pinfo->used_queues = 64 + mm_queues;
++	pinfo->used_queues = ONIC_MAX_QUEUES + mm_queues;
 +	pinfo->ring_sz = ring_sz;
 +	pinfo->c2h_tmr_cnt = c2h_tmr_cnt;
 +	pinfo->c2h_cnt_thr = c2h_cnt_thr;
@@ -1810,7 +1808,7 @@ index 1d9107e..090e207 100644
 +	pinfo->pci_msix_user_cnt = pci_msix_user_cnt;
 +	pinfo->poll_mode = is_poll_mode;
 +	pinfo->intr_mod_en = is_poll_mode ? false : true;
-+	
++
 +	*pinfo_ref = pinfo;
 +	return 0;
 +}
@@ -1828,7 +1826,7 @@ index 1d9107e..090e207 100644
  
  extern void onic_set_ethtool_ops(struct net_device *netdev);
  
-@@ -1175,10 +1256,15 @@ static int onic_pci_probe(struct pci_dev *pdev,
+@@ -1175,10 +1255,15 @@ static int onic_pci_probe(struct pci_dev *pdev,
  	int ret;
  	u64 bar_start;
  	u64 bar_len;
@@ -1837,7 +1835,7 @@ index 1d9107e..090e207 100644
  
 -	ret = onic_get_pinfo(pdev, &pinfo);
 +	//ret = onic_get_pinfo(pdev, &pinfo);
-+	ret = onic_config_platform(&pinfo, QDMA_BAR, QDMA_USER_BAR, QDMA_QUEUE_BASE, QDMA_QUEUE_MAX, 
++	ret = onic_config_platform(&pinfo, QDMA_BAR, QDMA_USER_BAR, QDMA_QUEUE_BASE, ONIC_MAX_QUEUES,
 +														 QDMA_MM_QUEUE, RING_SIZE, C2H_TMR_CNT, C2H_CNT_THR, C2H_BUF_SIZE,
 +														 CMAC_PORT_ID, PCI_MSIX_USER_CNT, is_poll_mode, en_rsfec);
  	if (ret) {
@@ -1846,7 +1844,7 @@ index 1d9107e..090e207 100644
  		       ret);
  		return ret;
  	}
-@@ -1209,11 +1295,17 @@ static int onic_pci_probe(struct pci_dev *pdev,
+@@ -1209,11 +1294,17 @@ static int onic_pci_probe(struct pci_dev *pdev,
  	xpriv->pinfo = pinfo;
  
  	memset(&saddr, 0, sizeof(struct sockaddr));
@@ -1867,7 +1865,7 @@ index 1d9107e..090e207 100644
  	}
  
  	ret = onic_set_num_queue(xpriv);
-@@ -1221,6 +1313,8 @@ static int onic_pci_probe(struct pci_dev *pdev,
+@@ -1221,6 +1312,8 @@ static int onic_pci_probe(struct pci_dev *pdev,
  		goto exit;
  	}
  
@@ -1876,7 +1874,7 @@ index 1d9107e..090e207 100644
  	if (xpriv->pinfo->used_queues > 0 ) {
  		netif_set_real_num_tx_queues(xpriv->netdev,
  					     xpriv->pinfo->used_queues);
-@@ -1273,6 +1367,7 @@ static int onic_pci_probe(struct pci_dev *pdev,
+@@ -1273,6 +1366,7 @@ static int onic_pci_probe(struct pci_dev *pdev,
  
  	netif_carrier_off(netdev);
  
@@ -1884,7 +1882,7 @@ index 1d9107e..090e207 100644
  	return 0;
  
  disable_cmac:
-@@ -1311,6 +1406,8 @@ static void onic_pci_remove(struct pci_dev *pdev)
+@@ -1311,6 +1405,8 @@ static void onic_pci_remove(struct pci_dev *pdev)
  	pci_set_drvdata(pdev, NULL);
  	unregister_netdev(netdev);
  
@@ -1893,7 +1891,7 @@ index 1d9107e..090e207 100644
  	onic_disable_cmac(xpriv);
  	if (xpriv->bar_base)
  		iounmap(xpriv->bar_base);
-@@ -1334,20 +1431,17 @@ static struct pci_driver onic_pci_driver = {
+@@ -1334,20 +1430,17 @@ static struct pci_driver onic_pci_driver = {
  static int __init onic_module_init(void)
  {
  	int err = 0;
@@ -1914,7 +1912,7 @@ index 1d9107e..090e207 100644
  	return err;
  }
  
-@@ -1363,6 +1457,8 @@ static void __exit onic_module_exit(void)
+@@ -1363,6 +1456,8 @@ static void __exit onic_module_exit(void)
  module_init(onic_module_init);
  module_exit(onic_module_exit);
  
