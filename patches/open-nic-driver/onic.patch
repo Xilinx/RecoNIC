@@ -7,15 +7,15 @@ index b8a3f57..130c765 100644
                libqdma/qdma_access/qdma_soft_access \
                libqdma/qdma_access/eqdma_soft_access \
 -              libqdma/qdma_access/qdma_s80_hard_access \
--			  jsmn
+-			  jsmn 
 +              libqdma/qdma_access/qdma_s80_hard_access
-
+ 
  ifneq ($(SUBDIRS),)
      ONIC_OBJS = $(foreach CURR, $(SRC_FOLDERS), $(patsubst $(SUBDIRS)/$(CURR)/%.c, $(CURR)/%.o, $(wildcard $(SUBDIRS)/$(CURR)/*.c)))
 @@ -32,6 +31,6 @@ install:
  	install -d ${MODULES_INSTALL_PATH}
  	install -t ${MODULES_INSTALL_PATH} $(MOD_NAME).ko
-
+ 
 -json_install:
 -	install -d /lib/firmware/xilinx/
 -	install -m 644 json/*.json /lib/firmware/xilinx/
@@ -23,32 +23,32 @@ index b8a3f57..130c765 100644
 +#	install -d /lib/firmware/xilinx/
 +#	install -m 644 json/*.json /lib/firmware/xilinx/
 diff --git a/README.md b/README.md
-index a52daa2..f3327ce 100644
+index a52daa2..8981c4b 100644
 --- a/README.md
 +++ b/README.md
-@@ -1,102 +1,24 @@
+@@ -1,102 +1,25 @@
  # onic-driver
-
+ 
 -onic-driver is the brand-new driver for [open-nic-shell](https://github.com/Xilinx/open-nic-shell).
 -It is written refering to [qep-driver](https://github.com/Xilinx/qep-drivers/tree/master/linux-kernel/driver)
 -based on [libqdma](https://github.com/Xilinx/dma_ip_drivers/tree/master/QDMA/linux-kernel/driver/libqdma)<br>
 -Because libqdma has the full-blown functions for qdma, we can treat it in high level in the application driver.<br>
-+**[onic-driver](https://github.com/Hyunok-Kim/onic-driver)** is yet another open-source driver developed by [Hyunok Kim](https://github.com/Hyunok-Kim) for the AMD [OpenNIC shell](https://github.com/Xilinx/open-nic-shell), adapted from AMD [QDMA Ethernet Platform (QEP) driver](https://github.com/Xilinx/qep-drivers) and [OpenNIC driver](https://github.com/Xilinx/open-nic-driver).
-
++**[onic-driver](https://github.com/Hyunok-Kim/onic-driver)** is yet another open-source driver developed by [Hyunok Kim](https://github.com/Hyunok-Kim) for the AMD [OpenNIC shell](https://github.com/Xilinx/open-nic-shell), adapted from AMD [QDMA Ethernet Platform (QEP) driver](https://github.com/Xilinx/qep-drivers) and [OpenNIC driver](https://github.com/Xilinx/open-nic-driver). 
+ 
 -However, two modifications are required.
 -1. [open-nic-shell patch](https://github.com/Hyunok-Kim/open-nic-shell/commit/a1ba78308efded589967431eddf0a397f69f2806)
 -2. [libqdma patch](https://github.com/Hyunok-Kim/dma_ip_drivers/commit/a6c6e41243a2eecc66f6e157f93017b8aa4941e2)(The patch is applied to this driver)
 +Compared to [OpenNIC driver](https://github.com/Xilinx/open-nic-driver), **onic-driver** provides improved support for various QDMA features. This enhanced support is achieved by the [QEP driver](https://github.com/Xilinx/qep-drivers), which is built upon AMD [libqdma](https://github.com/Xilinx/dma_ip_drivers/tree/master/QDMA/linux-kernel/driver/libqdma).
-
+ 
 -The first patch is required because libqdma require the specific data formats for st h2c descriptor and st c2h completion entry.<br>
--The second patch is to fix the problem the irq allocation order of original libqdma issues the abnormal user/error interrupts
+-The second patch is to fix the problem the irq allocation order of original libqdma issues the abnormal user/error interrupts 
 +**RecoNIC** (<ins>R</ins>DMA-<ins>e</ins>nabled <ins>C</ins>ompute <ins>O</ins>ffloading on Smart<ins>NIC</ins>) leverages onic-driver as its software networking stack. Moreover, **RecoNIC** extends onic-driver to support data copy between host and device's memory over PCIe.
-
+ 
 -## JSON Configuration
 +## How to use
-
+ 
 -Instead of module parameters, json files are used to configure driver settings.
--Each `pf` has it's own json file under `json` directory.
+-Each `pf` has it's own json file under `json` directory. 
 -
 -* `queue_base` and `queue_max` are used to restrict the range of queues for each `pf`.
 -* `used_queues` is the real number of used queues. The value of `0` means that the number equals that of data interrupts.
@@ -67,7 +67,7 @@ index a52daa2..f3327ce 100644
 -## Test Setup
 -
 -The following test setup is valid for a machine which has an alveo card with two QSF28 ports.
--One port is plugged directly into the other.
+-One port is plugged directly into the other. 
 -`open-nic-shell` project should be built with the option of `-num_cmac_port 2`
 -
 -* ip setting
@@ -80,10 +80,10 @@ index a52daa2..f3327ce 100644
 -$ sudo ip link set enp2s0f1 netns ns_enp2s0f1
 -$ sudo ip netns exec ns_enp2s0f1 ip addr add dev enp2s0f1 192.168.253.2/24
 -$ sudo ip netns exec ns_enp2s0f1 ip link set dev enp2s0f1 up
-+$ make
++$ make 
 +$ sudo insmod onic.ko
  ```
-
+ 
 -* iperf server
 -```sh
 -$ sudo ip netns exec ns_enp2s0f0 iperf -s -P8
@@ -142,7 +142,7 @@ index a52daa2..f3327ce 100644
 +## How to test data copy feature
 +
 +Please refer to RecoNIC's README file.
-\ No newline at end of file
++
 diff --git a/jsmn/jsmn.c b/jsmn/jsmn.c
 deleted file mode 100644
 index 853c3f1..0000000
@@ -607,7 +607,7 @@ index 25e735c..79d8c09 100644
 +			descq->conf.name, req->write ? 'W' : 'R', (req->write && (descq->conf.q_type != Q_H2C)), (!req->write && (descq->conf.q_type != Q_C2H)), (descq->conf.q_type == Q_C2H) ? "C2H" : "H2C");
  		return -EINVAL;
  	}
-
+ 
 diff --git a/libqdma/libqdma_export.h b/libqdma/libqdma_export.h
 index 75d4cdf..8a4d200 100644
 --- a/libqdma/libqdma_export.h
@@ -620,14 +620,14 @@ index 75d4cdf..8a4d200 100644
 +	/* Device available offset position */
 +    u64 offset_pos;
  };
-
+ 
  /**
 diff --git a/libqdma/qdma_descq.c b/libqdma/qdma_descq.c
 index 7470097..41dbaf6 100644
 --- a/libqdma/qdma_descq.c
 +++ b/libqdma/qdma_descq.c
 @@ -1459,8 +1459,9 @@ int qdma_descq_service_cmpl_update(struct qdma_descq *descq, int budget,
-
+ 
  ssize_t qdma_descq_proc_sgt_request(struct qdma_descq *descq)
  {
 -	if (!descq->conf.st) /* MM H2C/C2H */
@@ -660,24 +660,25 @@ index 375a12c..943b5af 100644
 +    u16 num_queues;
 +    void __iomem *addr; /* mapped address of device registers */
  };
-
+ 
  /**
 diff --git a/onic.h b/onic.h
-index e2b8865..e3211df 100644
+index e2b8865..3921b6e 100644
 --- a/onic.h
 +++ b/onic.h
 @@ -3,7 +3,6 @@
-
+ 
  #include <linux/netdevice.h>
  #include <linux/cpumask.h>
 -#include "onic_json.h"
  #include "libqdma_export.h"
  #include "onic_register.h"
  #include "qdma_access/qdma_access_common.h"
-@@ -15,6 +14,29 @@
+@@ -15,6 +14,28 @@
  #define ONIC_RX_PULL_LEN                    (128)
  #define ONIC_NAPI_WEIGHT                    (64)
-
+ 
++#define ONIC_MAX_QUEUES 64
 +#define DRV_CDEV_NAME "reconic-mm"
 +#include "onic_cdev.h"
 +
@@ -687,8 +688,6 @@ index e2b8865..e3211df 100644
 +#define QDMA_QUEUE_MAX 1024
 +#define CMAC_PORT_ID 0
 +#define QDMA_MM_QUEUE 4
-+#define QDMA_NET_QUEUE 64
-+#define QMDA_TOTAL_QUEUE_ACTIVE (QDMA_MM_QUEUE + QDMA_NET_QUEUE)
 +#define RING_SIZE 1024
 +#define C2H_TMR_CNT 5
 +#define C2H_CNT_THR 64
@@ -701,21 +700,19 @@ index e2b8865..e3211df 100644
 +    u32 qmax:12;
 +    u32 rsvd1:20;
 +};
-
+ 
  struct onic_dma_request {
  	struct sk_buff *skb;
-@@ -23,6 +45,28 @@ struct onic_dma_request {
+@@ -23,6 +44,26 @@ struct onic_dma_request {
  	struct qdma_sw_sg sgl[MAX_SKB_FRAGS];
  };
-
+ 
 +struct onic_platform_info {
 +	u8 qdma_bar;
 +	u8 user_bar;
 +	u16 queue_base;
 +	u16 queue_max;
 +	u16 used_queues;
-+  u16 active_tx_queues;
-+  u16 active_rx_queues;
 +	u16 mm_queues;
 +	u8 pci_msix_user_cnt;
 +	bool pci_master_pf;
@@ -733,21 +730,21 @@ index e2b8865..e3211df 100644
  /* ONIC Net device private structure */
  struct onic_priv {
  	u8 rx_desc_rng_sz_idx;
-@@ -47,7 +91,7 @@ struct onic_priv {
+@@ -47,7 +88,7 @@ struct onic_priv {
  	unsigned long base_tx_q_handle, base_rx_q_handle;
  	struct napi_struct *napi;
  	struct rtnl_link_stats64 *tx_qstats, *rx_qstats;
 -
 +    struct onic_cdev *onic_cdev_ptr;
  };
-
+ 
  #endif /* ONIC_H */
 diff --git a/onic_cdev.c b/onic_cdev.c
 new file mode 100755
-index 0000000..0489c85
+index 0000000..4ec940e
 --- /dev/null
 +++ b/onic_cdev.c
-@@ -0,0 +1,458 @@
+@@ -0,0 +1,457 @@
 +/*
 + * Copyright (c) 2021 Xilinx, Inc.
 + * All rights reserved.
@@ -814,33 +811,32 @@ index 0000000..0489c85
 +}
 +
 +static long onic_cdev_ioctl(
-+  struct file *file,	/* ditto */
-+  unsigned int ioctl_num,	/* number and param for ioctl */
-+  unsigned long ioctl_param){
++		 struct file *file,	/* ditto */
++		 unsigned int ioctl_num,	/* number and param for ioctl */
++		 unsigned long ioctl_param){
 +	return 0;
 +}
 +
 +static void unmap_user_buf(struct cdev_io_cb *iocb, bool write)
 +{
-+  int i;
++    int i;
 +
-+  if (!iocb->pages || !iocb->page_nb)
-+    return;
++    if (!iocb->pages || !iocb->page_nb)
++        return;
 +
-+  for (i = 0; i < iocb->page_nb; i++) {
-+    if (iocb->pages[i]) {
-+      if (!write)
-+        set_page_dirty(iocb->pages[i]);
-+      put_page(iocb->pages[i]);
-+    } else{
-+      break;
++    for (i = 0; i < iocb->page_nb; i++) {
++        if (iocb->pages[i]) {
++            if (!write)
++                set_page_dirty(iocb->pages[i]);
++            put_page(iocb->pages[i]);
++        } else
++            break;
 +    }
-+  }
 +
-+  if (i != iocb->page_nb)
-+    pr_err("sgl pages %d/%u.\n", i, iocb->page_nb);
++    if (i != iocb->page_nb)
++        pr_err("sgl pages %d/%u.\n", i, iocb->page_nb);
 +
-+  iocb->page_nb = 0;
++    iocb->page_nb = 0;
 +}
 +
 +/*
@@ -848,166 +844,166 @@ index 0000000..0489c85
 + */
 +static inline void iocb_release(struct cdev_io_cb *iocb)
 +{
-+  if (iocb->pages)
-+    iocb->pages = NULL;
-+  kfree(iocb->sgl);
-+  iocb->sgl = NULL;
-+  iocb->buf = NULL;
++    if (iocb->pages)
++        iocb->pages = NULL;
++    kfree(iocb->sgl);
++    iocb->sgl = NULL;
++    iocb->buf = NULL;
 +}
 +
 +static int map_user_buf_to_sgl(struct cdev_io_cb *iocb, bool write)
 +{
-+  unsigned long len = iocb->len;
-+  char *buf = iocb->buf;
-+  struct qdma_sw_sg *sg;
-+  unsigned int pg_off = offset_in_page(buf);
-+  unsigned int pages_nr = (len + pg_off + PAGE_SIZE - 1) >> PAGE_SHIFT;
-+  int i;
-+  int rv;
++    unsigned long len = iocb->len;
++    char *buf = iocb->buf;
++    struct qdma_sw_sg *sg;
++    unsigned int pg_off = offset_in_page(buf);
++    unsigned int pages_nr = (len + pg_off + PAGE_SIZE - 1) >> PAGE_SHIFT;
++    int i;
++    int rv;
 +
-+  if (len == 0)
-+    pages_nr = 1;
-+  if (pages_nr == 0)
-+    return -EINVAL;
++    if (len == 0)
++        pages_nr = 1;
++    if (pages_nr == 0)
++        return -EINVAL;
 +
-+  iocb->page_nb = 0;
-+  sg = kmalloc(pages_nr * (sizeof(struct qdma_sw_sg) +
-+          sizeof(struct page *)), GFP_KERNEL);
-+  if (!sg) {
-+    pr_err("sgl allocation failed for %u pages", pages_nr);
-+    return -ENOMEM;
-+  }
-+
-+  memset(sg, 0, pages_nr * (sizeof(struct qdma_sw_sg) +
-+          sizeof(struct page *)));
-+  iocb->sgl = sg;
-+
-+  iocb->pages = (struct page **)(sg + pages_nr);
-+  rv = get_user_pages_fast((unsigned long)buf, pages_nr, 1/* write */,
-+              iocb->pages);
-+  /* No pages were pinned */
-+  if (rv < 0) {
-+    pr_err("unable to pin down %u user pages, %d.\n",
-+        pages_nr, rv);
-+    goto err_out;
-+  }
-+  /* Less pages pinned than wanted */
-+  if (rv != pages_nr) {
-+    pr_err("unable to pin down all %u user pages, %d.\n",
-+        pages_nr, rv);
-+    iocb->page_nb = rv;
-+    rv = -EFAULT;
-+    goto err_out;
-+  }
-+
-+  for (i = 1; i < pages_nr; i++) {
-+    if (iocb->pages[i - 1] == iocb->pages[i]) {
-+      pr_err("duplicate pages, %d, %d.\n",
-+          i - 1, i);
-+      iocb->page_nb = pages_nr;
-+      rv = -EFAULT;
-+      goto err_out;
++    iocb->page_nb = 0;
++    sg = kmalloc(pages_nr * (sizeof(struct qdma_sw_sg) +
++            sizeof(struct page *)), GFP_KERNEL);
++    if (!sg) {
++        pr_err("sgl allocation failed for %u pages", pages_nr);
++        return -ENOMEM;
 +    }
-+  }
 +
-+  sg = iocb->sgl;
-+  for (i = 0; i < pages_nr; i++, sg++) {
-+    unsigned int offset = offset_in_page(buf);
-+    unsigned int nbytes = min_t(unsigned int, PAGE_SIZE - offset,
-+                    len);
-+    struct page *pg = iocb->pages[i];
++    memset(sg, 0, pages_nr * (sizeof(struct qdma_sw_sg) +
++            sizeof(struct page *)));
++    iocb->sgl = sg;
 +
-+    flush_dcache_page(pg);
++    iocb->pages = (struct page **)(sg + pages_nr);
++    rv = get_user_pages_fast((unsigned long)buf, pages_nr, 1/* write */,
++                iocb->pages);
++    /* No pages were pinned */
++    if (rv < 0) {
++        pr_err("unable to pin down %u user pages, %d.\n",
++            pages_nr, rv);
++        goto err_out;
++    }
++    /* Less pages pinned than wanted */
++    if (rv != pages_nr) {
++        pr_err("unable to pin down all %u user pages, %d.\n",
++            pages_nr, rv);
++        iocb->page_nb = rv;
++        rv = -EFAULT;
++        goto err_out;
++    }
 +
-+    sg->next = sg + 1;
-+    sg->pg = pg;
-+    sg->offset = offset;
-+    sg->len = nbytes;
-+    sg->dma_addr = 0UL;
++    for (i = 1; i < pages_nr; i++) {
++        if (iocb->pages[i - 1] == iocb->pages[i]) {
++            pr_err("duplicate pages, %d, %d.\n",
++                i - 1, i);
++            iocb->page_nb = pages_nr;
++            rv = -EFAULT;
++            goto err_out;
++        }
++    }
 +
-+    buf += nbytes;
-+    len -= nbytes;
-+  }
++    sg = iocb->sgl;
++    for (i = 0; i < pages_nr; i++, sg++) {
++        unsigned int offset = offset_in_page(buf);
++        unsigned int nbytes = min_t(unsigned int, PAGE_SIZE - offset,
++                        len);
++        struct page *pg = iocb->pages[i];
 +
-+  iocb->sgl[pages_nr - 1].next = NULL;
-+  iocb->page_nb = pages_nr;
++        flush_dcache_page(pg);
 +
-+  return 0;
++        sg->next = sg + 1;
++        sg->pg = pg;
++        sg->offset = offset;
++        sg->len = nbytes;
++        sg->dma_addr = 0UL;
++
++        buf += nbytes;
++        len -= nbytes;
++    }
++
++    iocb->sgl[pages_nr - 1].next = NULL;
++    iocb->page_nb = pages_nr;
++
++	return 0;
 +
 +err_out:
-+  unmap_user_buf(iocb, write);
-+  iocb_release(iocb);
++    unmap_user_buf(iocb, write);
++    iocb_release(iocb);
 +
-+  return rv;
++    return rv;
 +}
 +
 +static ssize_t onic_gen_read_write(struct file *file, char __user *buf,
 +        size_t count, loff_t *pos, bool write, int target_queue)
 +{
-+  struct onic_cdev *xcdev = (struct onic_cdev *)file->private_data;
-+  struct cdev_io_cb iocb;
-+  struct qdma_request *req = &iocb.qd_req;
-+  ssize_t res = 0;
-+  int rv;
-+  unsigned long qhndl;
++    struct onic_cdev *xcdev = (struct onic_cdev *)file->private_data;
++    struct cdev_io_cb iocb;
++    struct qdma_request *req = &iocb.qd_req;
++    ssize_t res = 0;
++    int rv;
++    unsigned long qhndl;
 +
-+  if (!xcdev) {
-+    pr_err("file 0x%p, xcdev NULL, 0x%p,%llu, pos %llu, W %d.\n",
-+        file, buf, (u64)count, (u64)*pos, write);
-+    return -EINVAL;
-+  }
++    if (!xcdev) {
++        pr_err("file 0x%p, xcdev NULL, 0x%p,%llu, pos %llu, W %d.\n",
++            file, buf, (u64)count, (u64)*pos, write);
++        return -EINVAL;
++    }
++	
++    if (!xcdev->fp_rw) {
++        pr_err("file 0x%p, %s, NO rw, 0x%p,%llu, pos %llu, W %d.\n",
++            file, xcdev->name, buf, (u64)count, (u64)*pos, write);
++        return -EINVAL;
++    }
 +
-+  if (!xcdev->fp_rw) {
-+    pr_err("file 0x%p, %s, NO rw, 0x%p,%llu, pos %llu, W %d.\n",
-+        file, xcdev->name, buf, (u64)count, (u64)*pos, write);
-+    return -EINVAL;
-+  }
++    qhndl = write ? xcdev->mm_h2c_q_hndl + target_queue : xcdev->mm_c2h_q_hndl + target_queue;
 +
-+  qhndl = write ? xcdev->mm_h2c_q_hndl + target_queue : xcdev->mm_c2h_q_hndl + target_queue;
++    pr_debug("%s, priv 0x%lx: buf 0x%p,%llu, pos %llu, W %d.\n",
++        xcdev->name, qhndl, buf, (u64)count, (u64)*pos,
++        write);
 +
-+  pr_debug("%s, priv 0x%lx: buf 0x%p,%llu, pos %llu, W %d.\n",
-+      xcdev->name, qhndl, buf, (u64)count, (u64)*pos,
-+      write);
++    memset(&iocb, 0, sizeof(struct cdev_io_cb));
++    iocb.buf = buf;
++    iocb.len = count;
++    rv = map_user_buf_to_sgl(&iocb, write);
++    if (rv < 0)
++        return rv;
 +
-+  memset(&iocb, 0, sizeof(struct cdev_io_cb));
-+  iocb.buf = buf;
-+  iocb.len = count;
-+  rv = map_user_buf_to_sgl(&iocb, write);
-+  if (rv < 0)
-+    return rv;
++    req->sgcnt = iocb.page_nb;
++    req->sgl = iocb.sgl;
++    req->write = write ? 1 : 0;
++    req->dma_mapped = 0;  
++    req->udd_len = 0;
++    req->ep_addr = (u64)*pos;
++    req->count = count;
++    req->timeout_ms = 10 * 1000;    /* 10 seconds */
++    req->fp_done = NULL;        /* blocking */
++    req->h2c_eot = 1;        /* set to 1 for STM tests */
 +
-+  req->sgcnt = iocb.page_nb;
-+  req->sgl = iocb.sgl;
-+  req->write = write ? 1 : 0;
-+  req->dma_mapped = 0;
-+  req->udd_len = 0;
-+  req->ep_addr = (u64)*pos;
-+  req->count = count;
-+  req->timeout_ms = 10 * 1000;    /* 10 seconds */
-+  req->fp_done = NULL;        /* blocking */
-+  req->h2c_eot = 1;        /* set to 1 for STM tests */
++    res = xcdev->fp_rw(xcdev->dev_handle, qhndl, req);
 +
-+  res = xcdev->fp_rw(xcdev->dev_handle, qhndl, req);
++    unmap_user_buf(&iocb, write);
++    iocb_release(&iocb);
 +
-+  unmap_user_buf(&iocb, write);
-+  iocb_release(&iocb);
++	if(!write){
++		down(&read_mutex2);
++		read_queue_pool[read_write_idx] = target_queue;
++		read_write_idx = (read_write_idx + 1) % xcdev->no_mm_queues;
++  	    up(&read_mutex2);
++		up(&read_sem);
++	}
++	else{
++		down(&write_mutex2);
++		write_queue_pool[write_write_idx] = target_queue;
++		write_write_idx = (write_write_idx + 1) % xcdev->no_mm_queues;
++  	    up(&write_mutex2);
++		up(&write_sem);
++	}
 +
-+  if(!write){
-+    down(&read_mutex2);
-+    read_queue_pool[read_write_idx] = target_queue;
-+    read_write_idx = (read_write_idx + 1) % xcdev->no_mm_queues;
-+    up(&read_mutex2);
-+    up(&read_sem);
-+  }
-+  else{
-+    down(&write_mutex2);
-+    write_queue_pool[write_write_idx] = target_queue;
-+    write_write_idx = (write_write_idx + 1) % xcdev->no_mm_queues;
-+    up(&write_mutex2);
-+    up(&write_sem);
-+  }
-+
-+  return res;
++ 	return res;
 +}
 +
 +/**
@@ -1048,26 +1044,26 @@ index 0000000..0489c85
 +
 +  loff_t newpos = 0;
 +
-+  switch (whence) {
-+  case 0: /* SEEK_SET */
-+    newpos = off;
-+    break;
-+  case 1: /* SEEK_CUR */
-+    newpos = file->f_pos + off;
-+    break;
-+  case 2: /* SEEK_END, @TODO should work from end of address space */
-+    newpos = UINT_MAX + off;
-+    break;
-+  default: /* can't happen */
-+    return -EINVAL;
-+  }
-+  if (newpos < 0)
-+    return -EINVAL;
-+  file->f_pos = newpos;
++	switch (whence) {
++	case 0: /* SEEK_SET */
++		newpos = off;
++		break;
++	case 1: /* SEEK_CUR */
++		newpos = file->f_pos + off;
++		break;
++	case 2: /* SEEK_END, @TODO should work from end of address space */
++		newpos = UINT_MAX + off;
++		break;
++	default: /* can't happen */
++		return -EINVAL;
++	}
++	if (newpos < 0)
++		return -EINVAL;
++	file->f_pos = newpos;
 +
-+  dev_dbg(&onic_cdev_ptr->qdev->pdev->dev, "%s: pos=%lld\n", onic_cdev_ptr->name, (signed long long)newpos);
++	dev_dbg(&onic_cdev_ptr->qdev->pdev->dev, "%s: pos=%lld\n", onic_cdev_ptr->name, (signed long long)newpos);
 +
-+  return newpos;
++	return newpos;
 +}
 +
 +/**
@@ -1093,13 +1089,13 @@ index 0000000..0489c85
 +  // Create a cdev class
 +  onic_cdev_class = class_create(THIS_MODULE, ONIC_CDEV_CLASS_NAME);
 +  if(IS_ERR(onic_cdev_class)) {
-+    dev_err(&onic_cdev_ptr->qdev->pdev->dev, "%s: failed to create open-nic cdev class.",
++    dev_err(&onic_cdev_ptr->qdev->pdev->dev, "%s: failed to create open-nic cdev class.", 
 +            ONIC_CDEV_CLASS_NAME);
 +    onic_cdev_class = NULL;
 +    // return error with no such device
 +    return -ENODEV;
 +  }
-+
++  
 +  // allocate a range of character device number. The major number will be chosen dynamically
 +  err = alloc_chrdev_region(&dev, 0, onic_cdev_ptr->cdev_minor_cnt, ONIC_CDEV_CLASS_NAME);
 +  if(err) {
@@ -1121,7 +1117,7 @@ index 0000000..0489c85
 +  read_queue_pool = (int*) kzalloc(sizeof(int) * no_mm_queues, GFP_KERNEL);
 +
 +  for(i = 0 ; i < no_mm_queues ; i++){
-+    read_queue_pool[i] = i;
++	read_queue_pool[i] = i;
 +  }
 +
 +  sema_init(&write_sem, no_mm_queues);
@@ -1131,7 +1127,7 @@ index 0000000..0489c85
 +  write_write_idx = 0;
 +  write_queue_pool = (int*) kzalloc(sizeof(int) * no_mm_queues, GFP_KERNEL);
 +  for(i = 0 ; i < no_mm_queues ; i++){
-+    write_queue_pool[i] = i;
++	write_queue_pool[i] = i;
 +  }
 +  return 0;
 +}
@@ -1189,7 +1185,7 @@ index 0000000..0489c85
 +  } else {
 +    dev_err(&onic_cdev_ptr->qdev->pdev->dev, "%s device_destroy failed!\n", onic_cdev_ptr->name);
 +  }
-+
++  
 +  // Remove sysfs class for this char device
 +  if(onic_cdev_class) {
 +    class_unregister(onic_cdev_class);
@@ -1570,13 +1566,13 @@ index 84fbdf2..0000000
 -
 -#endif
 diff --git a/onic_main.c b/onic_main.c
-index 1d9107e..e6a3d23 100644
+index 1d9107e..090e207 100644
 --- a/onic_main.c
 +++ b/onic_main.c
 @@ -14,6 +14,15 @@ char onic_drv_name[] = "onic";
  #define DRV_VER "1.00"
  char onic_drv_ver[] = DRV_VER;
-
+ 
 +/**
 + * Default MAC address 00:0A:35:00:00:00
 + * First three octets indicate OUI (00:0A:35 for Xilinx)
@@ -1592,33 +1588,25 @@ index 1d9107e..e6a3d23 100644
 @@ -42,6 +51,8 @@ static int onic_stats_alloc(struct onic_priv *xpriv)
  				    sizeof(struct rtnl_link_stats64))
  				   , GFP_KERNEL);
-
+ 
 +	printk(KERN_INFO "real_num_tx_queues: %d real_num_rx_queues %d\n", xpriv->netdev->real_num_tx_queues, xpriv->netdev->real_num_rx_queues);
 +
  	if (!xpriv->tx_qstats) {
  		netdev_err(xpriv->netdev, "%s: Memory allocation failure for stats\n",
  			   __func__);
-@@ -158,6 +169,7 @@ static int onic_rx_pkt_process(unsigned long qhndl, unsigned long quld,
- 	}
-
- 	q_no = (qhndl - xpriv->base_rx_q_handle);
-+
- 	ret = onic_rx_deliver(xpriv, q_no, len, sgcnt, sgl, udd);
- 	if (ret < 0) {
- 		while (sgcnt) {
-@@ -224,7 +236,9 @@ static int onic_rx_poll(struct napi_struct *napi, int quota)
+@@ -224,7 +235,9 @@ static int onic_rx_poll(struct napi_struct *napi, int quota)
  		qdma_queue_c2h_peek(xpriv->dev_handle, q_handle, &udd_cnt,
  				    &pkt_cnt, &data_len);
-
+ 
 -	qdma_queue_update_pointers(xpriv->dev_handle, q_handle);
 +	//qdma_queue_update_pointers(xpriv->dev_handle, q_handle);
 +	// memory-mapped queues do not use this
-+	if(queue_id < QDMA_NET_QUEUE) qdma_queue_update_pointers(xpriv->dev_handle, q_handle);
-
++	if(queue_id < 64) qdma_queue_update_pointers(xpriv->dev_handle, q_handle);
+ 
  	if (xpriv->pinfo->poll_mode || (pkt_cnt >= quota))
  		napi_reschedule(napi);
-@@ -249,7 +263,7 @@ static void onic_isr_rx_tophalf(unsigned long qhndl, unsigned long uld)
-
+@@ -249,7 +262,7 @@ static void onic_isr_rx_tophalf(unsigned long qhndl, unsigned long uld)
+ 
  /* Add a RX queue to QDMA */
  static int onic_qdma_rx_queue_add(struct onic_priv *xpriv, u32 q_no,
 -				  u8 timer_idx, u8 cnt_th_idx)
@@ -1626,102 +1614,37 @@ index 1d9107e..e6a3d23 100644
  {
  	int ret = 0;
  	char error_str[ONIC_ERROR_STR_BUF_LEN] = { '0' };
-@@ -257,12 +271,13 @@ static int onic_qdma_rx_queue_add(struct onic_priv *xpriv, u32 q_no,
+@@ -257,12 +270,13 @@ static int onic_qdma_rx_queue_add(struct onic_priv *xpriv, u32 q_no,
  	struct qdma_queue_conf qconf;
-
+ 
  	memset(&qconf, 0, sizeof(struct qdma_queue_conf));
 -	qconf.st = 1;
-+	qconf.st = q_no >= QDMA_NET_QUEUE ? 0 : 1;
++	qconf.st = q_no >= 64 ? 0 : 1;	
  	qconf.q_type = Q_C2H;
 -	qconf.irq_en = 0;
-+	qconf.irq_en = (xpriv->pinfo->poll_mode == 0);
++	qconf.irq_en = (xpriv->pinfo->poll_mode == 0); 
  	qconf.pfetch_en = 1;
 -	qconf.fetch_credit = 1;
 -	qconf.cmpl_stat_en = 1;
-+	qconf.fetch_credit = 1;
-+	qconf.cmpl_stat_en = 1;
-+	qconf.wb_status_en = q_no >= QDMA_NET_QUEUE ? 1 : 0;
++	qconf.fetch_credit = 1;	
++	qconf.cmpl_stat_en = 1; 	
++	qconf.wb_status_en = q_no >= 64 ? 1 : 0; 
  	qconf.cmpl_desc_sz = DESC_SZ_8B;
  	qconf.cmpl_rng_sz_idx = xpriv->cmpl_rng_sz_idx;
  	qconf.desc_rng_sz_idx = xpriv->rx_desc_rng_sz_idx;
-@@ -272,8 +287,10 @@ static int onic_qdma_rx_queue_add(struct onic_priv *xpriv, u32 q_no,
- 	qconf.cmpl_trig_mode = TRIG_MODE_COMBO;
- 	qconf.cmpl_en_intr = (xpriv->pinfo->poll_mode == 0);
- 	qconf.quld = (unsigned long)xpriv;
--	qconf.fp_descq_isr_top = onic_isr_rx_tophalf;
--	qconf.fp_descq_c2h_packet = onic_rx_pkt_process;
-+  if( q_no < QDMA_NET_QUEUE ) {
-+    qconf.fp_descq_isr_top = onic_isr_rx_tophalf;
-+    qconf.fp_descq_c2h_packet = onic_rx_pkt_process;
-+  }
-
- 	netdev_dbg(xpriv->netdev,
- 		   "%s: c2h_rng_sz_idx = %d, desc_rng_sz_idx = %d, c2h_buf_sz_idx = %d, c2h_timer_idx = %d, c2h_cnt_th_idx = %d\n",
-@@ -282,8 +299,10 @@ static int onic_qdma_rx_queue_add(struct onic_priv *xpriv, u32 q_no,
- 		   qconf.cmpl_cnt_th_idx);
-
- 	qconf.qidx = q_no;
-+
- 	ret = qdma_queue_add(xpriv->dev_handle, &qconf, &q_handle, error_str,
- 			     ONIC_ERROR_STR_BUF_LEN);
-+  xpriv->pinfo->active_rx_queues++;
- 	if (ret != 0) {
- 		netdev_err(xpriv->netdev,
- 			   "%s: qdma_queue_add() failed for queue %d with status %d(%s)\n",
-@@ -292,8 +311,13 @@ static int onic_qdma_rx_queue_add(struct onic_priv *xpriv, u32 q_no,
- 	}
-
- 	/* Get base q_handle */
--	if (q_no == 0)
--		xpriv->base_rx_q_handle = q_handle;
-+	if (q_no == 0) {
-+    xpriv->base_rx_q_handle = q_handle;
-+  }
-+
-+	if (q_no == QDMA_NET_QUEUE){
+@@ -295,6 +309,10 @@ static int onic_qdma_rx_queue_add(struct onic_priv *xpriv, u32 q_no,
+ 	if (q_no == 0)
+ 		xpriv->base_rx_q_handle = q_handle;
+ 
++	if (q_no == 64){ 
 +		xpriv->onic_cdev_ptr->mm_c2h_q_hndl = q_handle;
 +	}
-
++
  	return 0;
  }
-@@ -305,15 +329,26 @@ static void onic_qdma_rx_queue_release(struct onic_priv *xpriv, int num_queues)
- 	char error_str[ONIC_ERROR_STR_BUF_LEN] = { '0' };
-
- 	for (q_no = 0; q_no < num_queues; q_no++) {
--		ret = qdma_queue_remove(xpriv->dev_handle,
--					(xpriv->base_rx_q_handle + q_no),
--					error_str, ONIC_ERROR_STR_BUF_LEN);
--		if (ret != 0) {
--			netdev_err(xpriv->netdev,
--				   "%s: qdma_queue remove() failed for queue %d with status %d(%s)\n",
--				   __func__, q_no, ret, error_str);
--		}
--		netif_napi_del(&xpriv->napi[q_no]);
-+    if (q_no < QDMA_NET_QUEUE) {
-+      ret = qdma_queue_remove(xpriv->dev_handle,
-+            (xpriv->base_rx_q_handle + q_no),
-+            error_str, ONIC_ERROR_STR_BUF_LEN);
-+      if (ret != 0) {
-+        netdev_err(xpriv->netdev,
-+            "%s: qdma_queue remove() failed for queue %d with status %d(%s)\n",
-+            __func__, q_no, ret, error_str);
-+      }
-+        netif_napi_del(&xpriv->napi[q_no]);
-+    } else {
-+      ret = qdma_queue_remove(xpriv->dev_handle,
-+            (xpriv->base_rx_q_handle + q_no),
-+            error_str, ONIC_ERROR_STR_BUF_LEN);
-+      if (ret != 0) {
-+        netdev_err(xpriv->netdev,
-+            "%s: qdma_queue remove() failed for queue %d with status %d(%s)\n",
-+            __func__, q_no, ret, error_str);
-+      }
-+    }
- 	}
-
- 	kfree(xpriv->napi);
-@@ -331,7 +366,7 @@ static int onic_qdma_rx_queue_setup(struct onic_priv *xpriv)
-
+ 
+@@ -331,7 +349,7 @@ static int onic_qdma_rx_queue_setup(struct onic_priv *xpriv)
+ 
  	for (q_no = 0; q_no < xpriv->netdev->real_num_rx_queues; q_no++) {
  		ret = onic_qdma_rx_queue_add(xpriv, q_no, xpriv->rx_timer_idx,
 -					     xpriv->rx_cnt_th_idx);
@@ -1729,128 +1652,34 @@ index 1d9107e..e6a3d23 100644
  		if (ret != 0) {
  			netdev_err(xpriv->netdev,
  				   "%s: onic_qdma_rx_queue_add() failed for queue %d with status %d\n",
-@@ -342,10 +377,23 @@ static int onic_qdma_rx_queue_setup(struct onic_priv *xpriv)
+@@ -341,7 +359,6 @@ static int onic_qdma_rx_queue_setup(struct onic_priv *xpriv)
+ 		netif_napi_add(xpriv->netdev, &xpriv->napi[q_no], onic_rx_poll,
  			       ONIC_NAPI_WEIGHT);
  	}
-
-+  // Add rx queue for QDMA AXI-MM channels
-+	for (q_no = QDMA_NET_QUEUE; q_no < (QDMA_NET_QUEUE + xpriv->pinfo->mm_queues); q_no++) {
-+		ret = onic_qdma_rx_queue_add(xpriv, q_no, xpriv->rx_timer_idx,
-+					     xpriv->rx_cnt_th_idx, 1);
-+		if (ret != 0) {
-+			netdev_err(xpriv->netdev,
-+				   "%s: onic_qdma_rx_queue_add() failed for queue %d with status %d\n",
-+				   __func__, q_no, ret);
-+			goto release_rx_q;
-+		}
-+	}
-+
+-
  	return 0;
-
+ 
  release_rx_q:
--	onic_qdma_rx_queue_release(xpriv, q_no);
-+	//onic_qdma_rx_queue_release(xpriv, q_no);
-+	onic_qdma_rx_queue_release(xpriv, xpriv->pinfo->active_rx_queues);
- 	return ret;
- }
-
-@@ -365,6 +413,7 @@ static void onic_isr_tx_tophalf(unsigned long qhndl, unsigned long uld)
-
- 	/* If ISR is for Tx queue */
- 	q_no = (qhndl - xpriv->base_tx_q_handle);
-+
- 	netdev_dbg(xpriv->netdev, "%s: Tx interrupt called, Mapped queue no = %d\n",
- 		   __func__, q_no);
- }
-@@ -396,9 +445,10 @@ static int onic_qdma_tx_queue_setup(struct onic_priv *xpriv)
- 	unsigned long q_handle = 0;
- 	struct qdma_queue_conf qconf;
-
--	for (q_no = 0; q_no < xpriv->netdev->real_num_tx_queues; q_no++) {
-+	//for (q_no = 0; q_no < xpriv->netdev->real_num_tx_queues; q_no++) {
-+	for (q_no = 0; q_no < (xpriv->netdev->real_num_tx_queues + xpriv->pinfo->mm_queues); q_no++) {
+@@ -398,7 +415,7 @@ static int onic_qdma_tx_queue_setup(struct onic_priv *xpriv)
+ 
+ 	for (q_no = 0; q_no < xpriv->netdev->real_num_tx_queues; q_no++) {
  		memset(&qconf, 0, sizeof(struct qdma_queue_conf));
 -		qconf.st = 1;
-+		qconf.st = q_no >= QDMA_NET_QUEUE ? 0 : 1;
++		qconf.st = q_no >= 64 ? 0 : 1;
  		qconf.q_type = Q_H2C;
  		qconf.irq_en = (xpriv->pinfo->poll_mode == 0);
  		qconf.wb_status_en = 1;
-@@ -406,13 +456,19 @@ static int onic_qdma_tx_queue_setup(struct onic_priv *xpriv)
- 		qconf.cmpl_status_acc_en = 1;
- 		qconf.cmpl_status_pend_chk = 1;
- 		qconf.desc_rng_sz_idx = xpriv->tx_desc_rng_sz_idx;
--		qconf.fp_descq_isr_top = onic_isr_tx_tophalf;
- 		qconf.quld = (unsigned long)xpriv;
- 		qconf.qidx = q_no;
-+    qconf.fp_descq_isr_top = onic_isr_tx_tophalf;
-+    /*
-+    if( q_no < QDMA_NET_QUEUE ) {
-+      qconf.fp_descq_isr_top = onic_isr_tx_tophalf;
-+    }
-+    */
-
- 		ret = qdma_queue_add(xpriv->dev_handle, &qconf, &q_handle,
- 				     error_str, ONIC_ERROR_STR_BUF_LEN);
-
-+    xpriv->pinfo->active_tx_queues++;
- 		if (ret != 0) {
- 			netdev_err(xpriv->netdev,
- 				   "%s: qdma_queue_add() failed for queue %d with status %d(%s)\n",
-@@ -421,12 +477,14 @@ static int onic_qdma_tx_queue_setup(struct onic_priv *xpriv)
+@@ -421,7 +438,8 @@ static int onic_qdma_tx_queue_setup(struct onic_priv *xpriv)
  		}
  		if (q_no == 0)
  			xpriv->base_tx_q_handle = q_handle;
 -
-+		if (q_no == QDMA_NET_QUEUE)
++		if (q_no == 64)
 +			xpriv->onic_cdev_ptr->mm_h2c_q_hndl = q_handle;
  	}
  	return 0;
-
- cleanup_tx_q:
--	onic_qdma_tx_queue_release(xpriv, q_no);
-+	//onic_qdma_tx_queue_release(xpriv, q_no);
-+	onic_qdma_tx_queue_release(xpriv, xpriv->pinfo->active_tx_queues);
- 	return ret;
- }
-
-@@ -472,7 +530,8 @@ static int onic_qdma_start(struct onic_priv *xpriv)
- 	char error_str[ONIC_ERROR_STR_BUF_LEN] = { '0' };
-
-
--	for (q_no = 0; q_no < xpriv->netdev->real_num_rx_queues; q_no++) {
-+	//for (q_no = 0; q_no < xpriv->netdev->real_num_rx_queues; q_no++) {
-+	for (q_no = 0; q_no < xpriv->pinfo->active_rx_queues; q_no++) {
- 		ret = qdma_queue_start(xpriv->dev_handle,
- 				       xpriv->base_rx_q_handle + q_no,
- 				       error_str, ONIC_ERROR_STR_BUF_LEN);
-@@ -480,12 +539,14 @@ static int onic_qdma_start(struct onic_priv *xpriv)
- 			netdev_err(xpriv->netdev,
- 				   "%s: qdma_queue_start() failed for Rx queue %d with status %d(%s)\n",
- 				   __func__, q_no, ret, error_str);
--			onic_qdma_stop(xpriv, 0, q_no);
-+			//onic_qdma_stop(xpriv, 0, q_no);
-+			onic_qdma_stop(xpriv, 0, xpriv->pinfo->active_rx_queues);
- 			return ret;
- 		}
- 	}
-
--	for (q_no = 0; q_no < xpriv->netdev->real_num_tx_queues; q_no++) {
-+	//for (q_no = 0; q_no < xpriv->netdev->real_num_tx_queues; q_no++) {
-+	for (q_no = 0; q_no < xpriv->pinfo->active_tx_queues; q_no++) {
- 		ret = qdma_queue_start(xpriv->dev_handle,
- 				       xpriv->base_tx_q_handle + q_no,
- 				       error_str, ONIC_ERROR_STR_BUF_LEN);
-@@ -493,7 +554,8 @@ static int onic_qdma_start(struct onic_priv *xpriv)
- 			netdev_err(xpriv->netdev,
- 				   "%s: qdma_queue_start() failed for Tx queue %d with status %d(%s)\n",
- 				   __func__, q_no, ret, error_str);
--			onic_qdma_stop(xpriv, q_no, xpriv->netdev->real_num_rx_queues);
-+			//onic_qdma_stop(xpriv, q_no, xpriv->netdev->real_num_rx_queues);
-+			onic_qdma_stop(xpriv, xpriv->pinfo->active_tx_queues, 0);
- 			return ret;
- 		}
- 	}
-@@ -509,6 +571,10 @@ int onic_open(struct net_device *netdev)
+ 
+@@ -509,6 +527,10 @@ int onic_open(struct net_device *netdev)
  {
  	int ret = 0, q_no = 0;
  	struct onic_priv * xpriv;
@@ -1858,20 +1687,20 @@ index 1d9107e..e6a3d23 100644
 +	int no_mm_queues;
 +	struct onic_cdev *onic_cdev_ptr;
 +	struct xlnx_dma_dev *xdev;
-
+ 
  	if (!netdev) {
  		pr_err("%s: netdev is NULL\n", __func__);
-@@ -529,6 +595,25 @@ int onic_open(struct net_device *netdev)
+@@ -529,6 +551,25 @@ int onic_open(struct net_device *netdev)
  		return ret;
  	}
-
-+	xdev = (struct xlnx_dma_dev *)xpriv->dev_handle;
+ 
++ 	xdev = (struct xlnx_dma_dev *)xpriv->dev_handle;
 +	no_mm_queues = xpriv->pinfo->mm_queues;
 +	onic_cdev_ptr = (struct onic_cdev*) kzalloc(sizeof(struct onic_cdev)+strlen(ONIC_CDEV_CLASS_NAME)+5,
 +									 GFP_KERNEL);
 +	onic_cdev_ptr->dev_handle = xpriv->dev_handle;
 +	xpriv->onic_cdev_ptr = onic_cdev_ptr;
-+	xpriv->onic_cdev_ptr->qdev = xdev_2_qdev(xdev);
++	xpriv->onic_cdev_ptr->qdev = xdev_2_qdev(xdev); 
 +	xpriv->onic_cdev_ptr->xpriv = xpriv;
 +	xpriv->onic_cdev_ptr->netdev = netdev;
 +	xpriv->onic_cdev_ptr->qdev->pdev = xpriv->pcidev;
@@ -1879,81 +1708,35 @@ index 1d9107e..e6a3d23 100644
 +	rv = onic_init_cdev(xpriv->onic_cdev_ptr, no_mm_queues);
 +	rv = onic_create_cdev(xpriv->onic_cdev_ptr, 0);
 +	if(rv < 0) {
-+	dev_err(&xpriv->onic_cdev_ptr->qdev->pdev->dev, "Error: onic_init_cdev failed\n");
-+	goto release_queues;
++    	dev_err(&xpriv->onic_cdev_ptr->qdev->pdev->dev, "Error: onic_init_cdev failed\n");
++    	goto release_queues;
 +	}
 +    // end
 +
  	ret = onic_qdma_rx_queue_setup(xpriv);
  	if (ret != 0) {
  		netdev_err(netdev, "%s: onic_qdmx_rx_queue_setup() failed with status %d\n",
-@@ -566,9 +651,11 @@ int onic_open(struct net_device *netdev)
- 	return 0;
-
- release_queues:
--	onic_qdma_tx_queue_release(xpriv, xpriv->netdev->real_num_tx_queues);
-+	//onic_qdma_tx_queue_release(xpriv, xpriv->netdev->real_num_tx_queues);
-+	onic_qdma_tx_queue_release(xpriv, xpriv->pinfo->active_tx_queues);
- release_rx_queues:
--	onic_qdma_rx_queue_release(xpriv, xpriv->netdev->real_num_rx_queues);
-+	//onic_qdma_rx_queue_release(xpriv, xpriv->netdev->real_num_rx_queues);
-+	onic_qdma_rx_queue_release(xpriv, xpriv->pinfo->active_rx_queues);
- 	return ret;
- }
-
-@@ -590,21 +677,26 @@ static int onic_stop(struct net_device *netdev)
+@@ -590,7 +631,6 @@ static int onic_stop(struct net_device *netdev)
  		pr_err("%s: xpriv is NULL\n", __func__);
  		return -EINVAL;
  	}
 -
  	netif_tx_stop_all_queues(netdev);
  	netif_carrier_off(netdev);
-
- 	for (q_no = 0; q_no < xpriv->netdev->real_num_rx_queues; q_no++)
- 		napi_disable(&xpriv->napi[q_no]);
-
--	ret = onic_qdma_stop(xpriv, netdev->real_num_tx_queues,
--			     netdev->real_num_rx_queues);
-+	//ret = onic_qdma_stop(xpriv, netdev->real_num_tx_queues,
-+	//		     netdev->real_num_rx_queues);
-+	ret = onic_qdma_stop(xpriv, xpriv->pinfo->active_tx_queues,
-+			     xpriv->pinfo->active_rx_queues);
-+
- 	if (ret != 0)
- 		netdev_err(netdev, "%s: onic_qdma_stop() failed with status %d\n",
- 			   __func__, ret);
-
--	onic_qdma_rx_queue_release(xpriv, netdev->real_num_rx_queues);
--	onic_qdma_tx_queue_release(xpriv, netdev->real_num_tx_queues);
-+	//onic_qdma_rx_queue_release(xpriv, netdev->real_num_rx_queues);
-+	//onic_qdma_tx_queue_release(xpriv, netdev->real_num_tx_queues);
-+  onic_qdma_rx_queue_release(xpriv, xpriv->pinfo->active_rx_queues);
-+  onic_qdma_tx_queue_release(xpriv, xpriv->pinfo->active_tx_queues);
-+
-
- 	kfree(xpriv->tx_qstats);
-
-@@ -737,6 +829,7 @@ static int onic_start_xmit(struct sk_buff *skb, struct net_device *netdev)
- 	}
-
- 	q_id = skb_get_queue_mapping(skb);
-+
- 	if (unlikely(q_id >= netdev->real_num_tx_queues)) {
- 		netdev_err(netdev, "%s: Invalid queue mapping. q_id = %d\n",
- 			   __func__, q_id);
-@@ -744,6 +837,8 @@ static int onic_start_xmit(struct sk_buff *skb, struct net_device *netdev)
+ 
+@@ -744,6 +784,8 @@ static int onic_start_xmit(struct sk_buff *skb, struct net_device *netdev)
  		return -EINVAL;
  	}
-
-+	if(q_id >= QDMA_NET_QUEUE) return 0; // mm queue does not need to do this
+ 
++	if(q_id >= 64) return 0; // mm queue does not need to do this
 +
  	q_handle = xpriv->base_tx_q_handle + q_id;
-
+ 
  	onic_req = kmem_cache_zalloc(xpriv->dma_req, GFP_ATOMIC);
-@@ -885,23 +980,13 @@ static void onic_get_stats64(struct net_device *netdev,
+@@ -885,23 +927,13 @@ static void onic_get_stats64(struct net_device *netdev,
  	}
  }
-
+ 
 -/* Network Device Operations */
 -static const struct net_device_ops onic_netdev_ops = {
 -	.ndo_open = onic_open,
@@ -1969,14 +1752,14 @@ index 1d9107e..e6a3d23 100644
  {
  	unsigned short int nb_queues;
  	int num_msix;
-
+ 
  	num_msix = pci_msix_vec_count(xpriv->pcidev);
 +
  	if (num_msix <= 0) {
  		pr_err("%s:No MSIX cpability %d\n", __func__, num_msix);
  		return num_msix;
-@@ -909,6 +994,9 @@ static int onic_set_num_queue(struct onic_priv *xpriv)
-
+@@ -909,6 +941,9 @@ static int onic_set_num_queue(struct onic_priv *xpriv)
+ 
  	nb_queues = num_msix;
  	nb_queues -= xpriv->pinfo->pci_msix_user_cnt;
 +
@@ -1984,51 +1767,27 @@ index 1d9107e..e6a3d23 100644
 +
  	if (xpriv->pinfo->pci_master_pf)
  		nb_queues--;
-
-@@ -1066,6 +1154,7 @@ static int onic_enable_cmac(struct onic_priv *xpriv)
- 		writel(0x7, xpriv->bar_base + CMAC_OFFSET_RSFEC_CONF_IND_CORRECTION(cmac_id));
- 	}
-
-+	/*
- 	if (cmac_id == 0) {
- 		writel(0x10, xpriv->bar_base + SYSCFG_OFFSET_SHELL_RESET);
- 		while ((readl(xpriv->bar_base + SYSCFG_OFFSET_SHELL_STATUS) & 0x10) != 0x10)
-@@ -1075,6 +1164,7 @@ static int onic_enable_cmac(struct onic_priv *xpriv)
- 		while ((readl(xpriv->bar_base + SYSCFG_OFFSET_SHELL_STATUS) & 0x100) != 0x100)
- 			mdelay(1);
- 	}
-+	*/
-
- 	writel(0x1, xpriv->bar_base + CMAC_OFFSET_CONF_RX_1(cmac_id));
- 	writel(0x10, xpriv->bar_base + CMAC_OFFSET_CONF_TX_1(cmac_id));
-@@ -1108,6 +1198,7 @@ static int onic_enable_cmac(struct onic_priv *xpriv)
- 	return 0;
-
- rx_not_aligned:
-+  pr_err("[ERROR] %s, rx_not_aligned\n", __func__);
- 	onic_disable_cmac(xpriv);
- 	return -EBUSY;
+ 
+@@ -1133,6 +1168,8 @@ static void onic_init_reta(struct onic_priv *xpriv)
+ 
  }
-@@ -1133,6 +1224,8 @@ static void onic_init_reta(struct onic_priv *xpriv)
-
- }
-
+ 
 +// TODO: remove getting configuration from a json file
 +/*
  static int onic_get_pinfo(struct pci_dev *pdev, struct onic_platform_info
  			  **pinfo_ref)
  {
-@@ -1157,6 +1250,53 @@ static int onic_get_pinfo(struct pci_dev *pdev, struct onic_platform_info
-
+@@ -1157,6 +1194,50 @@ static int onic_get_pinfo(struct pci_dev *pdev, struct onic_platform_info
+ 
  	return 0;
  }
 +*/
 +
-+static int onic_config_platform(struct onic_platform_info **pinfo_ref, u8 qdma_bar,
-+																u8 qdma_user_bar, u16 queue_base, u16 queue_max,
-+																u16 mm_queues, int ring_sz, int c2h_tmr_cnt,
-+																int c2h_cnt_thr, int c2h_buf_sz, u8 port_id,
-+																u8 pci_msix_user_cnt, bool is_poll_mode, bool rsfec_en)
++static int onic_config_platform(struct onic_platform_info **pinfo_ref, u8 qdma_bar, 
++																u8 qdma_user_bar, u16 queue_base, u16 queue_max, 
++																u16 mm_queues, int ring_sz, int c2h_tmr_cnt, 
++																int c2h_cnt_thr, int c2h_buf_sz, u8 port_id, 
++																u8 pci_msix_user_cnt, bool is_poll_mode, bool rsfec_en) 
 +{
 +	struct onic_platform_info *pinfo;
 +
@@ -2042,10 +1801,7 @@ index 1d9107e..e6a3d23 100644
 +	pinfo->queue_max = queue_max;
 +	pinfo->port_id = port_id;
 +	pinfo->mm_queues = mm_queues;
-+	//pinfo->used_queues = QDMA_NET_QUEUE + mm_queues;
-+  pinfo->used_queues = QDMA_NET_QUEUE;
-+  pinfo->active_tx_queues = 0;
-+  pinfo->active_rx_queues = 0;
++	pinfo->used_queues = 64 + mm_queues;
 +	pinfo->ring_sz = ring_sz;
 +	pinfo->c2h_tmr_cnt = c2h_tmr_cnt;
 +	pinfo->c2h_cnt_thr = c2h_cnt_thr;
@@ -2054,7 +1810,7 @@ index 1d9107e..e6a3d23 100644
 +	pinfo->pci_msix_user_cnt = pci_msix_user_cnt;
 +	pinfo->poll_mode = is_poll_mode;
 +	pinfo->intr_mod_en = is_poll_mode ? false : true;
-+
++	
 +	*pinfo_ref = pinfo;
 +	return 0;
 +}
@@ -2069,39 +1825,37 @@ index 1d9107e..e6a3d23 100644
 +	.ndo_change_mtu = onic_change_mtu,
 +	.ndo_get_stats64 = onic_get_stats64
 +};
-
+ 
  extern void onic_set_ethtool_ops(struct net_device *netdev);
-
-@@ -1175,10 +1315,16 @@ static int onic_pci_probe(struct pci_dev *pdev,
+ 
+@@ -1175,10 +1256,15 @@ static int onic_pci_probe(struct pci_dev *pdev,
  	int ret;
  	u64 bar_start;
  	u64 bar_len;
--
--	ret = onic_get_pinfo(pdev, &pinfo);
 +	bool is_poll_mode = false;
 +	bool en_rsfec = true;
-+
+ 
+-	ret = onic_get_pinfo(pdev, &pinfo);
 +	//ret = onic_get_pinfo(pdev, &pinfo);
-+	ret = onic_config_platform(&pinfo, QDMA_BAR, QDMA_USER_BAR, QDMA_QUEUE_BASE, QMDA_TOTAL_QUEUE_ACTIVE,
++	ret = onic_config_platform(&pinfo, QDMA_BAR, QDMA_USER_BAR, QDMA_QUEUE_BASE, QDMA_QUEUE_MAX, 
 +														 QDMA_MM_QUEUE, RING_SIZE, C2H_TMR_CNT, C2H_CNT_THR, C2H_BUF_SIZE,
 +														 CMAC_PORT_ID, PCI_MSIX_USER_CNT, is_poll_mode, en_rsfec);
-+
  	if (ret) {
 -		pr_err("%s: onic_get_pinfo() failed with status %d\n", __func__,
 +		pr_err("%s: onic_config_platform() failed with status %d\n", __func__,
  		       ret);
  		return ret;
  	}
-@@ -1209,11 +1355,17 @@ static int onic_pci_probe(struct pci_dev *pdev,
+@@ -1209,11 +1295,17 @@ static int onic_pci_probe(struct pci_dev *pdev,
  	xpriv->pinfo = pinfo;
-
+ 
  	memset(&saddr, 0, sizeof(struct sockaddr));
 -	memcpy(saddr.sa_data, pinfo->mac_addr, 6);
 +	memcpy(saddr.sa_data, onic_default_dev_addr, 6);
 +	get_random_bytes(saddr.sa_data + 3, 3);
 +	memcpy(pinfo->mac_addr, saddr.sa_data, 6);
  	onic_set_mac_address(netdev, (void *)&saddr);
-
+ 
 -	if (pinfo->pci_master_pf) {
 -		dev_info(&pdev->dev, "device is master PF");
 +	if (PCI_FUNC(pdev->devfn) == 0) {
@@ -2111,35 +1865,35 @@ index 1d9107e..e6a3d23 100644
 +		pinfo->pci_master_pf = false;
 +		dev_info(&pdev->dev, "device is not a master PF");
  	}
-
+ 
  	ret = onic_set_num_queue(xpriv);
-@@ -1221,6 +1373,8 @@ static int onic_pci_probe(struct pci_dev *pdev,
+@@ -1221,6 +1313,8 @@ static int onic_pci_probe(struct pci_dev *pdev,
  		goto exit;
  	}
-
+ 
 +	pr_info("%s mm_queues: %u\n", __func__, xpriv->pinfo->mm_queues);
 +
  	if (xpriv->pinfo->used_queues > 0 ) {
  		netif_set_real_num_tx_queues(xpriv->netdev,
  					     xpriv->pinfo->used_queues);
-@@ -1273,6 +1427,7 @@ static int onic_pci_probe(struct pci_dev *pdev,
-
+@@ -1273,6 +1367,7 @@ static int onic_pci_probe(struct pci_dev *pdev,
+ 
  	netif_carrier_off(netdev);
-
+ 
 +
  	return 0;
-
+ 
  disable_cmac:
-@@ -1311,6 +1466,8 @@ static void onic_pci_remove(struct pci_dev *pdev)
+@@ -1311,6 +1406,8 @@ static void onic_pci_remove(struct pci_dev *pdev)
  	pci_set_drvdata(pdev, NULL);
  	unregister_netdev(netdev);
-
-+  onic_destroy_cdev(xpriv->onic_cdev_ptr);
+ 
++    onic_destroy_cdev(xpriv->onic_cdev_ptr);
 +
  	onic_disable_cmac(xpriv);
  	if (xpriv->bar_base)
  		iounmap(xpriv->bar_base);
-@@ -1334,20 +1491,17 @@ static struct pci_driver onic_pci_driver = {
+@@ -1334,20 +1431,17 @@ static struct pci_driver onic_pci_driver = {
  static int __init onic_module_init(void)
  {
  	int err = 0;
@@ -2159,11 +1913,11 @@ index 1d9107e..e6a3d23 100644
 -
  	return err;
  }
-
-@@ -1363,6 +1517,8 @@ static void __exit onic_module_exit(void)
+ 
+@@ -1363,6 +1457,8 @@ static void __exit onic_module_exit(void)
  module_init(onic_module_init);
  module_exit(onic_module_exit);
-
+ 
 +MODULE_AUTHOR("Guanwen (Henry) Zhong");
 +MODULE_AUTHOR("Burin Amornpaisannon");
  MODULE_AUTHOR("Hyunok Kim");

@@ -4,7 +4,7 @@
   "pkt_op"                : "read",
   "non_roce_traffic"      : "no",
   "noise_roce_en"         : "no",
-  "payload_size"          : 64,
+  "payload_size"          : 4096,
   "src_baseaddr_location" :"dev_mem",
   "src_baseaddr"          : 2048,
   "dst_baseaddr"          : 512,
@@ -14,11 +14,12 @@
   "num_qp"                : 4,
   "udp_sport"             : 17185,
   "destination_qpid"      : 2,
-  "sq_depth"              : 4,
-  "rq_depth"              : 4,
+  "sq_depth"              : 20,
+  "rq_depth"              : 20,
   "mtu_size"              : 4096,
   "rq_buffer_size"        : 2048,
   "partition_key"         : 4660,
   "r_key"                 : 22,
-  "sq_psn"                : 10
+  "sq_psn"                : 10,
+  "num_wqe"               : 16
 }

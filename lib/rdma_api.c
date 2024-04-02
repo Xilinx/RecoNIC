@@ -695,7 +695,7 @@ struct rdma_qp_t* allocate_rdma_qp(struct rdma_dev_t* rdma_dev,
   // enable QPCONFi[2] and QPCONFi[3]
   qp_config = (en_qp & 0x00000001) | 
                 (0xc & 0x0000000c) | 
-                (0x30 & 0x000000f0) | 
+                (0x20 & 0x000000f0) | 
                 ((mtu_config<<8) & 0x0000ff00) | 
                 ((rq_buffer_entry_size<<16) & 0xffff0000);
   write32_data(rdma_dev->axil_ctl, 

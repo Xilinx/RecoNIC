@@ -123,44 +123,53 @@ module reconic # (
   output    [15:0] m_axis_cmac_tx_tuser_size,
   input            m_axis_cmac_tx_tready,
 
-  // Compute Logic AXI interface for memory access
-  output            m_axi_compute_logic_awid,
-  output   [63 : 0] m_axi_compute_logic_awaddr,
-  output    [3 : 0] m_axi_compute_logic_awqos,
-  output    [7 : 0] m_axi_compute_logic_awlen,
-  output    [2 : 0] m_axi_compute_logic_awsize,
-  output    [1 : 0] m_axi_compute_logic_awburst,
-  output    [3 : 0] m_axi_compute_logic_awcache,
-  output    [2 : 0] m_axi_compute_logic_awprot,
-  output            m_axi_compute_logic_awvalid,
-  input             m_axi_compute_logic_awready,
-  output  [511 : 0] m_axi_compute_logic_wdata,
-  output   [63 : 0] m_axi_compute_logic_wstrb,
-  output            m_axi_compute_logic_wlast,
-  output            m_axi_compute_logic_wvalid,
-  input             m_axi_compute_logic_wready,
-  output            m_axi_compute_logic_awlock,
-  input             m_axi_compute_logic_bid,
-  input     [1 : 0] m_axi_compute_logic_bresp,
-  input             m_axi_compute_logic_bvalid,
-  output            m_axi_compute_logic_bready,
-  output            m_axi_compute_logic_arid,
-  output   [63 : 0] m_axi_compute_logic_araddr,
-  output    [7 : 0] m_axi_compute_logic_arlen,
-  output    [2 : 0] m_axi_compute_logic_arsize,
-  output    [1 : 0] m_axi_compute_logic_arburst,
-  output    [3 : 0] m_axi_compute_logic_arcache,
-  output    [2 : 0] m_axi_compute_logic_arprot,
-  output            m_axi_compute_logic_arvalid,
-  input             m_axi_compute_logic_arready,
-  input             m_axi_compute_logic_rid,
-  input   [511 : 0] m_axi_compute_logic_rdata,
-  input     [1 : 0] m_axi_compute_logic_rresp,
-  input             m_axi_compute_logic_rlast,
-  input             m_axi_compute_logic_rvalid,
-  output            m_axi_compute_logic_rready,
-  output            m_axi_compute_logic_arlock,
-  output     [3:0]  m_axi_compute_logic_arqos,
+  output            m_axi_hw_hndshk_to_sys_mem_awid,
+  output   [63 : 0] m_axi_hw_hndshk_to_sys_mem_awaddr,
+  output    [3 : 0] m_axi_hw_hndshk_to_sys_mem_awqos,
+  output    [7 : 0] m_axi_hw_hndshk_to_sys_mem_awlen,
+  output    [2 : 0] m_axi_hw_hndshk_to_sys_mem_awsize,
+  output    [1 : 0] m_axi_hw_hndshk_to_sys_mem_awburst,
+  output    [3 : 0] m_axi_hw_hndshk_to_sys_mem_awcache,
+  output    [2 : 0] m_axi_hw_hndshk_to_sys_mem_awprot,
+  output            m_axi_hw_hndshk_to_sys_mem_awvalid,
+  input             m_axi_hw_hndshk_to_sys_mem_awready,
+  output  [511 : 0] m_axi_hw_hndshk_to_sys_mem_wdata,
+  output   [63 : 0] m_axi_hw_hndshk_to_sys_mem_wstrb,
+  output            m_axi_hw_hndshk_to_sys_mem_wlast,
+  output            m_axi_hw_hndshk_to_sys_mem_wvalid,
+  input             m_axi_hw_hndshk_to_sys_mem_wready,
+  output            m_axi_hw_hndshk_to_sys_mem_awlock,
+  input             m_axi_hw_hndshk_to_sys_mem_bid,
+  input     [1 : 0] m_axi_hw_hndshk_to_sys_mem_bresp,
+  input             m_axi_hw_hndshk_to_sys_mem_bvalid,
+  output            m_axi_hw_hndshk_to_sys_mem_bready,
+  output            m_axi_hw_hndshk_to_sys_mem_arid,
+  output   [63 : 0] m_axi_hw_hndshk_to_sys_mem_araddr,
+  output    [7 : 0] m_axi_hw_hndshk_to_sys_mem_arlen,
+  output    [2 : 0] m_axi_hw_hndshk_to_sys_mem_arsize,
+  output    [1 : 0] m_axi_hw_hndshk_to_sys_mem_arburst,
+  output    [3 : 0] m_axi_hw_hndshk_to_sys_mem_arcache,
+  output    [2 : 0] m_axi_hw_hndshk_to_sys_mem_arprot,
+  output            m_axi_hw_hndshk_to_sys_mem_arvalid,
+  input             m_axi_hw_hndshk_to_sys_mem_arready,
+  input             m_axi_hw_hndshk_to_sys_mem_rid,
+  input   [511 : 0] m_axi_hw_hndshk_to_sys_mem_rdata,
+  input     [1 : 0] m_axi_hw_hndshk_to_sys_mem_rresp,
+  input             m_axi_hw_hndshk_to_sys_mem_rlast,
+  input             m_axi_hw_hndshk_to_sys_mem_rvalid,
+  output            m_axi_hw_hndshk_to_sys_mem_rready,
+  output            m_axi_hw_hndshk_to_sys_mem_arlock,
+  output     [3:0]  m_axi_hw_hndshk_to_sys_mem_arqos,
+
+  input             s_resp_hndler_i_send_cq_db_cnt_valid,
+  input      [9 :0] s_resp_hndler_i_send_cq_db_addr,
+  input      [31:0] s_resp_hndler_i_send_cq_db_cnt,
+  output            s_resp_hndler_o_send_cq_db_rdy,
+
+  output     [15:0] m_o_qp_sq_pidb_hndshk,
+  output     [31:0] m_o_qp_sq_pidb_wr_addr_hndshk,
+  output            m_o_qp_sq_pidb_wr_valid_hndshk,
+  input             m_i_qp_sq_pidb_wr_rdy,
 
   input          axil_aclk,
   input          axil_rstn,
@@ -266,6 +275,9 @@ logic         pc_roce_out_tlast;
 logic         pc_roce_out_tready;
 
 logic   [1:0] pkt_filter_err;
+
+(* mark_debug = "true" *) logic [63:0] axis_clk_latency_timer;
+(* mark_debug = "true" *) logic [63:0] axil_clk_latency_timer;
 
 // rn_reg_control only uses fatal_err[5:0]. When changing fatal_err, 
 // please make sure that you also change fatal_err in rn_reg_control
@@ -514,7 +526,7 @@ packet_classification #(
 // TODO: Message status monitor
 
 // Compute Logic box
-compute_logic_wrapper #(
+/*compute_logic_wrapper #(
   .AXIL_ADDR_WIDTH(AXIL_REG_ADDR_WIDTH),
   .AXIL_DATA_WIDTH(AXIL_DATA_WIDTH),
   .AXIS_DATA_WIDTH(AXIS_DATA_WIDTH),
@@ -574,6 +586,81 @@ compute_logic_wrapper #(
   .m_axi_rready  (m_axi_compute_logic_rready),
   .m_axi_arlock  (m_axi_compute_logic_arlock),
   .m_axi_arqos   (m_axi_compute_logic_arqos),
+
+  .axil_aclk (axil_aclk),
+  .axil_rstn (axil_rstn),
+  .axis_aclk (axis_aclk),
+  .axis_rstn (axis_rstn)
+);*/
+
+hw_hndshk_wrapper hw_hndshk_wrapper_inst (
+  // register control interface
+  .s_axil_hw_hndshk_cmd_awvalid           (s_axil_cl_reg_awvalid),
+  .s_axil_hw_hndshk_cmd_awaddr            (s_axil_cl_reg_awaddr),
+  .s_axil_hw_hndshk_cmd_awready           (s_axil_cl_reg_awready),
+  .s_axil_hw_hndshk_cmd_wvalid            (s_axil_cl_reg_wvalid ),
+  .s_axil_hw_hndshk_cmd_wdata             (s_axil_cl_reg_wdata  ),
+  .s_axil_hw_hndshk_cmd_wready            (s_axil_cl_reg_wready ),
+  .s_axil_hw_hndshk_cmd_bvalid            (s_axil_cl_reg_bvalid ),
+  .s_axil_hw_hndshk_cmd_bresp             (s_axil_cl_reg_bresp  ),
+  .s_axil_hw_hndshk_cmd_bready            (s_axil_cl_reg_bready ),
+  .s_axil_hw_hndshk_cmd_arvalid           (s_axil_cl_reg_arvalid),
+  .s_axil_hw_hndshk_cmd_araddr            (s_axil_cl_reg_araddr),
+  .s_axil_hw_hndshk_cmd_arready           (s_axil_cl_reg_arready),
+  .s_axil_hw_hndshk_cmd_rvalid            (s_axil_cl_reg_rvalid ),
+  .s_axil_hw_hndshk_cmd_rdata             (s_axil_cl_reg_rdata  ),
+  .s_axil_hw_hndshk_cmd_rresp             (s_axil_cl_reg_rresp  ),
+  .s_axil_hw_hndshk_cmd_rready            (s_axil_cl_reg_rready ),
+
+  .m_axi_to_sys_mem_awid                  (m_axi_hw_hndshk_to_sys_mem_awid),
+  .m_axi_to_sys_mem_awaddr                (m_axi_hw_hndshk_to_sys_mem_awaddr),
+  .m_axi_to_sys_mem_awqos                 (m_axi_hw_hndshk_to_sys_mem_awqos),
+  .m_axi_to_sys_mem_awlen                 (m_axi_hw_hndshk_to_sys_mem_awlen),
+  .m_axi_to_sys_mem_awsize                (m_axi_hw_hndshk_to_sys_mem_awsize),
+  .m_axi_to_sys_mem_awburst               (m_axi_hw_hndshk_to_sys_mem_awburst),
+  .m_axi_to_sys_mem_awcache               (m_axi_hw_hndshk_to_sys_mem_awcache),
+  .m_axi_to_sys_mem_awprot                (m_axi_hw_hndshk_to_sys_mem_awprot),
+  .m_axi_to_sys_mem_awvalid               (m_axi_hw_hndshk_to_sys_mem_awvalid),
+  .m_axi_to_sys_mem_awready               (m_axi_hw_hndshk_to_sys_mem_awready),
+  .m_axi_to_sys_mem_wdata                 (m_axi_hw_hndshk_to_sys_mem_wdata),
+  .m_axi_to_sys_mem_wstrb                 (m_axi_hw_hndshk_to_sys_mem_wstrb),
+  .m_axi_to_sys_mem_wlast                 (m_axi_hw_hndshk_to_sys_mem_wlast),
+  .m_axi_to_sys_mem_wvalid                (m_axi_hw_hndshk_to_sys_mem_wvalid),
+  .m_axi_to_sys_mem_wready                (m_axi_hw_hndshk_to_sys_mem_wready),
+  .m_axi_to_sys_mem_awlock                (m_axi_hw_hndshk_to_sys_mem_awlock),
+  .m_axi_to_sys_mem_bid                   (m_axi_hw_hndshk_to_sys_mem_bid),
+  .m_axi_to_sys_mem_bresp                 (m_axi_hw_hndshk_to_sys_mem_bresp),
+  .m_axi_to_sys_mem_bvalid                (m_axi_hw_hndshk_to_sys_mem_bvalid),
+  .m_axi_to_sys_mem_bready                (m_axi_hw_hndshk_to_sys_mem_bready),
+  .m_axi_to_sys_mem_arid                  (m_axi_hw_hndshk_to_sys_mem_arid),
+  .m_axi_to_sys_mem_araddr                (m_axi_hw_hndshk_to_sys_mem_araddr),
+  .m_axi_to_sys_mem_arlen                 (m_axi_hw_hndshk_to_sys_mem_arlen),
+  .m_axi_to_sys_mem_arsize                (m_axi_hw_hndshk_to_sys_mem_arsize),
+  .m_axi_to_sys_mem_arburst               (m_axi_hw_hndshk_to_sys_mem_arburst),
+  .m_axi_to_sys_mem_arcache               (m_axi_hw_hndshk_to_sys_mem_arcache),
+  .m_axi_to_sys_mem_arprot                (m_axi_hw_hndshk_to_sys_mem_arprot),
+  .m_axi_to_sys_mem_arvalid               (m_axi_hw_hndshk_to_sys_mem_arvalid),
+  .m_axi_to_sys_mem_arready               (m_axi_hw_hndshk_to_sys_mem_arready),
+  .m_axi_to_sys_mem_rid                   (m_axi_hw_hndshk_to_sys_mem_rid),
+  .m_axi_to_sys_mem_rdata                 (m_axi_hw_hndshk_to_sys_mem_rdata),
+  .m_axi_to_sys_mem_rresp                 (m_axi_hw_hndshk_to_sys_mem_rresp),
+  .m_axi_to_sys_mem_rlast                 (m_axi_hw_hndshk_to_sys_mem_rlast),
+  .m_axi_to_sys_mem_rvalid                (m_axi_hw_hndshk_to_sys_mem_rvalid),
+  .m_axi_to_sys_mem_rready                (m_axi_hw_hndshk_to_sys_mem_rready),
+  .m_axi_to_sys_mem_arlock                (m_axi_hw_hndshk_to_sys_mem_arlock),
+  .m_axi_to_sys_mem_arqos                 (m_axi_hw_hndshk_to_sys_mem_arqos),
+
+  .s_resp_hndler_i_send_cq_db_cnt_valid   (s_resp_hndler_i_send_cq_db_cnt_valid),
+  .s_resp_hndler_i_send_cq_db_addr        (s_resp_hndler_i_send_cq_db_addr),
+  .s_resp_hndler_i_send_cq_db_cnt         (s_resp_hndler_i_send_cq_db_cnt),
+  .s_resp_hndler_o_send_cq_db_rdy         (s_resp_hndler_o_send_cq_db_rdy),
+
+  .m_o_qp_sq_pidb_hndshk                  (m_o_qp_sq_pidb_hndshk),
+  .m_o_qp_sq_pidb_wr_addr_hndshk          (m_o_qp_sq_pidb_wr_addr_hndshk),
+  .m_o_qp_sq_pidb_wr_valid_hndshk         (m_o_qp_sq_pidb_wr_valid_hndshk),
+  .m_i_qp_sq_pidb_wr_rdy                  (m_i_qp_sq_pidb_wr_rdy),
+
+  .global_hw_timer                        (axis_clk_latency_timer),
 
   .axil_aclk (axil_aclk),
   .axil_rstn (axil_rstn),
@@ -655,8 +742,6 @@ xpm_cdc_array_single #(
                            //  the XPM_CDC_GRAY macro instead.
 );
 
-(* mark_debug = "true" *) logic [63:0] axis_clk_latency_timer;
-(* mark_debug = "true" *) logic [63:0] axil_clk_latency_timer;
 always_ff @(posedge axis_aclk)
 begin
   if(!axis_rstn) begin

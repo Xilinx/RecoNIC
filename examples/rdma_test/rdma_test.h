@@ -25,7 +25,7 @@
 #define R_KEY 0x0008
 
 // Total number of hugepages allocated: preallocated_hugepages * per_hugepage_size
-//    -- 256 * 2MB = 512MB
+//    --256 * 2MB = 512MB
 #define preallocated_hugepages 256
 
 static struct option const long_opts[] = {

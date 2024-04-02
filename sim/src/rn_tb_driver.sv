@@ -18,6 +18,7 @@ module rn_tb_driver #(
   input  string           rsp_table_filename,
   input  string           rdma_cfg_filename,
   input  string           rdma_stat_filename,
+  input  string           rdma_wqe_init_filename,
   ref    mbox_pkt_str_t   mbox_pkt_str,
   // Output stimulus
   output [AXIS_DATA_WIDTH-1:0] m_axis_tdata,
@@ -66,6 +67,10 @@ module rn_tb_driver #(
   input             start_stat_rdma,
   output            stimulus_all_sent,
 
+  output logic      finish_config_rdma,
+  //input             start_init_hw_hndshk,
+  output logic      finish_init_hw_hndshk,
+
   output reg axil_clk,
   output reg axil_rstn,
   output reg axis_clk,
@@ -77,6 +82,8 @@ logic [31:0] delay_cnt;
 logic        start_send;
 
 axis_pkt_queue_t packets;
+
+logic start_init_hw_hndshk;
 
 logic start_reading;
 logic reading_done;
@@ -196,8 +203,35 @@ assign m_axis_tlast      = m_axis_tlast_reg;
 
 // TODO: Update register configuration for RecoNIC and RDMA
 /* Configure RecoNIC */
+/*
 axil_reg_stimulus config_rn (
   .table_config_filename(""),
+  .m_axil_reg_awvalid(m_axil_rn_awvalid),
+  .m_axil_reg_awaddr (m_axil_rn_awaddr),
+  .m_axil_reg_awready(m_axil_rn_awready),
+  .m_axil_reg_wvalid (m_axil_rn_wvalid),
+  .m_axil_reg_wdata  (m_axil_rn_wdata),
+  .m_axil_reg_wready (m_axil_rn_wready),
+  .m_axil_reg_bvalid (m_axil_rn_bvalid),
+  .m_axil_reg_bresp  (m_axil_rn_bresp),
+  .m_axil_reg_bready (m_axil_rn_bready),
+  .m_axil_reg_arvalid(m_axil_rn_arvalid),
+  .m_axil_reg_araddr (m_axil_rn_araddr),
+  .m_axil_reg_arready(m_axil_rn_arready),
+  .m_axil_reg_rvalid (m_axil_rn_rvalid),
+  .m_axil_reg_rdata  (m_axil_rn_rdata),
+  .m_axil_reg_rresp  (m_axil_rn_rresp),
+  .m_axil_reg_rready (m_axil_rn_rready),
+  .axil_clk          (axil_clk),
+  .axil_rstn         (axil_rstn)
+);*/
+
+assign start_init_hw_hndshk = finish_config_rdma;
+
+axil_reg_control config_init_hw_hndshk (
+  .rdma_cfg_filename (rdma_wqe_init_filename),
+  .start_config_rdma (start_init_hw_hndshk),
+  .finish_config_rdma(finish_init_hw_hndshk),
   .m_axil_reg_awvalid(m_axil_rn_awvalid),
   .m_axil_reg_awaddr (m_axil_rn_awaddr),
   .m_axil_reg_awready(m_axil_rn_awready),
@@ -224,7 +258,7 @@ axil_reg_control config_rdma (
   .rdma_cfg_filename (rdma_cfg_filename),
   .rdma_stat_filename(rdma_stat_filename),
   .start_config_rdma (start_config_rdma),
-  .finish_config_rdma(),
+  .finish_config_rdma(finish_config_rdma),
   .start_rdma_stat   (start_stat_rdma),
   .m_axil_reg_awvalid(m_axil_rdma_awvalid),
   .m_axil_reg_awaddr (m_axil_rdma_awaddr),

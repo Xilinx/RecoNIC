@@ -377,4 +377,6 @@ int destroy_rn_dev(struct rn_dev_t* rn_dev);
  */
 void dump_registers(struct rdma_dev_t* rdma_dev, uint8_t is_sender, uint32_t qpid);
 
+uint32_t get_rdma_per_q_config_addr(uint32_t offset, uint32_t qpid);
+
 #endif /* __RDMA_API_H__ */

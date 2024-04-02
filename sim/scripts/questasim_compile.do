@@ -110,14 +110,13 @@ vlog -64 -sv -work reco -L blk_mem_gen_v8_4_5 -L fifo_generator_v13_2_6 "+incdir
 "../build/ip/axi_protocol_checker/hdl/axi_protocol_checker_v2_0_vl_rfs.sv" \
 "../build/ip/axi_protocol_checker/sim/axi_protocol_checker.sv" \
 
-vlog -64 +define+DEBUG -work reco +incdir+../../shell/compute/lookside/interface -f ./interface.f
-vlog -64 +define+DEBUG -work reco +incdir+../../shell/compute/lookside/kernel -f ./kernel.f
+vlog -64 +define+DEBUG -work reco +incdir+../../shell/compute/lookside/hw_hndshk -f ./hw_hndshk.f
 
 vlog -64 -sv -L xpm +define+DEBUG -work reco \
 "../../shell/utilities/rn_reg_control.sv" \
 "../../shell/packet_classification/packet_classification.sv" \
 "../../shell/packet_classification/packet_filter.sv" \
-"../../shell/compute/lookside/compute_logic_wrapper.sv" \
+"../../shell/compute/lookside/hw_hndshk_wrapper.sv" \
 "../../shell/compute/lookside/control_command_processor.sv" \
 "../../base_nics/open-nic-shell/src/utility/axi_interconnect_to_dev_mem.sv" \
 "../../base_nics/open-nic-shell/src/utility/axi_interconnect_to_sys_mem.sv" \
@@ -138,19 +137,18 @@ vlog -64 -sv +define+DEBUG -L xpm -work reco \
 "../src/rn_tb_driver.sv" \
 "../src/rn_tb_checker.sv" \
 "../src/rn_tb_top.sv" \
-"../src/cl_tb_top.sv" \
 "../src/rn_tb_2rdma_top.sv" \
-"../src/axi_3to1_interconnect_to_dev_mem.sv" \
+"../src/axi_2to1_interconnect_to_dev_mem.sv" \
 "../src/axi_5to2_interconnect_to_sys_mem.sv" \
 
 
-vlog -64 -work reco -L fifo_generator_v13_2_6 "+incdir+../build/ip/dev_mem_3to1_axi_crossbar/hdl" \
-"../build/ip/dev_mem_3to1_axi_crossbar/hdl/axi_crossbar_v2_1_vl_rfs.v" \
-"../build/ip/dev_mem_3to1_axi_crossbar/hdl/axi_data_fifo_v2_1_vl_rfs.v" \
-"../build/ip/dev_mem_3to1_axi_crossbar/hdl/axi_infrastructure_v1_1_vl_rfs.v" \
-"../build/ip/dev_mem_3to1_axi_crossbar/hdl/axi_register_slice_v2_1_vl_rfs.v" \
-"../build/ip/dev_mem_3to1_axi_crossbar/hdl/generic_baseblocks_v2_1_vl_rfs.v" \
-"../build/ip/dev_mem_3to1_axi_crossbar/synth/dev_mem_3to1_axi_crossbar.v" \
+vlog -64 -work reco -L fifo_generator_v13_2_6 "+incdir+../build/ip/dev_mem_2to1_axi_crossbar/hdl" \
+"../build/ip/dev_mem_2to1_axi_crossbar/hdl/axi_crossbar_v2_1_vl_rfs.v" \
+"../build/ip/dev_mem_2to1_axi_crossbar/hdl/axi_data_fifo_v2_1_vl_rfs.v" \
+"../build/ip/dev_mem_2to1_axi_crossbar/hdl/axi_infrastructure_v1_1_vl_rfs.v" \
+"../build/ip/dev_mem_2to1_axi_crossbar/hdl/axi_register_slice_v2_1_vl_rfs.v" \
+"../build/ip/dev_mem_2to1_axi_crossbar/hdl/generic_baseblocks_v2_1_vl_rfs.v" \
+"../build/ip/dev_mem_2to1_axi_crossbar/synth/dev_mem_2to1_axi_crossbar.v" \
 
 vlog -64 -work reco -L fifo_generator_v13_2_6 "+incdir+../build/ip/sys_mem_5to2_axi_crossbar/hdl" \
 "../build/ip/sys_mem_5to2_axi_crossbar/hdl/axi_crossbar_v2_1_vl_rfs.v" \
