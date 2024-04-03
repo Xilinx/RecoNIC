@@ -118,8 +118,8 @@ vlog -64 -sv -L xpm +define+DEBUG -work reco \
 "../../shell/packet_classification/packet_filter.sv" \
 "../../shell/compute/lookside/hw_hndshk_wrapper.sv" \
 "../../shell/compute/lookside/control_command_processor.sv" \
-"../../base_nics/open-nic-shell/src/utility/axi_interconnect_to_dev_mem.sv" \
-"../../base_nics/open-nic-shell/src/utility/axi_interconnect_to_sys_mem.sv" \
+"../src/axi_interconnect_to_dev_mem.sv" \
+"../src/axi_interconnect_to_sys_mem.sv" \
 "../../shell/plugs/rdma_onic_plugin/reconic_address_map.sv" \
 "../../shell/top/reconic.sv" \
 "../../shell/plugs/rdma_onic_plugin/box_250mhz.sv" \
