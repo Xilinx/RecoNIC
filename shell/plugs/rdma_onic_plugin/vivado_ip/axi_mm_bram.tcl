@@ -12,6 +12,6 @@ set_property -dict {
     CONFIG.ECC_TYPE {0}
     CONFIG.BMG_INSTANCE {INTERNAL}
     CONFIG.MEM_DEPTH {8192}
-    CONFIG.ID_WIDTH {5}
+    CONFIG.ID_WIDTH {4}
     CONFIG.RD_CMD_OPTIMIZATION {0}
 } [get_ips $ip]

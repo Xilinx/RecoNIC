@@ -43,6 +43,7 @@ rdma2_combined_cfg_filename = 'rdma2_combined_config.txt'
 rdma2_stat_reg_cfg_filename = 'rdma2_stat_reg_config.txt'
 rdma2_debug_stat_reg_cfg_filename = 'debug_rdma2_stat_reg_config.txt'
 non_roce_packet_filename    = 'packets.txt'
+rdma_wqe_init_filename      = 'rdma_hw_hndshk_wqe_init.txt'
 
 # Files for Compute Logic simulation
 cl_init_mem    = "cl_init_mem.txt"
@@ -196,6 +197,7 @@ class testcaseClass:
         rdma2_combined_cfg_fname = pjoin(tc_dir, rdma2_combined_cfg_filename)
         rdma2_stat_cfg_fname = pjoin(tc_dir, rdma2_stat_reg_cfg_filename)
         rdma2_debug_stat_cfg_fname = pjoin(tc_dir, rdma2_debug_stat_reg_cfg_filename)
+        rdma_hw_hndshk_wqe_init_fname = pjoin(tc_dir, rdma_wqe_init_filename)
 
         non_roce_packets_fname = pjoin(tc_dir, non_roce_packet_filename)
 
@@ -222,6 +224,7 @@ class testcaseClass:
             pkt_gen.write2file(rdma2_combined_cfg_fname, '', rdma2_combined_config)
             pkt_gen.write2file(rdma2_stat_cfg_fname, '', pkt_gen.rdma2_stat_reg_config)
             pkt_gen.write2file(rdma2_debug_stat_cfg_fname, '', pkt_gen.rdma2_debug_stat_reg_config)
+            pkt_gen.write2file(rdma_hw_hndshk_wqe_init_fname, '', pkt_gen.init_hw_hndshk_list)
           if (is_debug):
             debug_wqe_fname = pjoin(tc_dir, f'debug_rdma_wqe_list.txt')
             pkt_gen.write2file(debug_wqe_fname, '', pkt_gen.debug_wqe_list)

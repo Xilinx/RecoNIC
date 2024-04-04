@@ -319,6 +319,7 @@ class GenRoCEClass(pktGenClass):
     self.read_pkt_size    = 0
     self.rsp_pkt_size     = 0
     self.paylaod_size     = 0
+    self.wqe_count        = 1
     self.pkt_op           = ''
     #self.num_pkts_per_flow= 0
     # We assume that only one src IPv4 address is used
@@ -331,6 +332,7 @@ class GenRoCEClass(pktGenClass):
     self.rdma_per_q_config  = []
     self.rdma_mr_config     = []
     self.rdma_wqe_list      = []
+    self.init_hw_hndshk_list     = []
     self.debug_wqe_list     = []
     self.qpid_sq_dict       = {}
     self.qpid_rq_dict       = {}
@@ -445,6 +447,8 @@ class GenRoCEClass(pktGenClass):
         self.sq_psn = config_dict[item]
       if (item == 'top_module'):
         self.top_module = config_dict[item]
+      if (item == 'num_wqe'):
+        self.wqe_count = config_dict[item]
 
   def get_int32_ip(self, ip):
     assert(len(ip)==4), "Please provide a correct IPv4 address"
@@ -925,7 +929,7 @@ class GenRoCEClass(pktGenClass):
       # generate rdma per-queue CSR configuration
       logger.info('Generating RDMA per-queue CSR configuration')
 
-      self.gen_rdma_perq_csr_config(qpid, ip_dst, mac_dst_lsb, mac_dst_msb, dst_qpid, part_key, self.sq_psn, pd_num, sq_depth=self.sq_depth, rq_depth=self.rq_depth, mtu_sz=self.mtu_size, rq_buf_sz=self.rq_buffer_size)
+      self.gen_rdma_perq_csr_config(qpid, ip_dst, mac_dst_lsb, mac_dst_msb, dst_qpid, part_key, self.sq_psn, pd_num, sq_depth=self.sq_depth, rq_depth=self.rq_depth, mtu_sz=self.mtu_size, rq_buf_sz=self.rq_buffer_size, en_hw_handshake=0)
 
       #virt_addr = pd_num*self.mr_buf_size
       virt_addr = self.rm_viraddr_seed
@@ -1465,10 +1469,78 @@ class GenRoCEClass(pktGenClass):
     # -- [415:384]: 32-bit immediate data
     # -- [511:416]: 96-bit reserved
     wqe_str = format(sq_wqe_offset, '016x') + ' ' + format(0, '024x') + format(immdt_data, '08x') + format(send_data, '032x') + format(remote_key, '08x') + format(remote_offset, '016x') + format(opcode, '08x') + format(payload_len, '08x') + format(payload_addr, '016x') + format(wrid, '08x') + ' ' + format(64, '04x')
-
-    # address offset, wqe, wqe length (64B)
-    self.rdma_wqe_list.append(wqe_str)
-
+    assert(self.wqe_count <= self.sq_depth), 'Please reduce number of WQE (<= sq_depth)'
+    ctl_cmd_baseaddr = 0x3000 + 0x0
+    rdma_ops_trg_baseaddr = 0x3010
+    command_size = 0x00000013
+    sq_pidb_cnt_init = 0
+    cq_db_cnt_init = 0
+    sq_pidb_addr = self.get_rdma_per_q_config_addr(eh.SQPIi, qpid)
+    wrid_opcode = wrid
+    wrid_opcode = (wrid_opcode << 16) | (opcode & 0x0000ffff)
+    wqe_count = self.wqe_count #need to pass as parameter in json
+    laddr_lsb = payload_addr & 0x00000000ffffffff
+    laddr_msb = (payload_addr & 0xffffffff00000000) >> 32
+    remote_offset_lsb = remote_offset & 0x00000000ffffffff
+    remote_offset_msb = (remote_offset & 0xffffffff00000000) >> 32
+    sq_addr_lsb = sq_wqe_offset & 0x00000000ffffffff
+    sq_addr_msb = (sq_wqe_offset & 0xffffffff00000000) >> 32
+    qpid_wqecount = qpid
+    qpid_wqecount = (qpid_wqecount << 16) | wqe_count
+    init_hw_hndshk_str = (
+    f"{format(ctl_cmd_baseaddr, '08x')} {format(command_size, '08x')}\n"
+    f"{format(ctl_cmd_baseaddr, '08x')} {format(sq_pidb_cnt_init, '08x')}\n"
+    f"{format(ctl_cmd_baseaddr, '08x')} {format(cq_db_cnt_init, '08x')}\n"
+    f"{format(ctl_cmd_baseaddr, '08x')} {format(sq_pidb_addr, '08x')}\n"
+    f"{format(ctl_cmd_baseaddr, '08x')} {format(wrid_opcode, '08x')}\n"
+    f"{format(ctl_cmd_baseaddr, '08x')} {format(wqe_count, '08x')}\n"
+    f"{format(ctl_cmd_baseaddr, '08x')} {format(laddr_msb, '08x')}\n"
+    f"{format(ctl_cmd_baseaddr, '08x')} {format(laddr_lsb, '08x')}\n"
+    f"{format(ctl_cmd_baseaddr, '08x')} {format(payload_len, '08x')}\n"
+    f"{format(ctl_cmd_baseaddr, '08x')} {format(remote_offset_msb, '08x')}\n"
+    f"{format(ctl_cmd_baseaddr, '08x')} {format(remote_offset_lsb, '08x')}\n"
+    f"{format(ctl_cmd_baseaddr, '08x')} {format(remote_key, '08x')}\n"
+    f"{format(ctl_cmd_baseaddr, '08x')} {format(send_data, '08x')}\n"
+    f"{format(ctl_cmd_baseaddr, '08x')} {format(send_data, '08x')}\n"
+    f"{format(ctl_cmd_baseaddr, '08x')} {format(send_data, '08x')}\n"
+    f"{format(ctl_cmd_baseaddr, '08x')} {format(send_data, '08x')}\n"
+    f"{format(ctl_cmd_baseaddr, '08x')} {format(immdt_data, '08x')}\n"
+    f"{format(ctl_cmd_baseaddr, '08x')} {format(sq_addr_msb, '08x')}\n"
+    f"{format(ctl_cmd_baseaddr, '08x')} {format(sq_addr_lsb, '08x')}\n"
+    #f"{format(ctl_cmd_baseaddr, '08x')} {format(self.sq_depth, '08x')}\n"
+    f"{format(rdma_ops_trg_baseaddr, '08x')} {format(qpid_wqecount, '08x')}"
+    )
+    #self.init_hw_hndshk_list.append(init_hw_hndshk_str)
+    
+    '''sq_pidb_cnt_init = 1
+    init_hw_hndshk_str = (
+    f"{format(ctl_cmd_baseaddr, '08x')} {format(command_size, '08x')}\n"
+    f"{format(ctl_cmd_baseaddr, '08x')} {format(sq_pidb_cnt_init, '08x')}\n"
+    f"{format(ctl_cmd_baseaddr, '08x')} {format(cq_db_cnt_init, '08x')}\n"
+    f"{format(ctl_cmd_baseaddr, '08x')} {format(sq_pidb_addr, '08x')}\n"
+    f"{format(ctl_cmd_baseaddr, '08x')} {format(wrid_opcode, '08x')}\n"
+    f"{format(ctl_cmd_baseaddr, '08x')} {format(wqe_count, '08x')}\n"
+    f"{format(ctl_cmd_baseaddr, '08x')} {format(laddr_msb, '08x')}\n"
+    f"{format(ctl_cmd_baseaddr, '08x')} {format(laddr_lsb, '08x')}\n"
+    f"{format(ctl_cmd_baseaddr, '08x')} {format(payload_len, '08x')}\n"
+    f"{format(ctl_cmd_baseaddr, '08x')} {format(remote_offset_msb, '08x')}\n"
+    f"{format(ctl_cmd_baseaddr, '08x')} {format(remote_offset_lsb, '08x')}\n"
+    f"{format(ctl_cmd_baseaddr, '08x')} {format(remote_key, '08x')}\n"
+    f"{format(ctl_cmd_baseaddr, '08x')} {format(send_data, '08x')}\n"
+    f"{format(ctl_cmd_baseaddr, '08x')} {format(send_data, '08x')}\n"
+    f"{format(ctl_cmd_baseaddr, '08x')} {format(send_data, '08x')}\n"
+    f"{format(ctl_cmd_baseaddr, '08x')} {format(send_data, '08x')}\n"
+    f"{format(ctl_cmd_baseaddr, '08x')} {format(immdt_data, '08x')}\n"
+    f"{format(ctl_cmd_baseaddr, '08x')} {format(sq_addr_msb, '08x')}\n"
+    f"{format(ctl_cmd_baseaddr, '08x')} {format(sq_addr_lsb + 64, '08x')}\n"
+    #f"{format(ctl_cmd_baseaddr, '08x')} {format(self.sq_depth, '08x')}\n"
+    f"{format(rdma_ops_trg_baseaddr, '08x')} {format(qpid_wqecount, '08x')}"
+    )'''
+    if(self.top_module == 'rn_tb_2rdma_top'):
+      self.init_hw_hndshk_list.append(init_hw_hndshk_str)
+    else:
+      self.rdma_wqe_list.append(wqe_str)
+  
     debug_wqe_str = f"qpid=0x{qpid:08x}, sq_wqe_offset=0x{sq_wqe_offset:016x}, wrid=0x{wrid:04x}, payload_address=0x{payload_addr:016x}, payload_length=0x{payload_len:08x}, ernic_opcode=0x{opcode:02x}, remote_offset=0x{remote_offset:016x}, remote_key=0x{remote_key:08x}, send_data=0x{send_data:032x}, immdt_data={immdt_data:08x}\nwqe_str={wqe_str}\n"
 
     self.debug_wqe_list.append(debug_wqe_str)
@@ -1497,7 +1569,8 @@ class GenRoCEClass(pktGenClass):
         self.write2file(debug_fname, '', helper_lst, mode='a')
     '''
 
-    self.sq_pidb = self.sq_pidb + 1
+    #self.sq_pidb = self.sq_pidb + 1
+    
     #sq_pidb_offset = self.get_rdma_per_q_config_addr(eh.SQPIi, qpid)
     #sq_pidb_config_str = format(sq_pidb_offset, '08x') + ' ' + format(self.sq_pidb, '08x')
     #debug_str = 'eh.SQPIi: ' + sq_pidb_config_str + '\n'

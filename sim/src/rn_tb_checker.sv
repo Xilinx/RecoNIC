@@ -89,6 +89,10 @@ module rn_tb_checker #(
 
   output              golden_data_loaded,
 
+  output logic             sys_axi_read_passed,
+  output logic             dev_axi_read_passed,
+
+
   input axis_clk,
   input axis_rstn
 );
@@ -167,11 +171,11 @@ logic  [31:0] axi_read_cnt;
 
 // Signals used for verifying system memory
 logic start_axi_veri_sys_read;
-logic sys_axi_read_passed;
+//logic sys_axi_read_passed;
 
 // Signals used for verifying device memory
 logic start_axi_veri_dev_read;
-logic dev_axi_read_passed;
+//logic dev_axi_read_passed;
 
 logic [1:0] two_unused_bits0;
 

@@ -32,6 +32,29 @@ typedef struct {
 	uint16_t work_id;      /*!< work_id a work/job ID. */
 } ctl_cmd_t;
 
+typedef struct {
+	uint32_t cmd_size;
+	uint32_t init_sq_pidb_cnt;
+	uint32_t init_cq_db_cnt;
+	uint32_t sq_pidb_addr;
+	uint16_t wrid;
+	uint16_t opcode;
+	uint32_t wqe_count;
+	uint32_t laddr_msb;
+	uint32_t laddr_lsb;
+	uint32_t payload_len;
+	uint32_t remote_offset_msb;
+	uint32_t remote_offset_lsb;
+	uint32_t r_key;
+	uint32_t send_small_payload0;
+	uint32_t send_small_payload1;
+	uint32_t send_small_payload2;
+	uint32_t send_small_payload3;
+	uint32_t immdt_data;
+	uint32_t sq_addr_msb;
+	uint32_t sq_addr_lsb;
+} init_wqe_cmd;
+
 /** @brief Register control API: A function used to write data to FPGA registers.
  *  @param pcie_axil_base AXIL base address of a PCIe device.
  *  @param offset Register offset.
@@ -85,5 +108,11 @@ void issue_ctl_cmd(void* axil_base, uint32_t offset, ctl_cmd_t* ctl_cmd);
  *  @return the work ID.
  */
 uint32_t wait_compute(void* axil_base, uint32_t offset);
+
+void gen_init_wqe_cmd(init_wqe_cmd* init_wqe_cmd, uint32_t cmd_size, uint32_t init_sq_pidb_cnt, uint32_t init_cq_db_cnt, uint32_t sq_pidb_addr, uint16_t wrid,uint16_t opcode, uint32_t wqe_count, uint64_t laddr, uint32_t payload_len, uint64_t remote_offset, uint32_t r_key, uint32_t send_small_payload0, uint32_t send_small_payload1, uint32_t send_small_payload2, uint32_t send_small_payload3, uint32_t immdt_data, uint32_t sq_addr_msb, uint32_t sq_addr_lsb);
+
+void issue_init_wqe_cmd(void* axil_base, uint32_t offset, init_wqe_cmd* init_wqe_cmd);
+
+uint32_t wait_finish_rdma(void* axil_base, uint32_t offset);
 
 #endif /* __CONTROL_API_H__ */

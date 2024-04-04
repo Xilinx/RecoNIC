@@ -4,7 +4,6 @@ To meet the explosive growth of data and scale-out workloads/applications, today
 
 To address these challenges, we propose RecoNIC, an RDMA-enabled SmartNIC platform with compute acceleration, designed to minimize the overhead associated with data copies and to bring data as close to computation as feasible. The platform consists of a hardware shell and software stacks. The hardware shell of RecoNIC encompasses basic NIC functionalities, an RDMA engine, and two programmable compute logic modules for lookaside and streaming computations, respectively. Developers have the flexibility to design their accelerators using RTL, HLS or Vitis Networking P4 within the RecoNIC's programmable compute logic modules. This allows for the processing of network data without resorting to the multiple copies’ characteristic of traditional CPU-centric solutions. The logic executed within these programmable modules can access both RecoNIC and host memory in remote peers via RDMA.
 
-For more information, please refer to the [RecoNIC primer](https://arxiv.org/abs/2312.06207).
 
 ## RecoNIC System Overview
 
@@ -14,7 +13,9 @@ The above figure shows the hardware shell architecture and software stacks of Re
 
 The RDMA engine is responsible for processing RDMA traffic, allowing payload data from the network to be stored in either the host's memory or the RecoNIC device's memory. User defined accelerators implemented in the Streaming Compute and Lookaside Compute modules can directly process data, including network-received data, within the device memory.
 
-The software encompasses the network stack, consisting of RDMA APIs and network driver to handle non-RDMA traffic (such as TCP/IP, UDP/IP, and ARP). Additionally, the memory driver facilitates seamless memory transfers between the host and RecoNIC memory. Finally, the control driver serves to configure and control various components in the hardware shell.
+The software encompasses the network stack driver, utilized to handle non-RDMA traffic (such as TCP/IP, UDP/IP, and ARP). Additionally, the memory driver facilitates seamless memory transfers between the host and RecoNIC memory. Finally, the control driver serves to configure and control various components in the hardware shell.
+
+In this branch we offloaded RDMA read/write control operations on to FPGA accelerator designed within compute logic box. This improves the performance of RDMA operations.
 
 ## System Requirement
 
@@ -259,6 +260,23 @@ If the program exits with an error saying libreconic.so is not found, you can tr
 
 The above example allocates the QP (SQ, CQ and RQ) in the host memory. If you want the QP to be allocated in the host memory, you can simply replace "-l host_mem" with "-l dev_mem" on both receiver and sender nodes.
 
+### RDMA Batch Read
+RDMA Batch Read operation: The client node issues n RDMA read requests of same payload size to the server node. The server node then replies with the RDMA read response packets.
+
+#### On the client node (192.100.51.1)
+Run the program
+```
+sudo ./read_batch -r 192.100.51.1 -i 192.100.52.1 -p /sys/bus/pci/devices/0000\:d8\:00.0/resource2 -z 256 -b 50 -l host_mem -d /dev/reconic-mm -c -u 22222 -t 11111 --dst_qp 2 -g 2>&1 | tee client_debug.log
+```
+
+#### On the server node (192.100.52.1)
+Run the program
+```
+sudo ./read_batch -r 192.100.52.1 -i 192.100.51.1 -p /sys/bus/pci/devices/0000\:d8\:00.0/resource2 -z 256 -b 50 -l host_mem -d /dev/reconic-mm -s -u 22222 -t 11111 --dst_qp 2 -g 2>&1 | tee server_debug.log
+```
+
+The above example will run for batch size of 50. Command argument -b  is used to specify batch size.
+
 ### RDMA Write
 RDMA Write operation: The client node issues RDMA write request to the server node directly. Usage of the RDMA write program is the same with RDMA read program above.
 
@@ -278,36 +296,22 @@ If the program exits with an error saying libreconic.so is not found, you can tr
 
 The above example allocates the QP (SQ, CQ and RQ) in the host memory. You can allocate QPs on device memory as well by using "-l dev_mem" on both receiver and sender nodes.
 
-### RDMA Send/Receive
-RDMA send/recv operation: The server node posts an RDMA receive request, waiting for a RDMA send request to its allocated receive queue. The client node then issues an RDMA send request to the server node. Usage of the RDMA send/receive program is the same iwth RDMA read program above.
+### RDMA Batch Write
+RDMA Batch Write operation: The client node issues n RDMA write requests of same payload size to the server node. Usage is similar to previous examples
 
-#### On the receiver node (192.100.51.1)
-Run the program in the receiver mode
+#### On the client node (192.100.51.1)
+Run the program
 ```
-sudo ./send_recv -r 192.100.51.1 -i 192.100.52.1 -p /sys/bus/pci/devices/0000\:d8\:00.0/resource2 -z 128 -l host_mem -d /dev/reconic-mm -c -u 22222 --dst_qp 2 -g 2>&1 | tee client_debug.log
-```
-
-#### On the sender node (192.100.52.1)
-Run the program in the sender mode
-```
-sudo ./send_recv -r 192.100.52.1 -i 192.100.51.1 -p /sys/bus/pci/devices/0000\:d8\:00.0/resource2 -z 16384 -l dev_mem -d /dev/reconic-mm -s -u 22222 --dst_qp 2 -g 2>&1 | tee server_debug.log
+sudo ./write_batch -r 192.100.51.1 -i 192.100.52.1 -p /sys/bus/pci/devices/0000\:d8\:00.0/resource2 -z 256 -b 50 -l host_mem -d /dev/reconic-mm -c -u 22222 -t 11111 --dst_qp 2 -g 2>&1 | tee client_debug.log
 ```
 
-If the program exits with an error saying libreconic.so is not found, you can try with "sudo env LD_LIBRARY_PATH=$LD_LIBRARY_PATH ./send_recv", instead of "sudo ./send_recv".
+#### On the server node (192.100.52.1)
+Run the program
+```
+sudo ./write_batch -r 192.100.52.1 -i 192.100.51.1 -p /sys/bus/pci/devices/0000\:d8\:00.0/resource2 -z 256 -b 50 -l host_mem -d /dev/reconic-mm -s -u 22222 -t 11111 --dst_qp 2 -g 2>&1 | tee server_debug.log
+```
 
-The above example allocates the QP (SQ, CQ and RQ) in the host memory. You can allocate QPs on device memory as well by using "-l dev_mem" on both receiver and sender nodes.
-
-## Applications
-
-### Built-in example - network systolic-array matrix multiplication
-
-In the current implementation, we have [matrix multiplication](examples/network_systolic_mm) as an example to demonstrate how to use RecoNIC. In this example, array A and B are stored in the host memory of the remote peer, and the computation is done in the local peer. 
-
-**Execution flow**: The local host first issues two RDMA read requests to the remote peer for acquiring array A and B and store it in the device memory. Once detecting the readiness of the two arrays, the local host issues a compute control command to the Compute Logic to start computation. Once the computation is finished, the host reads the result back to the host memory for verification.
-
-The [hardware implementation](shell/compute/lookside) of the MM computation is a systolic-array version and written in HLS C from the [Vitis_Accel_Examples](https://github.com/Xilinx/Vitis_Accel_Examples/blob/master/cpp_kernels/systolic_array/src/mmult.cpp).
-
-Data (Array A and B) is stored in a server node (Peer 1), while computation is executed in a client node (Peer 2).
+The above example will run for batch size of 50. Command argument -b  is used to specify batch size.
 
 Before we run the example, we need to configure hugepages in both servers.
 ```
@@ -316,100 +320,6 @@ Before we run the example, we need to configure hugepages in both servers.
 $ vm.nr_hugepages = 2048
 # 2. Refresh the kernel parameters
 $ sudo sysctl -p
-```
-Compilation
-```
-$ cd examples/network_systolic_mm
-$ make
-$ ./network_systolic_mm -h
-usage: ./network_systolic_mm [OPTIONS]
-
-  -d (--device) character device name (defaults to /dev/reconic-mm)
-  -p (--pcie_resource) PCIe resource
-  -r (--src_ip) Source IP address
-  -i (--dst_ip) Destination IP address
-  -u (--udp_sport) UDP source port
-  -t (--tcp_sport) TCP source port
-  -q (--dst_qp) Destination QP number
-  -s (--server) Server node
-  -c (--client) Client node
-  -h (--help) print usage help and exit
-
-```
-
-**Peer 1** - Server (192.100.51.1)
-```
-$ sudo ./network_systolic_mm -d /dev/reconic-mm -p /sys/bus/pci/devices/0000\:d8\:00.0/resource2 -r 192.100.51.1 -i 192.100.52.1 -u 22222 -t 11111 --dst_qp 2 -s 2>&1 | tee server_debug.log
-```
-
-**Peer 2** - Client (192.100.52.1)
-```
-$ cd software/network_systolic_mm
-$ make
-$ sudo ./network_systolic_mm -d /dev/reconic-mm -p /sys/bus/pci/devices/0000\:d8\:00.0/resource2 -r 192.100.52.1 -i 192.100.51.1 -u 22222 -t 11111 --dst_qp 2 -c 2>&1 | tee client_debug.log
-```
-
-## Performance Evaluation
-
-### DMA testing
-
-The [dma_test](examples/dma_test) folder is used to test data copy functionality between host and device's memory. It supports both read and write from/to the NIC's memory. In this example, the host acts as a master.
-
-```
-$ cd examples/dma_test
-$ make
-$ ./dma_test -help
-usage: ./dma_test [OPTIONS]
-
-  -d (--device) device
-  -a (--address) the start address on the AXI bus
-  -s (--size) size of a single transfer in bytes, default 32,
-  -o (--offset) page offset of transfer
-  -c (--count) number of transfers, default 1
-  -f (--data infile) filename to read the data from (ignored for read scenario)
-  -w (--data outfile) filename to write the data of the transfers
-  -h (--help) print usage help and exit
-  -v (--verbose) verbose output
-  -r (--read) use read scenario (write scenario without this flag)
-```
-
-* dma_test write
-```
-$ ./dma_test -d /dev/reconic-mm -s 65536000 -c 200
-```
-
-* dma_test read
-```
-$ ./dma_test -d /dev/reconic-mm -s 65536000 -c 200 -r
-```
-
-* PCIe bandwidth measurement for data copy
-
-Before measuring the bandwidth, we need to determine which CPU core is bound to the specific PCIe slot used for RecoNIC. To do so, we need to find the NUMA node bound to the PCIe slot. It's fine if you measure bandwidth without setting the CPU affinity. This might end up with lower performance if the system schedules other NUMA node that's not bound to the corresponding PCIe slot.
-
-```
-$ lspci | grep Xilinx
-d8:00.0 Memory controller: Xilinx Corporation Device 903f
-$ sudo lspci -vv -s d8:00.0 | grep 'NUMA node'
-        NUMA node: 1
-$ cat /sys/devices/system/node/node1/cpulist
-1,3,5,7,9,11,13,15
-```
-
-Now, we are ready to test the bandwidth
-```
-$ taskset -c 1,3,5,7 ./measure_dma.sh /dev/reconic-mm 4 write 65536000
-
-Number of dma_test (write) threads: 4
-Calculate total write bandwidth achieved:
--- The total write bandwidth is: 13.065046 GB/sec
-
-$ taskset -c 1,3,5,7 ./measure_dma.sh /dev/reconic-mm 4 read 65536000
-
-Number of dma_test (read) threads: 4
-Calculate total read bandwidth achieved:
--- The total read bandwidth is: 12.998869 GB/sec
-
 ```
 
 ## Hardware Simulation
@@ -484,28 +394,15 @@ User can specify their own configuraiton file to construct a new testcase. The c
   "rq_buffer_size"        : 2048,
   "partition_key"         : 4660,
   "r_key"                 : 22,
-  "sq_psn"                : 10
+  "sq_psn"                : 10,
+  "num_wqe"               : 3
 }
 ```
 "src_baseaddr_location" is used to specify the source buffer location either at host memory ("sys_mem") or device memory ("dev_mem").
 
 The simulation source code is located at [sim/src](sim/src).
 
-## Citation
-
-If you use RecoNIC in your research and projects, please cite
-```
-@misc{zhong2023primer,
-      title={A Primer on RecoNIC: RDMA-enabled Compute Offloading on SmartNIC}, 
-      author={Guanwen Zhong and Aditya Kolekar and Burin Amornpaisannon and Inho Choi and Haris Javaid and Mario Baldi},
-      year={2023},
-      eprint={2312.06207},
-      archivePrefix={arXiv},
-      primaryClass={cs.DC}
-}
-```
-
-If you find this project helpful, please consider giving it a star! Your support is greatly appreciated.⭐
+Enjoy!
 
 -----
 

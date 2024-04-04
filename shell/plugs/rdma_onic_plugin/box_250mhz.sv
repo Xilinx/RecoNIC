@@ -109,43 +109,43 @@ module box_250mhz #(
   input                   [31:0] s_rx_pkt_hndler_i_rq_db_data,
   output                         s_rx_pkt_hndler_o_rq_db_rdy,
 
-  output                         m_axi_compute_logic_awid,
-  output                [63 : 0] m_axi_compute_logic_awaddr,
-  output                 [3 : 0] m_axi_compute_logic_awqos,
-  output                 [7 : 0] m_axi_compute_logic_awlen,
-  output                 [2 : 0] m_axi_compute_logic_awsize,
-  output                 [1 : 0] m_axi_compute_logic_awburst,
-  output                 [3 : 0] m_axi_compute_logic_awcache,
-  output                 [2 : 0] m_axi_compute_logic_awprot,
-  output                         m_axi_compute_logic_awvalid,
-  input                          m_axi_compute_logic_awready,
-  output               [511 : 0] m_axi_compute_logic_wdata,
-  output                [63 : 0] m_axi_compute_logic_wstrb,
-  output                         m_axi_compute_logic_wlast,
-  output                         m_axi_compute_logic_wvalid,
-  input                          m_axi_compute_logic_wready,
-  output                         m_axi_compute_logic_awlock,
-  input                          m_axi_compute_logic_bid,
-  input                  [1 : 0] m_axi_compute_logic_bresp,
-  input                          m_axi_compute_logic_bvalid,
-  output                         m_axi_compute_logic_bready,
-  output                         m_axi_compute_logic_arid,
-  output                [63 : 0] m_axi_compute_logic_araddr,
-  output                 [7 : 0] m_axi_compute_logic_arlen,
-  output                 [2 : 0] m_axi_compute_logic_arsize,
-  output                 [1 : 0] m_axi_compute_logic_arburst,
-  output                 [3 : 0] m_axi_compute_logic_arcache,
-  output                 [2 : 0] m_axi_compute_logic_arprot,
-  output                         m_axi_compute_logic_arvalid,
-  input                          m_axi_compute_logic_arready,
-  input                          m_axi_compute_logic_rid,
-  input                [511 : 0] m_axi_compute_logic_rdata,
-  input                  [1 : 0] m_axi_compute_logic_rresp,
-  input                          m_axi_compute_logic_rlast,
-  input                          m_axi_compute_logic_rvalid,
-  output                         m_axi_compute_logic_rready,
-  output                         m_axi_compute_logic_arlock,
-  output                  [3:0]  m_axi_compute_logic_arqos,
+  output                         m_axi_hw_hndshk_to_sys_mem_awid,
+  output                [63 : 0] m_axi_hw_hndshk_to_sys_mem_awaddr,
+  output                 [3 : 0] m_axi_hw_hndshk_to_sys_mem_awqos,
+  output                 [7 : 0] m_axi_hw_hndshk_to_sys_mem_awlen,
+  output                 [2 : 0] m_axi_hw_hndshk_to_sys_mem_awsize,
+  output                 [1 : 0] m_axi_hw_hndshk_to_sys_mem_awburst,
+  output                 [3 : 0] m_axi_hw_hndshk_to_sys_mem_awcache,
+  output                 [2 : 0] m_axi_hw_hndshk_to_sys_mem_awprot,
+  output                         m_axi_hw_hndshk_to_sys_mem_awvalid,
+  input                          m_axi_hw_hndshk_to_sys_mem_awready,
+  output               [511 : 0] m_axi_hw_hndshk_to_sys_mem_wdata,
+  output                [63 : 0] m_axi_hw_hndshk_to_sys_mem_wstrb,
+  output                         m_axi_hw_hndshk_to_sys_mem_wlast,
+  output                         m_axi_hw_hndshk_to_sys_mem_wvalid,
+  input                          m_axi_hw_hndshk_to_sys_mem_wready,
+  output                         m_axi_hw_hndshk_to_sys_mem_awlock,
+  input                          m_axi_hw_hndshk_to_sys_mem_bid,
+  input                  [1 : 0] m_axi_hw_hndshk_to_sys_mem_bresp,
+  input                          m_axi_hw_hndshk_to_sys_mem_bvalid,
+  output                         m_axi_hw_hndshk_to_sys_mem_bready,
+  output                         m_axi_hw_hndshk_to_sys_mem_arid,
+  output                [63 : 0] m_axi_hw_hndshk_to_sys_mem_araddr,
+  output                 [7 : 0] m_axi_hw_hndshk_to_sys_mem_arlen,
+  output                 [2 : 0] m_axi_hw_hndshk_to_sys_mem_arsize,
+  output                 [1 : 0] m_axi_hw_hndshk_to_sys_mem_arburst,
+  output                 [3 : 0] m_axi_hw_hndshk_to_sys_mem_arcache,
+  output                 [2 : 0] m_axi_hw_hndshk_to_sys_mem_arprot,
+  output                         m_axi_hw_hndshk_to_sys_mem_arvalid,
+  input                          m_axi_hw_hndshk_to_sys_mem_arready,
+  input                          m_axi_hw_hndshk_to_sys_mem_rid,
+  input                [511 : 0] m_axi_hw_hndshk_to_sys_mem_rdata,
+  input                  [1 : 0] m_axi_hw_hndshk_to_sys_mem_rresp,
+  input                          m_axi_hw_hndshk_to_sys_mem_rlast,
+  input                          m_axi_hw_hndshk_to_sys_mem_rvalid,
+  output                         m_axi_hw_hndshk_to_sys_mem_rready,
+  output                         m_axi_hw_hndshk_to_sys_mem_arlock,
+  output                  [3:0]  m_axi_hw_hndshk_to_sys_mem_arqos,
 
   input                   [15:0] mod_rstn,
   output                  [15:0] mod_rst_done,
@@ -161,6 +161,7 @@ localparam C_NUM_USER_BLOCK = 1;
 
 logic axil_rstn;
 logic axis_rstn;
+logic [63:0] axis_clk_timer;
 
 generic_reset #(
   .NUM_INPUT_CLK  (2),
@@ -176,6 +177,81 @@ generic_reset #(
 // "mod_rst_done" are tied to 0
 assign mod_rst_done[15:C_NUM_USER_BLOCK] = {(16-C_NUM_USER_BLOCK){1'b1}};
 assign mod_rst_done[0]                   = box_rst_done;
+/*
+hw_hndshk_wrapper hw_hndshk_wrapper_inst (
+  // register control interface
+  .s_axil_hw_hndshk_cmd_awvalid           (s_axil_hw_hndshk_cmd_awvalid),
+  .s_axil_hw_hndshk_cmd_awaddr            (s_axil_hw_hndshk_cmd_awaddr),
+  .s_axil_hw_hndshk_cmd_awready           (s_axil_hw_hndshk_cmd_awready),
+  .s_axil_hw_hndshk_cmd_wvalid            (s_axil_hw_hndshk_cmd_wvalid ),
+  .s_axil_hw_hndshk_cmd_wdata             (s_axil_hw_hndshk_cmd_wdata  ),
+  .s_axil_hw_hndshk_cmd_wready            (s_axil_hw_hndshk_cmd_wready ),
+  .s_axil_hw_hndshk_cmd_bvalid            (s_axil_hw_hndshk_cmd_bvalid ),
+  .s_axil_hw_hndshk_cmd_bresp             (s_axil_hw_hndshk_cmd_bresp  ),
+  .s_axil_hw_hndshk_cmd_bready            (s_axil_hw_hndshk_cmd_bready ),
+  .s_axil_hw_hndshk_cmd_arvalid           (s_axil_hw_hndshk_cmd_arvalid),
+  .s_axil_hw_hndshk_cmd_araddr            (s_axil_hw_hndshk_cmd_araddr),
+  .s_axil_hw_hndshk_cmd_arready           (s_axil_hw_hndshk_cmd_arready),
+  .s_axil_hw_hndshk_cmd_rvalid            (s_axil_hw_hndshk_cmd_rvalid ),
+  .s_axil_hw_hndshk_cmd_rdata             (s_axil_hw_hndshk_cmd_rdata  ),
+  .s_axil_hw_hndshk_cmd_rresp             (s_axil_hw_hndshk_cmd_rresp  ),
+  .s_axil_hw_hndshk_cmd_rready            (s_axil_hw_hndshk_cmd_rready ),
+
+  .m_axi_to_sys_mem_awid    (m_axi_to_sys_mem_awid),
+  .m_axi_to_sys_mem_awaddr  (m_axi_to_sys_mem_awaddr),
+  .m_axi_to_sys_mem_awqos   (m_axi_to_sys_mem_awqos),
+  .m_axi_to_sys_mem_awlen   (m_axi_to_sys_mem_awlen),
+  .m_axi_to_sys_mem_awsize  (m_axi_to_sys_mem_awsize),
+  .m_axi_to_sys_mem_awburst (m_axi_to_sys_mem_awburst),
+  .m_axi_to_sys_mem_awcache (m_axi_to_sys_mem_awcache),
+  .m_axi_to_sys_mem_awprot  (m_axi_to_sys_mem_awprot),
+  .m_axi_to_sys_mem_awvalid (m_axi_to_sys_mem_awvalid),
+  .m_axi_to_sys_mem_awready (m_axi_to_sys_mem_awready),
+  .m_axi_to_sys_mem_wdata   (m_axi_to_sys_mem_wdata),
+  .m_axi_to_sys_mem_wstrb   (m_axi_to_sys_mem_wstrb),
+  .m_axi_to_sys_mem_wlast   (m_axi_to_sys_mem_wlast),
+  .m_axi_to_sys_mem_wvalid  (m_axi_to_sys_mem_wvalid),
+  .m_axi_to_sys_mem_wready  (m_axi_to_sys_mem_wready),
+  .m_axi_to_sys_mem_awlock  (m_axi_to_sys_mem_awlock),
+  .m_axi_to_sys_mem_bid     (m_axi_to_sys_mem_bid),
+  .m_axi_to_sys_mem_bresp   (m_axi_to_sys_mem_bresp),
+  .m_axi_to_sys_mem_bvalid  (m_axi_to_sys_mem_bvalid),
+  .m_axi_to_sys_mem_bready  (m_axi_to_sys_mem_bready),
+  .m_axi_to_sys_mem_arid    (m_axi_to_sys_mem_arid),
+  .m_axi_to_sys_mem_araddr  (m_axi_to_sys_mem_araddr),
+  .m_axi_to_sys_mem_arlen   (m_axi_to_sys_mem_arlen),
+  .m_axi_to_sys_mem_arsize  (m_axi_to_sys_mem_arsize),
+  .m_axi_to_sys_mem_arburst (m_axi_to_sys_mem_arburst),
+  .m_axi_to_sys_mem_arcache (m_axi_to_sys_mem_arcache),
+  .m_axi_to_sys_mem_arprot  (m_axi_to_sys_mem_arprot),
+  .m_axi_to_sys_mem_arvalid (m_axi_to_sys_mem_arvalid),
+  .m_axi_to_sys_mem_arready (m_axi_to_sys_mem_arready),
+  .m_axi_to_sys_mem_rid     (m_axi_to_sys_mem_rid),
+  .m_axi_to_sys_mem_rdata   (m_axi_to_sys_mem_rdata),
+  .m_axi_to_sys_mem_rresp   (m_axi_to_sys_mem_rresp),
+  .m_axi_to_sys_mem_rlast   (m_axi_to_sys_mem_rlast),
+  .m_axi_to_sys_mem_rvalid  (m_axi_to_sys_mem_rvalid),
+  .m_axi_to_sys_mem_rready  (m_axi_to_sys_mem_rready),
+  .m_axi_to_sys_mem_arlock  (m_axi_to_sys_mem_arlock),
+  .m_axi_to_sys_mem_arqos   (m_axi_to_sys_mem_arqos),
+
+  .s_resp_hndler_i_send_cq_db_cnt_valid   (s_resp_hndler_i_send_cq_db_cnt_valid),
+  .s_resp_hndler_i_send_cq_db_addr        (s_resp_hndler_i_send_cq_db_addr),
+  .s_resp_hndler_i_send_cq_db_cnt         (s_resp_hndler_i_send_cq_db_cnt),
+  .s_resp_hndler_o_send_cq_db_rdy         (s_resp_hndler_o_send_cq_db_rdy),
+
+  .m_o_qp_sq_pidb_hndshk                  (m_o_qp_sq_pidb_hndshk),
+  .m_o_qp_sq_pidb_wr_addr_hndshk          (m_o_qp_sq_pidb_wr_addr_hndshk),
+  .m_o_qp_sq_pidb_wr_valid_hndshk         (m_o_qp_sq_pidb_wr_valid_hndshk),
+  .m_i_qp_sq_pidb_wr_rdy                  (m_i_qp_sq_pidb_wr_rdy),
+
+  .global_hw_timer                        (axis_clk_timer),
+
+  .axil_aclk (axil_aclk),
+  .axil_rstn (axil_rstn),
+  .axis_aclk (axis_aclk),
+  .axis_rstn (axis_rstn)
+);*/
 
 rdma_onic_plugin rdma_onic_plugin_inst (
   .s_axil_awvalid            (s_axil_awvalid),
@@ -245,43 +321,53 @@ rdma_onic_plugin rdma_onic_plugin_inst (
   .s_axis_rdma2user_to_cmac_tx_tlast         (s_axis_rdma2user_to_cmac_tx_tlast),
   .s_axis_rdma2user_to_cmac_tx_tready        (s_axis_rdma2user_to_cmac_tx_tready),
 
-  .m_axi_compute_logic_awid                  (m_axi_compute_logic_awid),
-  .m_axi_compute_logic_awaddr                (m_axi_compute_logic_awaddr),
-  .m_axi_compute_logic_awqos                 (m_axi_compute_logic_awqos),
-  .m_axi_compute_logic_awlen                 (m_axi_compute_logic_awlen),
-  .m_axi_compute_logic_awsize                (m_axi_compute_logic_awsize),
-  .m_axi_compute_logic_awburst               (m_axi_compute_logic_awburst),
-  .m_axi_compute_logic_awcache               (m_axi_compute_logic_awcache),
-  .m_axi_compute_logic_awprot                (m_axi_compute_logic_awprot),
-  .m_axi_compute_logic_awvalid               (m_axi_compute_logic_awvalid),
-  .m_axi_compute_logic_awready               (m_axi_compute_logic_awready),
-  .m_axi_compute_logic_wdata                 (m_axi_compute_logic_wdata),
-  .m_axi_compute_logic_wstrb                 (m_axi_compute_logic_wstrb),
-  .m_axi_compute_logic_wlast                 (m_axi_compute_logic_wlast),
-  .m_axi_compute_logic_wvalid                (m_axi_compute_logic_wvalid),
-  .m_axi_compute_logic_wready                (m_axi_compute_logic_wready),
-  .m_axi_compute_logic_awlock                (m_axi_compute_logic_awlock),
-  .m_axi_compute_logic_bid                   (m_axi_compute_logic_bid),
-  .m_axi_compute_logic_bresp                 (m_axi_compute_logic_bresp),
-  .m_axi_compute_logic_bvalid                (m_axi_compute_logic_bvalid),
-  .m_axi_compute_logic_bready                (m_axi_compute_logic_bready),
-  .m_axi_compute_logic_arid                  (m_axi_compute_logic_arid),
-  .m_axi_compute_logic_araddr                (m_axi_compute_logic_araddr),
-  .m_axi_compute_logic_arlen                 (m_axi_compute_logic_arlen),
-  .m_axi_compute_logic_arsize                (m_axi_compute_logic_arsize),
-  .m_axi_compute_logic_arburst               (m_axi_compute_logic_arburst),
-  .m_axi_compute_logic_arcache               (m_axi_compute_logic_arcache),
-  .m_axi_compute_logic_arprot                (m_axi_compute_logic_arprot),
-  .m_axi_compute_logic_arvalid               (m_axi_compute_logic_arvalid),
-  .m_axi_compute_logic_arready               (m_axi_compute_logic_arready),
-  .m_axi_compute_logic_rid                   (m_axi_compute_logic_rid),
-  .m_axi_compute_logic_rdata                 (m_axi_compute_logic_rdata),
-  .m_axi_compute_logic_rresp                 (m_axi_compute_logic_rresp),
-  .m_axi_compute_logic_rlast                 (m_axi_compute_logic_rlast),
-  .m_axi_compute_logic_rvalid                (m_axi_compute_logic_rvalid),
-  .m_axi_compute_logic_rready                (m_axi_compute_logic_rready),
-  .m_axi_compute_logic_arlock                (m_axi_compute_logic_arlock),
-  .m_axi_compute_logic_arqos                 (m_axi_compute_logic_arqos),
+  .m_axi_hw_hndshk_to_sys_mem_awid           (m_axi_hw_hndshk_to_sys_mem_awid),
+  .m_axi_hw_hndshk_to_sys_mem_awaddr         (m_axi_hw_hndshk_to_sys_mem_awaddr),
+  .m_axi_hw_hndshk_to_sys_mem_awqos          (m_axi_hw_hndshk_to_sys_mem_awqos),
+  .m_axi_hw_hndshk_to_sys_mem_awlen          (m_axi_hw_hndshk_to_sys_mem_awlen),
+  .m_axi_hw_hndshk_to_sys_mem_awsize         (m_axi_hw_hndshk_to_sys_mem_awsize),
+  .m_axi_hw_hndshk_to_sys_mem_awburst        (m_axi_hw_hndshk_to_sys_mem_awburst),
+  .m_axi_hw_hndshk_to_sys_mem_awcache        (m_axi_hw_hndshk_to_sys_mem_awcache),
+  .m_axi_hw_hndshk_to_sys_mem_awprot         (m_axi_hw_hndshk_to_sys_mem_awprot),
+  .m_axi_hw_hndshk_to_sys_mem_awvalid        (m_axi_hw_hndshk_to_sys_mem_awvalid),
+  .m_axi_hw_hndshk_to_sys_mem_awready        (m_axi_hw_hndshk_to_sys_mem_awready),
+  .m_axi_hw_hndshk_to_sys_mem_wdata          (m_axi_hw_hndshk_to_sys_mem_wdata),
+  .m_axi_hw_hndshk_to_sys_mem_wstrb          (m_axi_hw_hndshk_to_sys_mem_wstrb),
+  .m_axi_hw_hndshk_to_sys_mem_wlast          (m_axi_hw_hndshk_to_sys_mem_wlast),
+  .m_axi_hw_hndshk_to_sys_mem_wvalid         (m_axi_hw_hndshk_to_sys_mem_wvalid),
+  .m_axi_hw_hndshk_to_sys_mem_wready         (m_axi_hw_hndshk_to_sys_mem_wready),
+  .m_axi_hw_hndshk_to_sys_mem_awlock         (m_axi_hw_hndshk_to_sys_mem_awlock),
+  .m_axi_hw_hndshk_to_sys_mem_bid            (m_axi_hw_hndshk_to_sys_mem_bid),
+  .m_axi_hw_hndshk_to_sys_mem_bresp          (m_axi_hw_hndshk_to_sys_mem_bresp),
+  .m_axi_hw_hndshk_to_sys_mem_bvalid         (m_axi_hw_hndshk_to_sys_mem_bvalid),
+  .m_axi_hw_hndshk_to_sys_mem_bready         (m_axi_hw_hndshk_to_sys_mem_bready),
+  .m_axi_hw_hndshk_to_sys_mem_arid           (m_axi_hw_hndshk_to_sys_mem_arid),
+  .m_axi_hw_hndshk_to_sys_mem_araddr         (m_axi_hw_hndshk_to_sys_mem_araddr),
+  .m_axi_hw_hndshk_to_sys_mem_arlen          (m_axi_hw_hndshk_to_sys_mem_arlen),
+  .m_axi_hw_hndshk_to_sys_mem_arsize         (m_axi_hw_hndshk_to_sys_mem_arsize),
+  .m_axi_hw_hndshk_to_sys_mem_arburst        (m_axi_hw_hndshk_to_sys_mem_arburst),
+  .m_axi_hw_hndshk_to_sys_mem_arcache        (m_axi_hw_hndshk_to_sys_mem_arcache),
+  .m_axi_hw_hndshk_to_sys_mem_arprot         (m_axi_hw_hndshk_to_sys_mem_arprot),
+  .m_axi_hw_hndshk_to_sys_mem_arvalid        (m_axi_hw_hndshk_to_sys_mem_arvalid),
+  .m_axi_hw_hndshk_to_sys_mem_arready        (m_axi_hw_hndshk_to_sys_mem_arready),
+  .m_axi_hw_hndshk_to_sys_mem_rid            (m_axi_hw_hndshk_to_sys_mem_rid),
+  .m_axi_hw_hndshk_to_sys_mem_rdata          (m_axi_hw_hndshk_to_sys_mem_rdata),
+  .m_axi_hw_hndshk_to_sys_mem_rresp          (m_axi_hw_hndshk_to_sys_mem_rresp),
+  .m_axi_hw_hndshk_to_sys_mem_rlast          (m_axi_hw_hndshk_to_sys_mem_rlast),
+  .m_axi_hw_hndshk_to_sys_mem_rvalid         (m_axi_hw_hndshk_to_sys_mem_rvalid),
+  .m_axi_hw_hndshk_to_sys_mem_rready         (m_axi_hw_hndshk_to_sys_mem_rready),
+  .m_axi_hw_hndshk_to_sys_mem_arlock         (m_axi_hw_hndshk_to_sys_mem_arlock),
+  .m_axi_hw_hndshk_to_sys_mem_arqos          (m_axi_hw_hndshk_to_sys_mem_arqos),
+
+  .s_resp_hndler_i_send_cq_db_cnt_valid      (s_resp_hndler_i_send_cq_db_cnt_valid),
+  .s_resp_hndler_i_send_cq_db_addr           (s_resp_hndler_i_send_cq_db_addr),
+  .s_resp_hndler_i_send_cq_db_cnt            (s_resp_hndler_i_send_cq_db_cnt),
+  .s_resp_hndler_o_send_cq_db_rdy            (s_resp_hndler_o_send_cq_db_rdy),
+
+  .m_o_qp_sq_pidb_hndshk                     (m_o_qp_sq_pidb_hndshk),
+  .m_o_qp_sq_pidb_wr_addr_hndshk             (m_o_qp_sq_pidb_wr_addr_hndshk),
+  .m_o_qp_sq_pidb_wr_valid_hndshk            (m_o_qp_sq_pidb_wr_valid_hndshk),
+  .m_i_qp_sq_pidb_wr_rdy                     (m_i_qp_sq_pidb_wr_rdy),
 
   .axil_aclk  (axil_aclk),
   .axil_rstn  (axil_rstn),
@@ -295,12 +381,12 @@ assign m_axis_adap_tx_250mhz_tuser_src = 16'd0;
 assign m_axis_adap_tx_250mhz_tuser_dst = 16'h1 << 6;
 
 // TODO: Disable hardware handshaking for doorbell ringing in the current implementation
-assign s_resp_hndler_o_send_cq_db_rdy = 1'b0;
+//assign s_resp_hndler_o_send_cq_db_rdy = 1'b0;
 assign s_rx_pkt_hndler_o_rq_db_rdy    = 1'b0;
-
+/*
 assign m_o_qp_sq_pidb_hndshk          = 0;
 assign m_o_qp_sq_pidb_wr_addr_hndshk  = 0;
-assign m_o_qp_sq_pidb_wr_valid_hndshk = 0;
+assign m_o_qp_sq_pidb_wr_valid_hndshk = 0;*/
 
 assign m_o_qp_rq_cidb_hndshk          = 0;
 assign m_o_qp_rq_cidb_wr_addr_hndshk  = 0;
@@ -308,5 +394,16 @@ assign m_o_qp_rq_cidb_wr_valid_hndshk = 0;
 
 // TODO: Disable ieth and immdt data
 assign s_axis_rdma2user_ieth_immdt_trdy = 1'b1;
+//delete this later
+/*
+always_ff @(posedge axis_aclk)
+begin
+  if(!axis_rstn) begin
+    axis_clk_timer <= 64'd0;
+  end
+  else begin
+    axis_clk_timer <= axis_clk_timer + 64'd1;
+  end
+end*/
 
 endmodule: box_250mhz

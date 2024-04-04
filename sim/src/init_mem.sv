@@ -9,7 +9,7 @@ module init_mem (
   input string tag_string,
   input string axi_mem_filename,
 
-  output logic     [4:0] m_axi_init_awid,
+  output logic     [3:0] m_axi_init_awid,
   output logic  [63 : 0] m_axi_init_awaddr,
   output logic   [3 : 0] m_axi_init_awqos,
   output logic   [7 : 0] m_axi_init_awlen,
@@ -25,7 +25,7 @@ module init_mem (
   output logic           m_axi_init_wvalid,
   input                  m_axi_init_wready,
   output logic           m_axi_init_awlock,
-  input          [4 : 0] m_axi_init_bid,
+  input          [3 : 0] m_axi_init_bid,
   input          [1 : 0] m_axi_init_bresp,
   input                  m_axi_init_bvalid,
   output logic           m_axi_init_bready,
@@ -286,7 +286,7 @@ always_comb begin
 end
 
 // Set default values to specific signals
-assign m_axi_init_awid    = 5'd0;
+assign m_axi_init_awid    = 4'd0;
 assign m_axi_init_awsize  = 3'b110;
 assign m_axi_init_awburst = 2'b01; // INCR mode
 assign m_axi_init_awlock  = 1'b0;

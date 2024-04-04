@@ -51,6 +51,29 @@ uint64_t resp_err_pkt_buf_size = 65536;
 
 struct rn_dev_t* rn_dev;
 
+  void print_init_wqe_cmd(const init_wqe_cmd *init_wqe_cmd) {
+    fprintf(stderr, "cmd_size: 0x%08x\n", init_wqe_cmd->cmd_size);
+    fprintf(stderr, "init_sq_pidb_cnt: 0x%08x\n", init_wqe_cmd->init_sq_pidb_cnt);
+    fprintf(stderr, "init_cq_db_cnt: 0x%08x\n", init_wqe_cmd->init_cq_db_cnt);
+    fprintf(stderr, "sq_pidb_addr: 0x%08x\n", init_wqe_cmd->sq_pidb_addr);
+    fprintf(stderr, "wrid: 0x%04x\n", init_wqe_cmd->wrid);
+    fprintf(stderr, "opcode: 0x%04x\n", init_wqe_cmd->opcode);
+    fprintf(stderr, "wqe_count: 0x%08x\n", init_wqe_cmd->wqe_count);
+    fprintf(stderr, "laddr_msb: 0x%08x\n", init_wqe_cmd->laddr_msb);
+    fprintf(stderr, "laddr_lsb: 0x%08x\n", init_wqe_cmd->laddr_lsb);
+    fprintf(stderr, "payload_len: 0x%08x\n", init_wqe_cmd->payload_len);
+    fprintf(stderr, "remote_offset_msb: 0x%08x\n", init_wqe_cmd->remote_offset_msb);
+    fprintf(stderr, "remote_offset_lsb: 0x%08x\n", init_wqe_cmd->remote_offset_lsb);
+    fprintf(stderr, "r_key: 0x%08x\n", init_wqe_cmd->r_key);
+    fprintf(stderr, "send_small_payload0: 0x%08x\n", init_wqe_cmd->send_small_payload0);
+    fprintf(stderr, "send_small_payload1: 0x%08x\n", init_wqe_cmd->send_small_payload1);
+    fprintf(stderr, "send_small_payload2: 0x%08x\n", init_wqe_cmd->send_small_payload2);
+    fprintf(stderr, "send_small_payload3: 0x%08x\n", init_wqe_cmd->send_small_payload3);
+    fprintf(stderr, "immdt_data: 0x%08x\n", init_wqe_cmd->immdt_data);
+    fprintf(stderr, "sq_addr_msb: 0x%08x\n", init_wqe_cmd->sq_addr_msb);
+    fprintf(stderr, "sq_addr_lsb: 0x%08x\n", init_wqe_cmd->sq_addr_lsb);
+  }
+
 int main(int argc, char *argv[])
 {
   int sockfd;
@@ -71,7 +94,6 @@ int main(int argc, char *argv[])
   char *pcie_resource = NULL;
   char *qp_location = QP_LOCATION_DEFAULT;
   double total_time = 0.0;
-  struct timespec ts_start, ts_end;
   double bandwidth  = 0.0;
   //payload size in bytes
   uint32_t payload_size = 4;
@@ -84,6 +106,7 @@ int main(int argc, char *argv[])
 
   uint64_t cq_cidb_addr;
   uint64_t rq_cidb_addr;
+  int ops_completed;
 
   struct rdma_dev_t* rdma_dev;
 
@@ -98,15 +121,18 @@ int main(int argc, char *argv[])
   uint32_t dst_qpid;
   uint32_t qdepth;
   uint16_t wrid;
-  uint32_t wqe_idx;
-  //uint32_t transfer_size;
 
   uint64_t read_A_offset;
-  int      ret_val;
 
   uint64_t read_offset;
   uint32_t* sw_golden;
   ssize_t rc;
+
+  init_wqe_cmd init_wqe_cmd;
+  uint32_t cmd_size = 19;
+  uint32_t sq_addr_lsb;
+  uint32_t sq_addr_msb;
+  uint32_t hw_timer;
 
   server = 0;
   client = 0;
@@ -226,7 +252,8 @@ int main(int argc, char *argv[])
   // Allocate a hugepage for the CQ and RQ's cidb buffer. They share the same hugepage
   // cidb is 32-bit, and each queue pair will have both cq_cidb and rq_cidb. Therefor, 
   // we set base address of rq_cidb_addr to cq_cidb_addr + (num_qp<<2)
-  uint32_t cidb_buffer_size = (1 << HUGE_PAGE_SHIFT);
+  //uint32_t cidb_buffer_size = (1 << HUGE_PAGE_SHIFT);
+  uint32_t cidb_buffer_size = (1 << 21);
   cidb_buffer = allocate_rdma_buffer(rn_dev, (uint64_t) cidb_buffer_size, "host_mem");
   cq_cidb_addr = cidb_buffer->dma_addr;
   rq_cidb_addr = cidb_buffer->dma_addr + (num_qp<<2);
@@ -297,6 +324,9 @@ int main(int argc, char *argv[])
     uint32_t buf_size;
     uint64_t buf_phy_addr;
 
+    uint32_t sq_pidb_addr;
+    uint32_t qpid_wqecount;
+
     buf_size = payload_size;
     
     uint32_t* recv_tmp = malloc(buf_size);
@@ -323,34 +353,34 @@ int main(int argc, char *argv[])
 
     read_A_offset = ntohll(read_A_offset);
 
-    wqe_idx   = 0;
     wrid      = 0;
-
     device_buffer = allocate_rdma_buffer(rn_dev, (uint64_t) payload_size, "dev_mem");
 
     buf_phy_addr = device_buffer->dma_addr;
 
     fprintf(stderr, "Info: creating an RDMA read WQE for getting data\n");
-    create_a_wqe(rn_dev->rdma_dev, qpid, wrid, wqe_idx, device_buffer->dma_addr, payload_size, RNIC_OP_READ, read_A_offset, R_KEY, 0, 0, 0, 0, 0);
-    clock_gettime(CLOCK_MONOTONIC, &ts_start);
-    ret_val = rdma_post_send(rn_dev->rdma_dev, qpid);
-    clock_gettime(CLOCK_MONOTONIC, &ts_end);
-    if(ret_val>=0) {
-      fprintf(stderr, "Successfully sent an RDMA read operation\n");
-    } else {
-      fprintf(stderr, "Failed to send an RDMA read operation\n");
-    }
 
-    dump_registers(rn_dev->rdma_dev, 1, qpid);
+    sq_pidb_addr = get_rdma_per_q_config_addr(RN_RDMA_QCSR_SQPIi, qpid);
+    sq_addr_lsb = read32_data((uint32_t*) rdma_dev->axil_ctl, get_rdma_per_q_config_addr(RN_RDMA_QCSR_SQBAi, qpid));  
+    sq_addr_msb = read32_data((uint32_t*) rdma_dev->axil_ctl, get_rdma_per_q_config_addr(RN_RDMA_QCSR_SQBAMSBi, qpid));
+    gen_init_wqe_cmd(&init_wqe_cmd, cmd_size, 0, 0, sq_pidb_addr, wrid, RNIC_OP_READ, 1, (uint64_t) device_buffer->dma_addr, payload_size, (uint64_t) read_A_offset, R_KEY, 0, 0, 0, 0, 0, sq_addr_msb, sq_addr_lsb);
 
-    fprintf(stderr, "Info: All data has been received!\n");
-    fprintf(stderr, "Info: buffer physical address is 0x%lx\n",buf_phy_addr);
+    print_init_wqe_cmd(&init_wqe_cmd);
 
-    /* subtract the start time from the end time */
-    timespec_sub(&ts_end, &ts_start);
-    total_time = (ts_end.tv_sec + ((double)ts_end.tv_nsec/NSEC_DIV));
+    issue_init_wqe_cmd((void *)rdma_dev->axil_ctl, RN_CLR_CTL_CMD, &init_wqe_cmd);
+    qpid_wqecount = qpid;
+    qpid_wqecount = (qpid_wqecount << 16) | 0x0001;
+    fprintf(stderr, "qpid_wqecount: 0x%08x\n", qpid_wqecount);
+    write32_data((uint32_t*) rdma_dev->axil_ctl, RN_RDMA_OPS_TRG, qpid_wqecount);
+    fprintf(stderr, "RDMA read operation triggered and waiting to finish\n");
+    ops_completed = wait_finish_rdma((void *)rdma_dev->axil_ctl, RN_CLR_JOB_COMPLETED_NOT_READ);//RN_CLR_KER_STS);
+
+    fprintf(stderr, "Info: Is RDMA operation finished, ops_completed = %d\n", ops_completed);
+    hw_timer = read32_data(rdma_dev->axil_ctl, RN_CLR_KER_STS);
+    fprintf(stderr, "hw_timer: 0x%08x\n", hw_timer);
+    total_time = (double) ((hw_timer & 0x00ffffff)*4);
     bandwidth = ((double) payload_size) / total_time;
-    fprintf(stderr, "Info: Time spent %f usec, size = %d bytes, Bandwidth = %f gigabits/sec\n",	total_time*1000000, payload_size, ((bandwidth*8)/1000000000));
+    fprintf(stderr, "Info: Time spent %f usec, size = %d bytes, Bandwidth = %f gigabits/sec\n",	total_time/1000, payload_size, (bandwidth*8));
 
     if(is_device_address(buf_phy_addr)) {
       // Copy data from device memory to host memory
@@ -365,7 +395,7 @@ int main(int argc, char *argv[])
       recv_tmp = (uint32_t* ) device_buffer->buffer;
       fprintf(stderr,"Buffer contents: %ls\n", recv_tmp);
     }
-/*
+  /*
     for (uint32_t i = 0; i < payload_size>>2; i++) {
         fprintf(stderr, "Info: received data: recv[%d]=%d\n", i, recv_tmp[i]);
     }*/
@@ -396,7 +426,6 @@ int main(int argc, char *argv[])
 
   if(server) {
     // Connect to the remote peer via TCP/IP
-    //uint32_t* sent_tmp = malloc(payload_size);
     memset(&server_addr, '\0', sizeof(struct sockaddr_in));
     server_addr.sin_family = AF_INET;
     server_addr.sin_port = htons(tcp_sport);
@@ -412,7 +441,7 @@ int main(int argc, char *argv[])
 
     fprintf(stderr, "Info: Server is connected to a remote peer\n");
 
-    tmp_buffer = allocate_rdma_buffer(rn_dev, payload_size, /*qp_location*/"dev_mem");
+    tmp_buffer = allocate_rdma_buffer(rn_dev, payload_size, /*qp_location*/"host_mem");
     rdma_register_memory_region(rdma_dev, rdma_pd, R_KEY, tmp_buffer);
     fprintf(stderr, "Info: allocating buffer for payload data\n");
     fprintf(stderr, "Info: tmp_buffer->buffer = %p, tmp_buffer->dma_addr = 0x%lx\n", (uint64_t *) tmp_buffer->buffer, tmp_buffer->dma_addr);

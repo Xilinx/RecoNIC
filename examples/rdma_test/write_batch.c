@@ -52,6 +52,29 @@ uint64_t resp_err_pkt_buf_size = 65536;
 
 struct rn_dev_t* rn_dev;
 
+void print_init_wqe_cmd(const init_wqe_cmd *init_wqe_cmd) {
+    fprintf(stderr, "cmd_size: 0x%08x\n", init_wqe_cmd->cmd_size);
+    fprintf(stderr, "init_sq_pidb_cnt: 0x%08x\n", init_wqe_cmd->init_sq_pidb_cnt);
+    fprintf(stderr, "init_cq_db_cnt: 0x%08x\n", init_wqe_cmd->init_cq_db_cnt);
+    fprintf(stderr, "sq_pidb_addr: 0x%08x\n", init_wqe_cmd->sq_pidb_addr);
+    fprintf(stderr, "wrid: 0x%04x\n", init_wqe_cmd->wrid);
+    fprintf(stderr, "opcode: 0x%04x\n", init_wqe_cmd->opcode);
+    fprintf(stderr, "wqe_count: 0x%08x\n", init_wqe_cmd->wqe_count);
+    fprintf(stderr, "laddr_msb: 0x%08x\n", init_wqe_cmd->laddr_msb);
+    fprintf(stderr, "laddr_lsb: 0x%08x\n", init_wqe_cmd->laddr_lsb);
+    fprintf(stderr, "payload_len: 0x%08x\n", init_wqe_cmd->payload_len);
+    fprintf(stderr, "remote_offset_msb: 0x%08x\n", init_wqe_cmd->remote_offset_msb);
+    fprintf(stderr, "remote_offset_lsb: 0x%08x\n", init_wqe_cmd->remote_offset_lsb);
+    fprintf(stderr, "r_key: 0x%08x\n", init_wqe_cmd->r_key);
+    fprintf(stderr, "send_small_payload0: 0x%08x\n", init_wqe_cmd->send_small_payload0);
+    fprintf(stderr, "send_small_payload1: 0x%08x\n", init_wqe_cmd->send_small_payload1);
+    fprintf(stderr, "send_small_payload2: 0x%08x\n", init_wqe_cmd->send_small_payload2);
+    fprintf(stderr, "send_small_payload3: 0x%08x\n", init_wqe_cmd->send_small_payload3);
+    fprintf(stderr, "immdt_data: 0x%08x\n", init_wqe_cmd->immdt_data);
+    fprintf(stderr, "sq_addr_msb: 0x%08x\n", init_wqe_cmd->sq_addr_msb);
+    fprintf(stderr, "sq_addr_lsb: 0x%08x\n", init_wqe_cmd->sq_addr_lsb);
+  }
+
 int main(int argc, char *argv[])
 {
   int sockfd;
@@ -72,8 +95,6 @@ int main(int argc, char *argv[])
   char *pcie_resource = NULL;
   char *qp_location = QP_LOCATION_DEFAULT;
   double total_time = 0.0;
-  struct timespec ts_start;
-  struct timespec ts_end;
   double bandwidth  = 0.0;
   //payload size in bytes
   uint32_t payload_size = 128;
@@ -88,6 +109,7 @@ int main(int argc, char *argv[])
 
   uint64_t cq_cidb_addr;
   uint64_t rq_cidb_addr;
+  int ops_completed;
 
   struct rdma_dev_t* rdma_dev;
 
@@ -102,14 +124,18 @@ int main(int argc, char *argv[])
   uint32_t dst_qpid;
   uint32_t qdepth;
   uint16_t wrid;
-  uint32_t wqe_idx;
 
   uint64_t write_offset_client;
-  int      ret_val;
 
   uint64_t write_offset_server;
   uint32_t* sw_golden;
   ssize_t rc;
+
+  init_wqe_cmd init_wqe_cmd;
+  uint32_t cmd_size = 19;
+  uint32_t sq_addr_lsb;
+  uint32_t sq_addr_msb;
+  uint32_t hw_timer;
 
   server = 0;
   client = 0;
@@ -305,6 +331,9 @@ if(client) {
     server_addr.sin_port   = htons(tcp_sport);
     server_addr.sin_addr.s_addr = inet_addr(dst_ip_str);
 
+    uint32_t sq_pidb_addr;
+    uint32_t qpid_wqecount;
+
     fprintf(stderr, "Info: Client is connecting to a remote server\n");
     connect(sockfd, (struct sockaddr* )&server_addr, sizeof(server_addr));
 
@@ -322,7 +351,6 @@ if(client) {
 
     write_offset_client = ntohll(write_offset_client);
     
-    wqe_idx   = 0;
     wrid      = 0;
 
     device_buffer = allocate_rdma_buffer(rn_dev, (uint64_t) total_payload_size, "dev_mem");
@@ -343,37 +371,34 @@ if(client) {
       }
       fprintf(stderr, "Info: buffer physical address is 0x%lx\n",device_buffer->dma_addr);
 
-    for(int i=0; i < WQE_count; i++)
-    {
-      fprintf(stderr, "Info: creating an RDMA write WQE for writing data\n");
-      
-      create_a_wqe(rn_dev->rdma_dev, qpid, wrid, wqe_idx, device_buffer->dma_addr, payload_size, RNIC_OP_WRITE, write_offset_client, R_KEY, 0, 0, 0, 0, 0);
-      wqe_idx = wqe_idx + 1;
-      fprintf(stderr, "Info: Adding delay of 1s\n");
-      sleep(1);
-    }
+    sq_pidb_addr = get_rdma_per_q_config_addr(RN_RDMA_QCSR_SQPIi, qpid);
+    sq_addr_lsb = read32_data((uint32_t*) rdma_dev->axil_ctl, get_rdma_per_q_config_addr(RN_RDMA_QCSR_SQBAi, qpid));  
+    sq_addr_msb = read32_data((uint32_t*) rdma_dev->axil_ctl, get_rdma_per_q_config_addr(RN_RDMA_QCSR_SQBAMSBi, qpid));
+    gen_init_wqe_cmd(&init_wqe_cmd, cmd_size, 0, 0, sq_pidb_addr, wrid, RNIC_OP_WRITE, WQE_count, (uint64_t) device_buffer->dma_addr, payload_size, (uint64_t) write_offset_client, R_KEY, 0, 0, 0, 0, 0, sq_addr_msb, sq_addr_lsb);
+    
+    print_init_wqe_cmd(&init_wqe_cmd);
+    issue_init_wqe_cmd((void *)rdma_dev->axil_ctl, RN_CLR_CTL_CMD, &init_wqe_cmd);
+    qpid_wqecount = qpid;
+    qpid_wqecount = (qpid_wqecount << 16) | (WQE_count & 0x0000ffff);
+    fprintf(stderr, "qpid_wqecount: 0x%08x\n", qpid_wqecount);
+    write32_data((uint32_t*) rdma_dev->axil_ctl, RN_RDMA_OPS_TRG, qpid_wqecount);
+    fprintf(stderr, "RDMA read operation triggered and waiting to finish\n");
+    ops_completed = wait_finish_rdma((void *)rdma_dev->axil_ctl, RN_CLR_JOB_COMPLETED_NOT_READ);//RN_CLR_KER_STS);
 
-    //Total payload size is 16777088
-    /* subtract the start time from the end time */
-      clock_gettime(CLOCK_MONOTONIC, &ts_start);
-      ret_val = rdma_post_batch_send(rn_dev->rdma_dev, qpid, WQE_count);
-      clock_gettime(CLOCK_MONOTONIC, &ts_end);
-      if(ret_val>=0) {
-        fprintf(stderr, "Successfully sent an RDMA write operation\n");
-      } else {
-        fprintf(stderr, "Failed to send an RDMA write operation\n");
-      }
-      timespec_sub(&ts_end, &ts_start);
-      total_time = (ts_end.tv_sec + ((double)ts_end.tv_nsec/NSEC_DIV));
-      bandwidth = ((double) payload_size) / (total_time/WQE_count);
-      fprintf(stderr, "Info: Total Time spent %f usec, Average Time spent on each WQE %f usec, Size per WQE = %d bytes, Bandwidth per WQE = %f gigabits/sec\n",	(total_time*1000000), (total_time*1000000)/WQE_count, payload_size, ((bandwidth*8)/1000000000));
+    fprintf(stderr, "Info: Is RDMA operation finished, ops_completed = %d\n", ops_completed);
+    //sleep(1);
+    hw_timer = read32_data(rdma_dev->axil_ctl, RN_CLR_KER_STS);
+    fprintf(stderr, "hw_timer: 0x%08x\n", hw_timer);
+    total_time = (double) ((hw_timer & 0x00ffffff)*4);
+    bandwidth = ((double) payload_size) / (total_time/WQE_count);
+    fprintf(stderr, "Info: Total Time spent %f usec, Average Time spent on each WQE %f usec, Size per WQE = %d bytes, Bandwidth per WQE = %f gigabits/sec\n",	(total_time/1000), (total_time/1000)/WQE_count, payload_size, (bandwidth*8));
 
-      fprintf(stderr, "Info: Data write successfully\n");
+    fprintf(stderr, "Info: Data write successfully\n");
 
-      fprintf(stderr, "Info: Printing RDMA registers from the client side\n");
+    fprintf(stderr, "Info: Printing RDMA registers from the client side\n");
 
       // Dump RDMA registers
-      dump_registers(rdma_dev, 1, qpid);
+    dump_registers(rdma_dev, 1, qpid);
   }
 
   if(server) {

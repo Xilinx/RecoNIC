@@ -35,6 +35,9 @@ module control_command_processor #(
   output [31:0] ctl_cmd_fifo_dout,
   output        ctl_cmd_fifo_empty_n,
   input         ctl_cmd_fifo_rd_en,
+  output [31:0] rdma_trg_fifo_dout,
+  output        rdma_trg_fifo_empty_n,
+  input         rdma_trg_fifo_rd_en,
 
   input  [31:0] ker_status_fifo_din,
   input         ker_status_fifo_wr_en,
@@ -66,6 +69,7 @@ localparam CTL_CMD                = 12'h000;
 localparam KER_STS                = 12'h004;
 localparam JOB_SUBMITTED          = 12'h008;
 localparam JOB_COMPLETED_NOT_READ = 12'h00C;
+localparam RDMA_TRG               = 12'h010;
 
 logic [31:0] job_submitted_cnt;
 logic [31:0] job_completed_not_read_cnt;
@@ -96,9 +100,19 @@ logic ctl_cmd_rd_en;
 logic ctl_cmd_afifo_empty;
 logic [31:0] ctl_cmd_afifo_data_out;
 
+logic        rdma_trg_wr_en;
+logic        rdma_trg_afifo_full;
+logic [31:0] rdma_trg_data;
+
+logic        rdma_trg_rd_en;
+logic        rdma_trg_afifo_empty;
+logic [31:0] rdma_trg_afifo_data_out;
+
 logic [WR_DATA_COUNT_WIDTH-1:0] ctl_cmd_afifo_wr_data_count;
+logic [WR_DATA_COUNT_WIDTH-1:0] rdma_trg_afifo_wr_data_count;
 
 logic ctl_cmd_wr_rst_busy;
+logic rdma_trg_wr_rst_busy;
 
 /* Async FIFO to buffer kernel status */
 localparam RD_DATA_COUNT_WIDTH = log2(ASYNC_FIFO_DEPTH) + 1;
@@ -137,10 +151,14 @@ begin
     ctl_cmd_data   <= 0;
     ctl_cmd_wr_en  <= 0;
 
+    rdma_trg_data   <= 0;
+    rdma_trg_wr_en  <= 0;
+
     axil_write_state <= AXIL_WRITE_IDLE;
   end
   else begin
     ctl_cmd_wr_en  <= 0;
+    rdma_trg_wr_en  <= 0;
     case(axil_write_state)
       AXIL_WRITE_IDLE: begin
         s_axil_bvalid  <= 1'b0;
@@ -161,6 +179,20 @@ begin
                 end
                 else begin
                   ctl_cmd_wr_en <= 1'b1;
+                end
+                if(s_axil_wready)
+                begin
+                  s_axil_wready <= 1'b0;
+                end
+              end
+              RDMA_TRG     : begin
+                rdma_trg_data <= s_axil_wdata;
+                if(rdma_trg_afifo_full || rdma_trg_wr_rst_busy) begin
+                  rdma_trg_wr_en  <= 1'b0;
+                  axil_write_state <= AXIL_WRITE_WAIT;
+                end
+                else begin
+                  rdma_trg_wr_en <= 1'b1;
                 end
                 if(s_axil_wready)
                 begin
@@ -202,6 +234,16 @@ begin
                 ctl_cmd_wr_en <= 1'b1;
               end
             end
+            RDMA_TRG     : begin
+              rdma_trg_data <= s_axil_wdata;
+              if(rdma_trg_afifo_full) begin
+                rdma_trg_wr_en  <= 1'b0;
+                axil_write_state <= AXIL_WRITE_WAIT;
+              end
+              else begin
+                rdma_trg_wr_en <= 1'b1;
+              end
+            end
             TEMPLATE_REG   : template_reg <= s_axil_wdata;
             default: begin
               template_reg <= template_reg;
@@ -210,12 +252,24 @@ begin
         end
       end
       AXIL_WRITE_WAIT: begin
-        if(!ctl_cmd_afifo_full && !ctl_cmd_wr_rst_busy) begin
-          s_axil_bresp  <= 0;
-          ctl_cmd_wr_en <= 1'b1;
-          s_axil_bvalid <= 1'b1;
-          axil_write_state <= AXIL_WRITE_RESP;
-        end
+        case(awaddr)
+          CTL_CMD     : begin
+            if(!ctl_cmd_afifo_full && !ctl_cmd_wr_rst_busy) begin
+              s_axil_bresp  <= 0;
+              ctl_cmd_wr_en <= 1'b1;
+              s_axil_bvalid <= 1'b1;
+              axil_write_state <= AXIL_WRITE_RESP;
+            end
+          end
+          RDMA_TRG     : begin
+              if(!rdma_trg_afifo_full && !rdma_trg_wr_rst_busy) begin
+              s_axil_bresp  <= 0;
+              rdma_trg_wr_en <= 1'b1;
+              s_axil_bvalid <= 1'b1;
+              axil_write_state <= AXIL_WRITE_RESP;
+            end
+          end
+        endcase
       end
       AXIL_WRITE_RESP: begin
         s_axil_bresp   <= 0;
@@ -224,6 +278,7 @@ begin
         s_axil_awready <= 1'b1;
         s_axil_wready  <= 1'b0;
         ctl_cmd_wr_en  <= 1'b0;
+        rdma_trg_wr_en  <= 1'b0;
         axil_write_state <= s_axil_bready ? AXIL_WRITE_IDLE : AXIL_WRITE_RESP;
       end
       default: begin
@@ -284,9 +339,59 @@ xpm_fifo_async #(
   .wr_rst_busy   (ctl_cmd_wr_rst_busy)
 );
 
+// Async FIFO to store rdma trigger (qpid_wqecount)
+xpm_fifo_async #(
+  .DOUT_RESET_VALUE    ("0"),
+  .ECC_MODE            ("no_ecc"),
+  .FIFO_MEMORY_TYPE    ("auto"),
+  .FIFO_READ_LATENCY   (0),
+  .FIFO_WRITE_DEPTH    (ASYNC_FIFO_DEPTH),
+  .READ_DATA_WIDTH     (32),
+  .RD_DATA_COUNT_WIDTH (),
+  .WR_DATA_COUNT_WIDTH (WR_DATA_COUNT_WIDTH),
+  .READ_MODE           ("fwft"),
+  .WRITE_DATA_WIDTH    (32),
+  .CDC_SYNC_STAGES     (2)
+) qpid_wqecount_afifo (
+  .wr_en         (rdma_trg_wr_en),
+  .din           (rdma_trg_data),
+  .wr_ack        (),
+  .rd_en         (rdma_trg_rd_en),
+  .data_valid    (),
+  .dout          (rdma_trg_afifo_data_out),
+
+  .wr_data_count (rdma_trg_afifo_wr_data_count),
+  .rd_data_count (),
+
+  .empty         (rdma_trg_afifo_empty),
+  .full          (rdma_trg_afifo_full),
+  .almost_empty  (),
+  .almost_full   (),
+  .overflow      (),
+  .underflow     (),
+  .prog_empty    (),
+  .prog_full     (),
+  .sleep         (1'b0),
+
+  .sbiterr       (),
+  .dbiterr       (),
+  .injectsbiterr (1'b0),
+  .injectdbiterr (1'b0),
+
+  .wr_clk        (axil_aclk),
+  .rd_clk        (axis_aclk),
+  .rst           (~axis_arstn),
+  .rd_rst_busy   (),
+  .wr_rst_busy   (rdma_trg_wr_rst_busy)
+);
+
 assign ctl_cmd_rd_en        = ctl_cmd_fifo_rd_en;
 assign ctl_cmd_fifo_dout    = ctl_cmd_afifo_data_out;
 assign ctl_cmd_fifo_empty_n = ~ctl_cmd_afifo_empty;
+
+assign rdma_trg_rd_en        = rdma_trg_fifo_rd_en;
+assign rdma_trg_fifo_dout    = rdma_trg_afifo_data_out;
+assign rdma_trg_fifo_empty_n = ~rdma_trg_afifo_empty;
 
 // AXI-Lite read transaction
 always_ff @(posedge axil_aclk)
@@ -343,7 +448,7 @@ begin
   end
 end
 
-assign job_submitted_cnt          = ctl_cmd_afifo_wr_data_count;
+assign job_submitted_cnt          = ctl_cmd_afifo_wr_data_count + rdma_trg_afifo_wr_data_count;
 assign job_completed_not_read_cnt = ker_status_afifo_rd_data_count;
 
 // Async FIFO to buffer kernel status
@@ -406,7 +511,7 @@ begin
     cl_box_start <= 1'b0;
     case(kernel_state)
       CL_IDLE: begin
-        if(cl_box_idle && cl_kernel_idle && !ctl_cmd_afifo_empty) begin
+        if(cl_box_idle && cl_kernel_idle && !(ctl_cmd_afifo_empty || rdma_trg_afifo_empty)) begin
           cl_box_start <= 1'b1;
           kernel_state <= CL_BOX_ACTIVE;
         end

@@ -78,22 +78,40 @@ hls_build:
 ifeq ($(GEN_HLS), 1)
 	mkdir -p $(LOOKASIDE_COMP_DIR)/interface
 	mkdir -p $(LOOKASIDE_COMP_DIR)/kernel
-	cd $(LOOKASIDE_COMP_DIR); vitis_hls -f ./cl_box.tcl; vitis_hls -f ./mmult.tcl
-	cp $(LOOKASIDE_COMP_DIR)/cl_box/solution1/syn/verilog/* $(LOOKASIDE_COMP_DIR)/interface/
-	cp $(LOOKASIDE_COMP_DIR)/mmult/solution1/syn/verilog/* $(LOOKASIDE_COMP_DIR)/kernel/
+	cd $(LOOKASIDE_COMP_DIR); vitis_hls -f ./hw_hndshk.tcl; vitis_hls -f ./ker_write_wqe.tcl; vitis_hls -f ./ker_write_sqpidb.tcl; vitis_hls -f ./ker_wait_on_cqdb.tcl
+	cp $(LOOKASIDE_COMP_DIR)/ker_write_wqe/solution1/syn/verilog/* $(LOOKASIDE_COMP_DIR)/kernel/
+	cp $(LOOKASIDE_COMP_DIR)/ker_write_sqpidb/solution1/syn/verilog/* $(LOOKASIDE_COMP_DIR)/kernel/
+	cp $(LOOKASIDE_COMP_DIR)/ker_wait_on_cqdb/solution1/syn/verilog/* $(LOOKASIDE_COMP_DIR)/kernel/
+	cp $(LOOKASIDE_COMP_DIR)/hw_hndshk/solution1/syn/verilog/* $(LOOKASIDE_COMP_DIR)/interface/
 else
-ifeq (,$(wildcard $(LOOKASIDE_COMP_DIR)/interface/cl_box.v))
+ifeq (,$(wildcard $(LOOKASIDE_COMP_DIR)/interface/hw_hndshk.v))
 	mkdir -p $(LOOKASIDE_COMP_DIR)/interface
-	cd $(LOOKASIDE_COMP_DIR); vitis_hls -f ./cl_box.tcl
-	cp $(LOOKASIDE_COMP_DIR)/cl_box/solution1/syn/verilog/* $(LOOKASIDE_COMP_DIR)/interface/
+	cd $(LOOKASIDE_COMP_DIR); vitis_hls -f ./hw_hndshk.tcl
+	cp $(LOOKASIDE_COMP_DIR)/hw_hndshk/solution1/syn/verilog/* $(LOOKASIDE_COMP_DIR)/interface/
 else
 	@echo "Use old files in $(LOOKASIDE_COMP_DIR)/interface"
 endif
 
-ifeq (,$(wildcard $(LOOKASIDE_COMP_DIR)/kernel/mmult.v))
+ifeq (,$(wildcard $(LOOKASIDE_COMP_DIR)/kernel/ker_wait_on_cqdb.v))
 	mkdir -p $(LOOKASIDE_COMP_DIR)/kernel
-	cd $(LOOKASIDE_COMP_DIR); vitis_hls -f ./mmult.tcl
-	cp $(LOOKASIDE_COMP_DIR)/mmult/solution1/syn/verilog/* $(LOOKASIDE_COMP_DIR)/kernel/
+	cd $(LOOKASIDE_COMP_DIR); vitis_hls -f ./ker_wait_on_cqdb.tcl
+	cp $(LOOKASIDE_COMP_DIR)/ker_wait_on_cqdb/solution1/syn/verilog/* $(LOOKASIDE_COMP_DIR)/kernel/
+else
+	@echo "Use old files in $(LOOKASIDE_COMP_DIR)/kernel"
+endif
+
+ifeq (,$(wildcard $(LOOKASIDE_COMP_DIR)/kernel/ker_write_wqe.v))
+	mkdir -p $(LOOKASIDE_COMP_DIR)/kernel
+	cd $(LOOKASIDE_COMP_DIR); vitis_hls -f ./ker_write_wqe.tcl
+	cp $(LOOKASIDE_COMP_DIR)/ker_write_wqe/solution1/syn/verilog/* $(LOOKASIDE_COMP_DIR)/kernel/
+else
+	@echo "Use old files in $(LOOKASIDE_COMP_DIR)/kernel"
+endif
+
+ifeq (,$(wildcard $(LOOKASIDE_COMP_DIR)/kernel/ker_write_sqpidb.v))
+	mkdir -p $(LOOKASIDE_COMP_DIR)/kernel
+	cd $(LOOKASIDE_COMP_DIR); vitis_hls -f ./ker_write_sqpidb.tcl
+	cp $(LOOKASIDE_COMP_DIR)/ker_write_sqpidb/solution1/syn/verilog/* $(LOOKASIDE_COMP_DIR)/kernel/
 else
 	@echo "Use old files in $(LOOKASIDE_COMP_DIR)/kernel"
 endif
