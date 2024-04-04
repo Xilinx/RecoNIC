@@ -260,6 +260,23 @@ If the program exits with an error saying libreconic.so is not found, you can tr
 
 The above example allocates the QP (SQ, CQ and RQ) in the host memory. If you want the QP to be allocated in the host memory, you can simply replace "-l host_mem" with "-l dev_mem" on both receiver and sender nodes.
 
+### RDMA Batch Read
+RDMA Batch Read operation: The client node issues n RDMA read requests of same payload size to the server node. The server node then replies with the RDMA read response packets.
+
+#### On the client node (192.100.51.1)
+Run the program
+```
+sudo ./read_batch -r 192.100.51.1 -i 192.100.52.1 -p /sys/bus/pci/devices/0000\:d8\:00.0/resource2 -z 256 -b 50 -l host_mem -d /dev/reconic-mm -c -u 22222 -t 11111 --dst_qp 2 -g 2>&1 | tee client_debug.log
+```
+
+#### On the server node (192.100.52.1)
+Run the program
+```
+sudo ./read_batch -r 192.100.52.1 -i 192.100.51.1 -p /sys/bus/pci/devices/0000\:d8\:00.0/resource2 -z 256 -b 50 -l host_mem -d /dev/reconic-mm -s -u 22222 -t 11111 --dst_qp 2 -g 2>&1 | tee server_debug.log
+```
+
+The above example will run for batch size of 50. Command argument -b  is used to specify batch size.
+
 ### RDMA Write
 RDMA Write operation: The client node issues RDMA write request to the server node directly. Usage of the RDMA write program is the same with RDMA read program above.
 
@@ -278,6 +295,23 @@ sudo ./write -r 192.100.52.1 -i 192.100.51.1 -p /sys/bus/pci/devices/0000\:d8\:0
 If the program exits with an error saying libreconic.so is not found, you can try with "sudo env LD_LIBRARY_PATH=$LD_LIBRARY_PATH ./write", instead of "sudo ./write".
 
 The above example allocates the QP (SQ, CQ and RQ) in the host memory. You can allocate QPs on device memory as well by using "-l dev_mem" on both receiver and sender nodes.
+
+### RDMA Batch Write
+RDMA Batch Write operation: The client node issues n RDMA write requests of same payload size to the server node. Usage is similar to previous examples
+
+#### On the client node (192.100.51.1)
+Run the program
+```
+sudo ./write_batch -r 192.100.51.1 -i 192.100.52.1 -p /sys/bus/pci/devices/0000\:d8\:00.0/resource2 -z 256 -b 50 -l host_mem -d /dev/reconic-mm -c -u 22222 -t 11111 --dst_qp 2 -g 2>&1 | tee client_debug.log
+```
+
+#### On the server node (192.100.52.1)
+Run the program
+```
+sudo ./write_batch -r 192.100.52.1 -i 192.100.51.1 -p /sys/bus/pci/devices/0000\:d8\:00.0/resource2 -z 256 -b 50 -l host_mem -d /dev/reconic-mm -s -u 22222 -t 11111 --dst_qp 2 -g 2>&1 | tee server_debug.log
+```
+
+The above example will run for batch size of 50. Command argument -b  is used to specify batch size.
 
 Before we run the example, we need to configure hugepages in both servers.
 ```
