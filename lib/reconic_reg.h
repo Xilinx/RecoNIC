@@ -21,7 +21,7 @@
 #define RN_SCR_OFFSET      0x2000
 #define RN_CLR_OFFSET      0x3000
 
-// PCIe bar2 map size: 4MB 
+// PCIe bar2 map size: 4MB
 #define RN_SCR_MAP_SIZE  0x00400000
 
 #define TIMEOUT_THRESHOLD 1000
@@ -177,9 +177,9 @@
 // - [31:30] Read/Write Access permission, set to 2'b11
 // - [29] : R0 access Error, set to 1'b0
 // - [28:26] Protection ID, set to 3'd0
-// - [25:0] Window Size in unit of 4K. we use 64GB mapping, so set it to 0x1000000
+// - [25:0] Window Size in unit of 4K. If we use 64GB mapping, need to set it to 0x1000000
 #define AXIB_BDF_MAP_CONTROL_ADDR        RN_QDMA_CSR_BASE_ADDRESS + 0x00002430
 #define AXIB_BDF_RESERVED_ADDR           RN_QDMA_CSR_BASE_ADDRESS + 0x00002434
-#define AXIB_BDF_MAP_CONTROL             0xC1000000 
+#define AXIB_BDF_MAP_CONTROL             0xC1000000
 
 #endif  /* __RN_REGISTERS_H__ */
