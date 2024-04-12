@@ -663,7 +663,7 @@ index 375a12c..943b5af 100644
  
  /**
 diff --git a/onic.h b/onic.h
-index e2b8865..28cc28f 100644
+index e2b8865..2664de5 100644
 --- a/onic.h
 +++ b/onic.h
 @@ -3,7 +3,6 @@
@@ -674,7 +674,7 @@ index e2b8865..28cc28f 100644
  #include "libqdma_export.h"
  #include "onic_register.h"
  #include "qdma_access/qdma_access_common.h"
-@@ -15,6 +14,31 @@
+@@ -15,6 +14,32 @@
  #define ONIC_RX_PULL_LEN                    (128)
  #define ONIC_NAPI_WEIGHT                    (64)
  
@@ -695,6 +695,7 @@ index e2b8865..28cc28f 100644
 +#define C2H_BUF_SIZE 1024
 +#define PCI_MSIX_USER_CNT 1
 +
++#define CMAC_RX_LANE_ALIGNMENT_RESET_CNT 8
 +#define CMAC_RX_LANE_ALIGNMENT_TIMEOUT_CNT 32
 +
 +struct qdma_fmap_ctxt {
@@ -706,7 +707,7 @@ index e2b8865..28cc28f 100644
  
  struct onic_dma_request {
  	struct sk_buff *skb;
-@@ -23,6 +47,28 @@ struct onic_dma_request {
+@@ -23,6 +48,28 @@ struct onic_dma_request {
  	struct qdma_sw_sg sgl[MAX_SKB_FRAGS];
  };
  
@@ -735,7 +736,7 @@ index e2b8865..28cc28f 100644
  /* ONIC Net device private structure */
  struct onic_priv {
  	u8 rx_desc_rng_sz_idx;
-@@ -47,7 +93,7 @@ struct onic_priv {
+@@ -47,7 +94,7 @@ struct onic_priv {
  	unsigned long base_tx_q_handle, base_rx_q_handle;
  	struct napi_struct *napi;
  	struct rtnl_link_stats64 *tx_qstats, *rx_qstats;
@@ -1572,7 +1573,7 @@ index 84fbdf2..0000000
 -
 -#endif
 diff --git a/onic_main.c b/onic_main.c
-index 1d9107e..303c8a9 100644
+index 1d9107e..db700b8 100644
 --- a/onic_main.c
 +++ b/onic_main.c
 @@ -14,167 +14,179 @@ char onic_drv_name[] = "onic";
@@ -3334,7 +3335,7 @@ index 1d9107e..303c8a9 100644
  }
  
  /* This function gets global CSR and sets the default indexes of the
-@@ -935,228 +1023,287 @@ static int onic_arr_find(unsigned int *arr, int n, int element)
+@@ -935,228 +1023,294 @@ static int onic_arr_find(unsigned int *arr, int n, int element)
   */
  static int onic_qdma_csr_index_setup(struct onic_priv *xpriv)
  {
@@ -3643,6 +3644,13 @@ index 1d9107e..303c8a9 100644
 +  while(!onic_rx_lane_aligned(xpriv, cmac_id)) {
 +    mdelay(50);
 +    timeout_cnt++;
++
++    if (timeout_cnt == CMAC_RX_LANE_ALIGNMENT_RESET_CNT) {
++      onic_reset_cmac(xpriv);
++      writel(0x1, xpriv->bar_base + CMAC_OFFSET_CONF_RX_1(cmac_id));
++      writel(0x10, xpriv->bar_base + CMAC_OFFSET_CONF_TX_1(cmac_id));
++    }
++
 +    if (timeout_cnt > CMAC_RX_LANE_ALIGNMENT_TIMEOUT_CNT) {
 +      goto rx_not_aligned;
 +    }
@@ -3806,7 +3814,7 @@ index 1d9107e..303c8a9 100644
  
  extern void onic_set_ethtool_ops(struct net_device *netdev);
  
-@@ -1164,129 +1311,144 @@ extern void onic_set_ethtool_ops(struct net_device *netdev);
+@@ -1164,129 +1318,144 @@ extern void onic_set_ethtool_ops(struct net_device *netdev);
   * with Vendor ID and Device ID listed in the in onic_pci_ids table.
   * From this function netdevice and device initialization are done
   */
@@ -4067,7 +4075,7 @@ index 1d9107e..303c8a9 100644
  }
  
  /* This function gets called when PCIe device has been removed from the bus
-@@ -1294,38 +1456,40 @@ exit:
+@@ -1294,38 +1463,40 @@ exit:
   */
  static void onic_pci_remove(struct pci_dev *pdev)
  {
@@ -4136,7 +4144,7 @@ index 1d9107e..303c8a9 100644
  };
  
  /* This is the entry point of the NIC driver.
-@@ -1333,22 +1497,19 @@ static struct pci_driver onic_pci_driver = {
+@@ -1333,22 +1504,19 @@ static struct pci_driver onic_pci_driver = {
   */
  static int __init onic_module_init(void)
  {
@@ -4172,7 +4180,7 @@ index 1d9107e..303c8a9 100644
  }
  
  /* This is the exit point of the NIC driver.
-@@ -1356,13 +1517,15 @@ static int __init onic_module_init(void)
+@@ -1356,13 +1524,15 @@ static int __init onic_module_init(void)
   */
  static void __exit onic_module_exit(void)
  {
