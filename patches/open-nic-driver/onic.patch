@@ -1573,7 +1573,7 @@ index 84fbdf2..0000000
 -
 -#endif
 diff --git a/onic_main.c b/onic_main.c
-index 1d9107e..db700b8 100644
+index 1d9107e..9c4b900 100644
 --- a/onic_main.c
 +++ b/onic_main.c
 @@ -14,167 +14,179 @@ char onic_drv_name[] = "onic";
@@ -1900,7 +1900,7 @@ index 1d9107e..db700b8 100644
  }
  
  /* This is deffered NAPI task for processing incoming Rx packet from DMA queue
-@@ -183,170 +195,206 @@ static int onic_rx_pkt_process(unsigned long qhndl, unsigned long quld,
+@@ -183,170 +195,197 @@ static int onic_rx_pkt_process(unsigned long qhndl, unsigned long quld,
   */
  static int onic_rx_poll(struct napi_struct *napi, int quota)
  {
@@ -2125,7 +2125,7 @@ index 1d9107e..db700b8 100644
 +  }
 +
 +  if (q_no == QDMA_NET_QUEUE){
-+    xpriv->onic_cdev_ptr->mm_c2h_q_hndl = q_handle;
++    xpriv->onic_cdev_ptr->mm_c2h_q_hndl = xpriv->base_rx_q_handle + QDMA_NET_QUEUE;
 +  }
 +
 +  return 0;
@@ -2154,25 +2154,16 @@ index 1d9107e..db700b8 100644
 +  char error_str[ONIC_ERROR_STR_BUF_LEN] = { '0' };
 +
 +  for (q_no = 0; q_no < num_queues; q_no++) {
++    ret = qdma_queue_remove(xpriv->dev_handle,
++          (xpriv->base_rx_q_handle + q_no),
++          error_str, ONIC_ERROR_STR_BUF_LEN);
++    if (ret != 0) {
++      netdev_err(xpriv->netdev,
++          "%s: qdma_queue remove() failed for queue %d with status %d(%s)\n",
++          __func__, q_no, ret, error_str);
++    }
 +    if (q_no < QDMA_NET_QUEUE) {
-+      ret = qdma_queue_remove(xpriv->dev_handle,
-+            (xpriv->base_rx_q_handle + q_no),
-+            error_str, ONIC_ERROR_STR_BUF_LEN);
-+      if (ret != 0) {
-+        netdev_err(xpriv->netdev,
-+            "%s: qdma_queue remove() failed for queue %d with status %d(%s)\n",
-+            __func__, q_no, ret, error_str);
-+      }
-+        netif_napi_del(&xpriv->napi[q_no]);
-+    } else {
-+      ret = qdma_queue_remove(xpriv->dev_handle,
-+            (xpriv->base_rx_q_handle + q_no),
-+            error_str, ONIC_ERROR_STR_BUF_LEN);
-+      if (ret != 0) {
-+        netdev_err(xpriv->netdev,
-+            "%s: qdma_queue remove() failed for queue %d with status %d(%s)\n",
-+            __func__, q_no, ret, error_str);
-+      }
++      netif_napi_del(&xpriv->napi[q_no]);
 +    }
 +  }
 +
@@ -2246,7 +2237,7 @@ index 1d9107e..db700b8 100644
  }
  
  /* This function is interrupt handler (TOP half).
-@@ -355,150 +403,164 @@ release_rx_q:
+@@ -355,150 +394,154 @@ release_rx_q:
   */
  static void onic_isr_tx_tophalf(unsigned long qhndl, unsigned long uld)
  {
@@ -2303,10 +2294,9 @@ index 1d9107e..db700b8 100644
 +          error_str, ONIC_ERROR_STR_BUF_LEN);
 +    if (ret != 0) {
 +      netdev_err(xpriv->netdev,
-+           "%s: qdma_queue_remove() failed for queue %d with status %d(%s)\n",
-+           __func__, q_no, ret, error_str);
++          "%s: qdma_queue_remove() failed for queue %d with status %d(%s)\n",
++          __func__, q_no, ret, error_str);
 +    }
-+
 +  }
  }
  
@@ -2354,7 +2344,7 @@ index 1d9107e..db700b8 100644
 +  //for (q_no = 0; q_no < xpriv->netdev->real_num_tx_queues; q_no++) {
 +  for (q_no = 0; q_no < (xpriv->netdev->real_num_tx_queues + xpriv->pinfo->mm_queues); q_no++) {
 +    memset(&qconf, 0, sizeof(struct qdma_queue_conf));
-+    qconf.st = q_no >= QDMA_NET_QUEUE ? 0 : 1;
++    qconf.st = (q_no >= QDMA_NET_QUEUE) ? 0 : 1;
 +    qconf.q_type = Q_H2C;
 +    qconf.irq_en = (xpriv->pinfo->poll_mode == 0);
 +    qconf.wb_status_en = 1;
@@ -2364,12 +2354,9 @@ index 1d9107e..db700b8 100644
 +    qconf.desc_rng_sz_idx = xpriv->tx_desc_rng_sz_idx;
 +    qconf.quld = (unsigned long)xpriv;
 +    qconf.qidx = q_no;
-+    qconf.fp_descq_isr_top = onic_isr_tx_tophalf;
-+    /*
 +    if( q_no < QDMA_NET_QUEUE ) {
 +      qconf.fp_descq_isr_top = onic_isr_tx_tophalf;
 +    }
-+    */
 +
 +    ret = qdma_queue_add(xpriv->dev_handle, &qconf, &q_handle,
 +             error_str, ONIC_ERROR_STR_BUF_LEN);
@@ -2384,14 +2371,13 @@ index 1d9107e..db700b8 100644
 +    if (q_no == 0)
 +      xpriv->base_tx_q_handle = q_handle;
 +    if (q_no == QDMA_NET_QUEUE)
-+      xpriv->onic_cdev_ptr->mm_h2c_q_hndl = q_handle;
++      xpriv->onic_cdev_ptr->mm_h2c_q_hndl = xpriv->base_tx_q_handle + QDMA_NET_QUEUE;
 +  }
 +  return 0;
  
  cleanup_tx_q:
 -	onic_qdma_tx_queue_release(xpriv, q_no);
 -	return ret;
-+  //onic_qdma_tx_queue_release(xpriv, q_no);
 +  onic_qdma_tx_queue_release(xpriv, xpriv->pinfo->active_tx_queues);
 +  return ret;
  }
@@ -2439,8 +2425,8 @@ index 1d9107e..db700b8 100644
 +              ONIC_ERROR_STR_BUF_LEN);
 +    if (ret < 0) {
 +      netdev_err(xpriv->netdev,
-+           "%s: qdma_queue_stop() failed for Rx queue %d with status %d msg: %s\n",
-+           __func__, q, ret, error_str);
++          "%s: qdma_queue_stop() failed for Rx queue %d with status %d msg: %s\n",
++          __func__, q, ret, error_str);
 +      err = -EINVAL;
 +    }
 +  }
@@ -2451,8 +2437,8 @@ index 1d9107e..db700b8 100644
 +              ONIC_ERROR_STR_BUF_LEN);
 +    if (ret < 0) {
 +      netdev_err(xpriv->netdev,
-+           "%s: qdma_queue_stop() failed for Tx queue %d with status %d msg: %s\n",
-+           __func__, q, ret, error_str);
++          "%s: qdma_queue_stop() failed for Tx queue %d with status %d msg: %s\n",
++          __func__, q, ret, error_str);
 +      err = -EINVAL;
 +    }
 +  }
@@ -2497,32 +2483,27 @@ index 1d9107e..db700b8 100644
 +  int ret, q_no;
 +  char error_str[ONIC_ERROR_STR_BUF_LEN] = { '0' };
 +
-+
-+  //for (q_no = 0; q_no < xpriv->netdev->real_num_rx_queues; q_no++) {
 +  for (q_no = 0; q_no < xpriv->pinfo->active_rx_queues; q_no++) {
 +    ret = qdma_queue_start(xpriv->dev_handle,
-+               xpriv->base_rx_q_handle + q_no,
-+               error_str, ONIC_ERROR_STR_BUF_LEN);
++              xpriv->base_rx_q_handle + q_no,
++              error_str, ONIC_ERROR_STR_BUF_LEN);
 +    if (ret != 0) {
 +      netdev_err(xpriv->netdev,
-+           "%s: qdma_queue_start() failed for Rx queue %d with status %d(%s)\n",
-+           __func__, q_no, ret, error_str);
-+      //onic_qdma_stop(xpriv, 0, q_no);
++          "%s: qdma_queue_start() failed for Rx queue %d with status %d(%s)\n",
++          __func__, q_no, ret, error_str);
 +      onic_qdma_stop(xpriv, 0, xpriv->pinfo->active_rx_queues);
 +      return ret;
 +    }
 +  }
 +
-+  //for (q_no = 0; q_no < xpriv->netdev->real_num_tx_queues; q_no++) {
 +  for (q_no = 0; q_no < xpriv->pinfo->active_tx_queues; q_no++) {
 +    ret = qdma_queue_start(xpriv->dev_handle,
-+               xpriv->base_tx_q_handle + q_no,
-+               error_str, ONIC_ERROR_STR_BUF_LEN);
++              xpriv->base_tx_q_handle + q_no,
++              error_str, ONIC_ERROR_STR_BUF_LEN);
 +    if (ret != 0) {
 +      netdev_err(xpriv->netdev,
-+           "%s: qdma_queue_start() failed for Tx queue %d with status %d(%s)\n",
-+           __func__, q_no, ret, error_str);
-+      //onic_qdma_stop(xpriv, q_no, xpriv->netdev->real_num_rx_queues);
++          "%s: qdma_queue_start() failed for Tx queue %d with status %d(%s)\n",
++          __func__, q_no, ret, error_str);
 +      onic_qdma_stop(xpriv, xpriv->pinfo->active_tx_queues, 0);
 +      return ret;
 +    }
@@ -2532,7 +2513,7 @@ index 1d9107e..db700b8 100644
  }
  
  /* This function gets called when interface gets 'UP' request via 'ifconfig up'
-@@ -507,69 +569,94 @@ static int onic_qdma_start(struct onic_priv *xpriv)
+@@ -507,69 +550,92 @@ static int onic_qdma_start(struct onic_priv *xpriv)
   */
  int onic_open(struct net_device *netdev)
  {
@@ -2676,18 +2657,16 @@ index 1d9107e..db700b8 100644
  
  release_queues:
 -	onic_qdma_tx_queue_release(xpriv, xpriv->netdev->real_num_tx_queues);
-+  //onic_qdma_tx_queue_release(xpriv, xpriv->netdev->real_num_tx_queues);
 +  onic_qdma_tx_queue_release(xpriv, xpriv->pinfo->active_tx_queues);
  release_rx_queues:
 -	onic_qdma_rx_queue_release(xpriv, xpriv->netdev->real_num_rx_queues);
 -	return ret;
-+  //onic_qdma_rx_queue_release(xpriv, xpriv->netdev->real_num_rx_queues);
 +  onic_qdma_rx_queue_release(xpriv, xpriv->pinfo->active_rx_queues);
 +  return ret;
  }
  
  /* This function gets called when there is a interface down request.
-@@ -577,105 +664,110 @@ release_rx_queues:
+@@ -577,105 +643,106 @@ release_rx_queues:
   */
  static int onic_stop(struct net_device *netdev)
  {
@@ -2723,8 +2702,6 @@ index 1d9107e..db700b8 100644
  
 -	netif_tx_stop_all_queues(netdev);
 -	netif_carrier_off(netdev);
-+  //ret = onic_qdma_stop(xpriv, netdev->real_num_tx_queues,
-+  //		     netdev->real_num_rx_queues);
 +  ret = onic_qdma_stop(xpriv, xpriv->pinfo->active_tx_queues,
 +           xpriv->pinfo->active_rx_queues);
  
@@ -2739,8 +2716,6 @@ index 1d9107e..db700b8 100644
 -	if (ret != 0)
 -		netdev_err(netdev, "%s: onic_qdma_stop() failed with status %d\n",
 -			   __func__, ret);
-+  //onic_qdma_rx_queue_release(xpriv, netdev->real_num_rx_queues);
-+  //onic_qdma_tx_queue_release(xpriv, netdev->real_num_tx_queues);
 +  onic_qdma_rx_queue_release(xpriv, xpriv->pinfo->active_rx_queues);
 +  onic_qdma_tx_queue_release(xpriv, xpriv->pinfo->active_tx_queues);
  
@@ -2884,7 +2859,7 @@ index 1d9107e..db700b8 100644
  }
  
  /* This function is called by QDMA core when one or multiple packet
-@@ -683,250 +775,246 @@ static int onic_unmap_free_pkt_data(struct qdma_request *req)
+@@ -683,250 +750,246 @@ static int onic_unmap_free_pkt_data(struct qdma_request *req)
   * This function frees skb associated with the transmitted packets.
   */
  static int onic_tx_done(struct qdma_request *req, unsigned int bytes_done,
@@ -3285,32 +3260,32 @@ index 1d9107e..db700b8 100644
 +  int num_msix;
 +
 +  num_msix = pci_msix_vec_count(xpriv->pcidev);
++
++  if (num_msix <= 0) {
++    pr_err("%s:No MSIX cpability %d\n", __func__, num_msix);
++    return num_msix;
++  }
  
 -	num_msix = pci_msix_vec_count(xpriv->pcidev);
 -	if (num_msix <= 0) {
 -		pr_err("%s:No MSIX cpability %d\n", __func__, num_msix);
 -		return num_msix;
 -	}
-+  if (num_msix <= 0) {
-+    pr_err("%s:No MSIX cpability %d\n", __func__, num_msix);
-+    return num_msix;
-+  }
++  nb_queues = num_msix;
++  nb_queues -= xpriv->pinfo->pci_msix_user_cnt;
  
 -	nb_queues = num_msix;
 -	nb_queues -= xpriv->pinfo->pci_msix_user_cnt;
 -	if (xpriv->pinfo->pci_master_pf)
 -		nb_queues--;
-+  nb_queues = num_msix;
-+  nb_queues -= xpriv->pinfo->pci_msix_user_cnt;
++  pr_warn("%s: num_msix %d, nb_queues %d, pci_msix_user_cnt %d\n", __func__, num_msix, nb_queues, xpriv->pinfo->pci_msix_user_cnt);
  
 -	xpriv->num_msix = num_msix;
 -	xpriv->nb_queues = nb_queues;
-+  pr_warn("%s: num_msix %d, nb_queues %d, pci_msix_user_cnt %d\n", __func__, num_msix, nb_queues, xpriv->pinfo->pci_msix_user_cnt);
- 
--	return 0;
 +  if (xpriv->pinfo->pci_master_pf)
 +    nb_queues--;
-+
+ 
+-	return 0;
 +  xpriv->num_msix = num_msix;
 +  xpriv->nb_queues = nb_queues;
 +
@@ -3335,7 +3310,7 @@ index 1d9107e..db700b8 100644
  }
  
  /* This function gets global CSR and sets the default indexes of the
-@@ -935,228 +1023,294 @@ static int onic_arr_find(unsigned int *arr, int n, int element)
+@@ -935,358 +998,411 @@ static int onic_arr_find(unsigned int *arr, int n, int element)
   */
  static int onic_qdma_csr_index_setup(struct onic_priv *xpriv)
  {
@@ -3722,56 +3697,34 @@ index 1d9107e..db700b8 100644
  
  }
  
-+// TODO: remove getting configuration from a json file
-+/*
- static int onic_get_pinfo(struct pci_dev *pdev, struct onic_platform_info
+-static int onic_get_pinfo(struct pci_dev *pdev, struct onic_platform_info
 -			  **pinfo_ref)
-+        **pinfo_ref)
- {
--	int ret;
--	struct onic_platform_info *pinfo;
--	char file_name[50] = {0};
-+  int ret;
-+  struct onic_platform_info *pinfo;
-+  char file_name[50] = {0};
- 
--	pinfo = kzalloc(sizeof(struct onic_platform_info), GFP_KERNEL);
--	if (!pinfo)
--		return -ENOMEM;
-+  pinfo = kzalloc(sizeof(struct onic_platform_info), GFP_KERNEL);
-+  if (!pinfo)
-+    return -ENOMEM;
- 
--	sprintf(file_name, "onic_%4x.json", pdev->device);
--	ret = onic_get_platform_info(file_name, pinfo);
-+  sprintf(file_name, "onic_%4x.json", pdev->device);
-+  ret = onic_get_platform_info(file_name, pinfo);
- 
--	if (ret) {
--		pr_err("%s: onic_get_platform_info failed\n", __func__);
--		kfree(pinfo);
--		return ret;
--	}
-+  if (ret) {
-+    pr_err("%s: onic_get_platform_info failed\n", __func__);
-+    kfree(pinfo);
-+    return ret;
-+  }
- 
--	*pinfo_ref = pinfo;
-+  *pinfo_ref = pinfo;
- 
--	return 0;
-+  return 0;
- }
-+*/
-+
 +static int onic_config_platform(struct onic_platform_info **pinfo_ref, u8 qdma_bar,
 +                                u8 qdma_user_bar, u16 queue_base, u16 queue_max,
 +                                u16 mm_queues, int ring_sz, int c2h_tmr_cnt,
 +                                int c2h_cnt_thr, int c2h_buf_sz, u8 port_id,
 +                                u8 pci_msix_user_cnt, bool is_poll_mode, bool rsfec_en)
-+{
+ {
+-	int ret;
+-	struct onic_platform_info *pinfo;
+-	char file_name[50] = {0};
+-
+-	pinfo = kzalloc(sizeof(struct onic_platform_info), GFP_KERNEL);
+-	if (!pinfo)
+-		return -ENOMEM;
+-
+-	sprintf(file_name, "onic_%4x.json", pdev->device);
+-	ret = onic_get_platform_info(file_name, pinfo);
+-
+-	if (ret) {
+-		pr_err("%s: onic_get_platform_info failed\n", __func__);
+-		kfree(pinfo);
+-		return ret;
+-	}
+-
+-	*pinfo_ref = pinfo;
+-
+-	return 0;
 +  struct onic_platform_info *pinfo;
 +
 +  pinfo = kzalloc(sizeof(struct onic_platform_info), GFP_KERNEL);
@@ -3799,8 +3752,8 @@ index 1d9107e..db700b8 100644
 +
 +  *pinfo_ref = pinfo;
 +  return 0;
-+}
-+
+ }
+ 
 +/* Network Device Operations */
 +static const struct net_device_ops onic_netdev_ops = {
 +  .ndo_open = onic_open,
@@ -3811,10 +3764,10 @@ index 1d9107e..db700b8 100644
 +  .ndo_change_mtu = onic_change_mtu,
 +  .ndo_get_stats64 = onic_get_stats64
 +};
- 
++
  extern void onic_set_ethtool_ops(struct net_device *netdev);
  
-@@ -1164,129 +1318,144 @@ extern void onic_set_ethtool_ops(struct net_device *netdev);
+ /* This is probe function which is called when Linux kernel detects PCIe device
   * with Vendor ID and Device ID listed in the in onic_pci_ids table.
   * From this function netdevice and device initialization are done
   */
@@ -4075,7 +4028,7 @@ index 1d9107e..db700b8 100644
  }
  
  /* This function gets called when PCIe device has been removed from the bus
-@@ -1294,38 +1463,40 @@ exit:
+@@ -1294,38 +1410,40 @@ exit:
   */
  static void onic_pci_remove(struct pci_dev *pdev)
  {
@@ -4144,7 +4097,7 @@ index 1d9107e..db700b8 100644
  };
  
  /* This is the entry point of the NIC driver.
-@@ -1333,22 +1504,19 @@ static struct pci_driver onic_pci_driver = {
+@@ -1333,22 +1451,19 @@ static struct pci_driver onic_pci_driver = {
   */
  static int __init onic_module_init(void)
  {
@@ -4180,7 +4133,7 @@ index 1d9107e..db700b8 100644
  }
  
  /* This is the exit point of the NIC driver.
-@@ -1356,13 +1524,15 @@ static int __init onic_module_init(void)
+@@ -1356,13 +1471,15 @@ static int __init onic_module_init(void)
   */
  static void __exit onic_module_exit(void)
  {
