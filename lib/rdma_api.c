@@ -26,7 +26,7 @@ struct rdma_dev_t* create_rdma_dev(struct rn_dev_t* rn_dev) {
     }
     rdma_dev->winSize = rn_dev->winSize;
     rdma_dev->rn_dev = rn_dev;
-
+    rdma_dev->num_qp = rn_dev->num_qp;
     rn_dev->rdma_dev = (void* ) rdma_dev;
 
     return rdma_dev;
@@ -907,6 +907,11 @@ int rdma_post_batch_send(struct rdma_dev_t* rdma_dev, uint32_t qpid, uint32_t ba
   Debug("DEBUG: original qp->sq_pidb = 0x%x\n", qp->sq_pidb);
   
   qp->sq_pidb += batch_size;
+
+    if((qp->qdepth < batch_size) || ((qp->sq_pidb > qp->qdepth))) {
+    fprintf(stderr, "Error: SQ overflow\n");
+    exit(EXIT_FAILURE);
+  }
 
   // Update sq_pidb to hardware
   write32_data(rdma_dev->axil_ctl, get_rdma_per_q_config_addr(RN_RDMA_QCSR_SQPIi, qpid), qp->sq_pidb);
