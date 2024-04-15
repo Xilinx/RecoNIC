@@ -18,7 +18,8 @@ char* device = "";
 int fpga_fd = -1;
 
 uint64_t get_win_size() {
-  return AXI_BAR_SIZE>>3;
+  //return AXI_BAR_SIZE>>3;
+  return AXI_BAR_SIZE;
 }
 
 uint32_t convert_ip_addr_to_uint(char* ip_addr){
@@ -113,7 +114,7 @@ uint8_t is_device_address(uint64_t address) {
 
 /* Used to get the PFN of a virtual address */
 unsigned long get_page_frame_number_of_address(void *addr) {
-  size_t return_code;  
+  size_t return_code;
   // Getting the pagemap file for the current process
   FILE *pagemap = fopen("/proc/self/pagemap", "rb");
 
@@ -141,12 +142,12 @@ unsigned long get_page_frame_number_of_address(void *addr) {
 uint64_t get_buffer_paddr(void *buffer) {
   // Getting the page frame the buffer is in
   unsigned long page_frame_number = get_page_frame_number_of_address(buffer);
-  
+
   Debug("Info: get_buffer_paddr - Page frame: 0x%lx\n", page_frame_number);
-  
+
   // Getting the offset of the buffer into the page
   unsigned int distance_from_page_boundary = (unsigned long)buffer % getpagesize();
-  
+
   Debug("Info: get_buffer_paddr - distance from page boundary: 0x%x\n", distance_from_page_boundary);
 
   uint64_t paddr = (uint64_t)(page_frame_number << PAGE_SHIFT) + (uint64_t)distance_from_page_boundary;
@@ -156,6 +157,7 @@ uint64_t get_buffer_paddr(void *buffer) {
 }
 
 void config_rn_dev_axib_bdf(struct rn_dev_t* rn_dev, uint32_t high_addr, uint32_t low_addr) {
+  int i;
   uint64_t win_size = 0;
   uint32_t bdf_addr_mask_high = 0;
   uint32_t bdf_addr_mask_low  = 0;
@@ -181,19 +183,22 @@ void config_rn_dev_axib_bdf(struct rn_dev_t* rn_dev, uint32_t high_addr, uint32_
   bdf_addr_high = high_addr & bdf_addr_mask_high;
   bdf_addr_low  = low_addr & bdf_addr_mask_low;
 
+  // 128GB mapping per window
   bdf_win_size_in_4Kpage = (uint32_t) ( (((AXI_BAR_SIZE>>3) + 1)>>12) & 0x00000000ffffffff);
   bdf_win_config = 0xC0000000 | bdf_win_size_in_4Kpage;
 
-  fprintf(stderr, "Info: Configuring QDMA AXI bridge BDF\n");
-  write32_data(rn_dev->axil_ctl, AXIB_BDF_ADDR_TRANSLATE_ADDR_LSB, bdf_addr_low);
-  write32_data(rn_dev->axil_ctl, AXIB_BDF_ADDR_TRANSLATE_ADDR_MSB, bdf_addr_high);
-  write32_data(rn_dev->axil_ctl, AXIB_BDF_PASID_RESERVED_ADDR, 0);
-  write32_data(rn_dev->axil_ctl, AXIB_BDF_FUNCTION_NUM_ADDR, 0);
-  write32_data(rn_dev->axil_ctl, AXIB_BDF_MAP_CONTROL_ADDR, bdf_win_config);
-  write32_data(rn_dev->axil_ctl, AXIB_BDF_RESERVED_ADDR, 0);
-  Debug("[BDF] AXIB_BDF_ADDR_TRANSLATE_ADDR_LSB=0x%x, bdf_addr_low=0x%x\n", AXIB_BDF_ADDR_TRANSLATE_ADDR_LSB, bdf_addr_low);
-  Debug("[BDF] AXIB_BDF_ADDR_TRANSLATE_ADDR_MSB=0x%x, bdf_addr_high=0x%x\n", AXIB_BDF_ADDR_TRANSLATE_ADDR_MSB, bdf_addr_high);
-  Debug("[BDF] AXIB_BDF_MAP_CONTROL_ADDR=0x%x, bdf_win_config=0x%x\n", AXIB_BDF_MAP_CONTROL_ADDR, bdf_win_config);
+  fprintf(stderr, "Info: Configuring 8 windows in QDMA AXI bridge BDF, each has 128GB mapping\n");
+  for(i=0; i<8; i++) {
+    write32_data(rn_dev->axil_ctl, AXIB_BDF_ADDR_TRANSLATE_ADDR_LSB+(i*0x20), bdf_addr_low);
+    write32_data(rn_dev->axil_ctl, AXIB_BDF_ADDR_TRANSLATE_ADDR_MSB+(i*0x20), bdf_addr_high + (i*0x20));
+    write32_data(rn_dev->axil_ctl, AXIB_BDF_PASID_RESERVED_ADDR+(i*0x20), 0);
+    write32_data(rn_dev->axil_ctl, AXIB_BDF_FUNCTION_NUM_ADDR  +(i*0x20), 0);
+    write32_data(rn_dev->axil_ctl, AXIB_BDF_MAP_CONTROL_ADDR   +(i*0x20), bdf_win_config);
+    write32_data(rn_dev->axil_ctl, AXIB_BDF_RESERVED_ADDR      +(i*0x20), 0);
+    Debug("[BDF] AXIB_BDF_ADDR_TRANSLATE_ADDR_LSB=0x%x, bdf_addr_low=0x%x\n", AXIB_BDF_ADDR_TRANSLATE_ADDR_LSB+(i*0x20), bdf_addr_low);
+    Debug("[BDF] AXIB_BDF_ADDR_TRANSLATE_ADDR_MSB=0x%x, bdf_addr_high=0x%x\n", AXIB_BDF_ADDR_TRANSLATE_ADDR_MSB+(i*0x20), bdf_addr_high+(i*0x20));
+    Debug("[BDF] AXIB_BDF_MAP_CONTROL_ADDR=0x%x, bdf_win_config=0x%x\n", AXIB_BDF_MAP_CONTROL_ADDR+(i*0x20), bdf_win_config);
+  }
 }
 
 struct rdma_buff_t* allocate_rdma_buffer(struct rn_dev_t* rn_dev, uint64_t buf_size, char* buf_location) {
@@ -253,10 +258,10 @@ struct rdma_buff_t* allocate_rdma_buffer(struct rn_dev_t* rn_dev, uint64_t buf_s
     Debug("Info: allocate_rdma_buffer - successfully allocated rdma device buffer\n");
     } else {
       fprintf(stderr, "Error: please provide correct buffer location: [host_mem | dev_mem]\n");
-      exit(EXIT_FAILURE);  
+      exit(EXIT_FAILURE);
     }
   }
-  
+
   return rdma_buffer;
 }
 
@@ -315,7 +320,7 @@ struct rn_dev_t* create_rn_dev(char* pcie_resource, int* pcie_resource_fd, uint3
 
   fprintf(stderr, "create_rn_dev - testing2\n");
   rn_dev->base_buf->buffer = mmap(NULL, num_hugepages_request * (1 << HUGE_PAGE_SHIFT),
-                                  PROT_READ | PROT_WRITE, MAP_SHARED | MAP_ANONYMOUS | 
+                                  PROT_READ | PROT_WRITE, MAP_SHARED | MAP_ANONYMOUS |
                                   MAP_HUGETLB, -1, 0);
 
   // Lock the buffer in physical memory
