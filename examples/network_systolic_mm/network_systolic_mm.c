@@ -3,8 +3,8 @@
 // SPDX-License-Identifier: MIT
 //
 //==============================================================================
-// Description: 
-//    This is a program used to evaluate a systolic-array based matrix multiplication 
+// Description:
+//    This is a program used to evaluate a systolic-array based matrix multiplication
 // 		accelerator on FPGA. The data will be copied from host memory to device memory
 // 		via QDMA AXI-MM channel. When data is ready, the host will construct a control
 // 		command and issue to the accelerator inside the RecoNIC shell. Then the
@@ -44,14 +44,14 @@ uint32_t win_size_low  = 0;
 // configure RDMA global control status register
 // data buffer, IPKTERR queue buffer, error buffer, response error buffer and retry packet buffer are allocated at host memory in the current software RDMA APIs.
 // We set default values to these buffers as below.
-// Data buffer size          : 16MB, 256 Data buffers with each having 4KB. Buffers of 4K size each for 
+// Data buffer size          : 16MB, 256 Data buffers with each having 4KB. Buffers of 4K size each for
 //                             256 QPs and each QP with up to 16 outstanding transactions.
-// IPKTERR buffer size       : 8KB for IPKTERR buffer. Each error status buffer entry is 64-bit wide. 
+// IPKTERR buffer size       : 8KB for IPKTERR buffer. Each error status buffer entry is 64-bit wide.
 //                             The format is [63: 32] reserved;
 //                                           [31 : 16] QP ID;
-//                                           [15 :  0] Fatal code. 
-// Error buffer size         : 64KB for error buffer. 256 packets of 256 bytes each. Packets that fail 
-//                             packet validation are sent to the error buffer along with 4 bytes of 
+//                                           [15 :  0] Fatal code.
+// Error buffer size         : 64KB for error buffer. 256 packets of 256 bytes each. Packets that fail
+//                             packet validation are sent to the error buffer along with 4 bytes of
 //                             error syndrome.
 // Response error buffer size: 64KB for response error buffer.
 uint16_t num_data_buf          = 4096;
@@ -157,7 +157,7 @@ int main(int argc, char *argv[])
 
   // systolic MM variables
   size_t matrix_size = DATA_SIZE * DATA_SIZE;
-  uint32_t* source_hw_results = malloc(matrix_size);
+  uint32_t source_hw_results[matrix_size];
   int source_in1[matrix_size];
   int source_in2[matrix_size];
   int source_sw_results[matrix_size];
@@ -257,24 +257,24 @@ int main(int argc, char *argv[])
 
   src_mac = get_mac_addr_from_str_ip(sockfd, src_ip_str);
 
-  /* 
+  /*
    * 1. Create an RecoNIC device instance
-   */  
+   */
   fprintf(stderr, "Info: Creating rn_dev\n");
   rn_dev = create_rn_dev(pcie_resource, &pcie_resource_fd, preallocated_hugepages, num_qp);
 
-  /* 
+  /*
    * 2. Create an RDMA device instance
    */
   fprintf(stderr, "Info: CREATE RDMA DEVICE\n");
   rdma_dev = create_rdma_dev(rn_dev);
 
-  /* 
-   * 3. Allocate memory for CQ and RQ's cidb buffers, data buffer, 
+  /*
+   * 3. Allocate memory for CQ and RQ's cidb buffers, data buffer,
    *    incoming_pkt_error_stat_q buffer, err_buffer and response error pkt buffer.
    */
   // Allocate a hugepage for the CQ and RQ's cidb buffer. They share the same hugepage
-  // cidb is 32-bit, and each queue pair will have both cq_cidb and rq_cidb. Therefor, 
+  // cidb is 32-bit, and each queue pair will have both cq_cidb and rq_cidb. Therefor,
   // we set base address of rq_cidb_addr to cq_cidb_addr + (num_qp<<2)
   uint32_t cidb_buffer_size = (1 << HUGE_PAGE_SHIFT);
   cidb_buffer = allocate_rdma_buffer(rn_dev, (uint64_t) cidb_buffer_size, "host_mem");
@@ -287,15 +287,15 @@ int main(int argc, char *argv[])
   err_buf = allocate_rdma_buffer(rn_dev, (uint64_t) (num_err_buf*per_err_buf_size), "host_mem");
   resp_err_pkt_buf = allocate_rdma_buffer(rn_dev, (uint64_t) resp_err_pkt_buf_size, "host_mem");
 
-/* 
-   * 4. Open RDMA engine 
+/*
+   * 4. Open RDMA engine
    */
   fprintf(stderr, "Info: OPEN RDMA DEVICE\n");
   open_rdma_dev(rdma_dev, src_mac, src_ip, udp_sport, num_data_buf, per_data_buf_size,
                 data_buf->dma_addr, ipkt_err_stat_q_size, ipkterr_buf->dma_addr, num_err_buf,
                 per_err_buf_size, err_buf->dma_addr, resp_err_pkt_buf_size, resp_err_pkt_buf->dma_addr);
 
-  /* 
+  /*
    * 5. Allocate protection domain for queues and memory regions
    */
   fprintf(stderr, "Info: ALLOCATE PD\n");
@@ -315,7 +315,7 @@ int main(int argc, char *argv[])
     return -EINVAL;
   }
 
-  /* 
+  /*
    * 6. Allocate a queue pair
    */
   fprintf(stderr, "Info: ALLOCATE RDMA QP\n");
@@ -324,10 +324,10 @@ int main(int argc, char *argv[])
   //  --   2KB CQ (8 CQs, each has 256B and can accommodate 64 CQEs)
   //  -- 128KB RQ (8 RQs, each has 16KB and can accommodate 64 RQE)
   // All SQ, CQ and RQ resources can be used for a single QP.
-    //struct rdma_qp_t* qp = 
+    //struct rdma_qp_t* qp =
   allocate_rdma_qp(rdma_dev, qpid, dst_qpid, rdma_pd, cq_cidb_addr, rq_cidb_addr, qdepth, qp_location, &dst_mac, dst_ip, P_KEY, R_KEY);
 
-  /* 
+  /*
    * 7. Configure last_rq_psn, so that the RDMA packets can be accepted at the remote side
    */
   fprintf(stderr, "Info: CONFIGURE PSN\n");
@@ -394,7 +394,7 @@ int main(int argc, char *argv[])
     device_bufferC = allocate_rdma_buffer(rn_dev, (uint64_t) transfer_size, "dev_mem");
 
     clock_gettime(CLOCK_MONOTONIC, &ts_start);
-    
+
     create_a_wqe(rn_dev->rdma_dev, qpid, wrid, wqe_idx, device_bufferA->dma_addr, transfer_size, RNIC_OP_READ, read_A_offset, R_KEY, 0, 0, 0, 0, 0);
 
     // Post RDMA operation
@@ -514,7 +514,7 @@ int main(int argc, char *argv[])
     mr_bufferB->buffer   = (void *) ((uint64_t) tmp_buffer->buffer + ((uint64_t) (matrix_size << 2)));
     mr_bufferB->dma_addr = tmp_buffer->dma_addr + ((uint64_t) (matrix_size << 2));
     fprintf(stderr, "Info: mr_bufferB->buffer = %p, mr_bufferB->dma_addr = 0x%lx\n", (uint64_t *) mr_bufferB->buffer, mr_bufferB->dma_addr);
-    
+
     if(is_device_address(tmp_buffer->dma_addr)) {
       // Device memory address
       fprintf(stderr, "Info: copy matrix data to the device memory\n");
@@ -534,7 +534,7 @@ int main(int argc, char *argv[])
    }
 
     fprintf(stderr, "Info: Host buffer vir address used for RDMA read operation is mr_bufferA = %p, mr_bufferB = %p\n", (uint64_t *) mr_bufferA->buffer, (uint64_t *) mr_bufferB->buffer);
-    
+
     read_offset = htonll((uint64_t) mr_bufferA->buffer);
     write(accepted_sockfd, &read_offset, sizeof(uint64_t));
     fprintf(stderr, "Sending read_offsetA (%lx) to the remote client\n", ntohll(read_offset));
@@ -545,7 +545,7 @@ int main(int argc, char *argv[])
 
     // Does the client finish its RDMA operation?
     fprintf(stderr, "Does the client finish its RDMA read operation? If yes, please press any key\n");
-    
+
     while(val != '\r' && val != '\n') {
       val = getchar();
     }
@@ -564,7 +564,7 @@ int main(int argc, char *argv[])
     fprintf(stderr, "sockfd shutdown failed\n");
     fprintf(stderr, "Error: %s\n", strerror(errno));
   }
-  close(sockfd);	
+  close(sockfd);
 
 out:
   free(cidb_buffer);
