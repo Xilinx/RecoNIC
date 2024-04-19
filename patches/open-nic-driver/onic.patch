@@ -663,7 +663,7 @@ index 375a12c..943b5af 100644
  
  /**
 diff --git a/onic.h b/onic.h
-index e2b8865..2664de5 100644
+index e2b8865..4bbcbdc 100644
 --- a/onic.h
 +++ b/onic.h
 @@ -3,7 +3,6 @@
@@ -674,7 +674,7 @@ index e2b8865..2664de5 100644
  #include "libqdma_export.h"
  #include "onic_register.h"
  #include "qdma_access/qdma_access_common.h"
-@@ -15,6 +14,32 @@
+@@ -15,39 +14,88 @@
  #define ONIC_RX_PULL_LEN                    (128)
  #define ONIC_NAPI_WEIGHT                    (64)
  
@@ -706,51 +706,92 @@ index e2b8865..2664de5 100644
 +};
  
  struct onic_dma_request {
- 	struct sk_buff *skb;
-@@ -23,6 +48,28 @@ struct onic_dma_request {
- 	struct qdma_sw_sg sgl[MAX_SKB_FRAGS];
- };
- 
-+struct onic_platform_info {
-+	u8 qdma_bar;
-+	u8 user_bar;
-+	u16 queue_base;
-+	u16 queue_max;
-+	u16 used_queues;
-+  u16 active_tx_queues;
-+  u16 active_rx_queues;
-+	u16 mm_queues;
-+	u8 pci_msix_user_cnt;
-+	bool pci_master_pf;
-+	bool poll_mode;
-+	bool intr_mod_en;
-+	int ring_sz;
-+	int c2h_tmr_cnt;
-+	int c2h_cnt_thr;
-+	int c2h_buf_sz;
-+	bool rsfec_en;
-+	u8 port_id;
-+	u8 mac_addr[6];
+-	struct sk_buff *skb;
+-	struct net_device *netdev;
+-	struct qdma_request qdma;
+-	struct qdma_sw_sg sgl[MAX_SKB_FRAGS];
++  struct sk_buff *skb;
++  struct net_device *netdev;
++  struct qdma_request qdma;
++  struct qdma_sw_sg sgl[MAX_SKB_FRAGS];
 +};
 +
++struct onic_platform_info {
++  u8 qdma_bar;
++  u8 user_bar;
++  u16 queue_base;
++  u16 queue_max;
++  u16 used_queues;
++  u16 active_tx_queues;
++  u16 active_rx_queues;
++  u16 mm_queues;
++  u8 pci_msix_user_cnt;
++  bool pci_master_pf;
++  bool poll_mode;
++  bool intr_mod_en;
++  int ring_sz;
++  int c2h_tmr_cnt;
++  int c2h_cnt_thr;
++  int c2h_buf_sz;
++  bool rsfec_en;
++  u8 port_id;
++  u8 mac_addr[6];
+ };
+ 
  /* ONIC Net device private structure */
  struct onic_priv {
- 	u8 rx_desc_rng_sz_idx;
-@@ -47,7 +94,7 @@ struct onic_priv {
- 	unsigned long base_tx_q_handle, base_rx_q_handle;
- 	struct napi_struct *napi;
- 	struct rtnl_link_stats64 *tx_qstats, *rx_qstats;
+-	u8 rx_desc_rng_sz_idx;
+-	u8 tx_desc_rng_sz_idx;
+-	u8 rx_buf_sz_idx;
+-	u8 rx_timer_idx;
+-	u8 rx_cnt_th_idx;
+-	u8 cmpl_rng_sz_idx;
 -
-+    struct onic_cdev *onic_cdev_ptr;
+-	struct net_device *netdev;
+-	struct pci_dev *pcidev;
+-	struct onic_platform_info *pinfo;
++  u8 rx_desc_rng_sz_idx;
++  u8 tx_desc_rng_sz_idx;
++  u8 rx_buf_sz_idx;
++  u8 rx_timer_idx;
++  u8 rx_cnt_th_idx;
++  u8 cmpl_rng_sz_idx;
+ 
+-	u16 num_msix;
+-	u16 nb_queues;
++  struct net_device *netdev;
++  struct pci_dev *pcidev;
++  struct onic_platform_info *pinfo;
+ 
+-	struct kmem_cache *dma_req;
+-	struct qdma_dev_conf qdma_dev_conf;
+-	unsigned long dev_handle;
+-	void __iomem *bar_base;
++  u16 num_msix;
++  u16 nb_queues;
+ 
+-	unsigned long base_tx_q_handle, base_rx_q_handle;
+-	struct napi_struct *napi;
+-	struct rtnl_link_stats64 *tx_qstats, *rx_qstats;
++  struct kmem_cache *dma_req;
++  struct qdma_dev_conf qdma_dev_conf;
++  struct qdma_dev* qdev;
++  unsigned long dev_handle;
++  void __iomem *bar_base;
+ 
++  unsigned long base_tx_q_handle, base_rx_q_handle;
++  struct napi_struct *napi;
++  struct rtnl_link_stats64 *tx_qstats, *rx_qstats;
++  struct onic_cdev *onic_cdev_ptr;
  };
  
  #endif /* ONIC_H */
 diff --git a/onic_cdev.c b/onic_cdev.c
 new file mode 100755
-index 0000000..18f5b10
+index 0000000..228eedb
 --- /dev/null
 +++ b/onic_cdev.c
-@@ -0,0 +1,458 @@
+@@ -0,0 +1,474 @@
 +/*
 + * Copyright (c) 2021 Xilinx, Inc.
 + * All rights reserved.
@@ -1086,15 +1127,56 @@ index 0000000..18f5b10
 +};
 +
 +int onic_init_cdev(struct onic_cdev *onic_cdev_ptr, int no_mm_queues) {
-+  // Device number
-+  dev_t dev;
-+  int err;
 +  int i;
++
++  sema_init(&read_sem, no_mm_queues);
++  sema_init(&read_mutex, 1);
++  sema_init(&read_mutex2, 1);
++  read_read_idx = 0;
++  read_write_idx = 0;
++
++  for(i = 0 ; i < no_mm_queues ; i++){
++    read_queue_pool[i] = i;
++  }
++
++  sema_init(&write_sem, no_mm_queues);
++  sema_init(&write_mutex, 1);
++  sema_init(&write_mutex2, 1);
++  write_read_idx = 0;
++  write_write_idx = 0;
++  for(i = 0 ; i < no_mm_queues ; i++){
++    write_queue_pool[i] = i;
++  }
++  return 0;
++}
++
++int onic_create_cdev(struct onic_cdev *onic_cdev_ptr, struct onic_priv * xpriv, unsigned int qid) {
++  int err;
++  struct device* sysfs_dev;
++  struct xlnx_dma_dev *xdev;
++  dev_t dev;
++  int no_mm_queues;
 +
 +  onic_cdev_ptr->cdev_minor_cnt = MAX_MINOR_DEV;
 +
++  xdev = (struct xlnx_dma_dev *)xpriv->dev_handle;
++  no_mm_queues = xpriv->pinfo->mm_queues;
++
++  onic_cdev_ptr->dev_handle = xpriv->dev_handle;
++  xpriv->onic_cdev_ptr = onic_cdev_ptr;
++  xpriv->onic_cdev_ptr->qdev = xdev_2_qdev(xdev);
++  xpriv->onic_cdev_ptr->xpriv = xpriv;
++  xpriv->onic_cdev_ptr->qdev->pdev = xpriv->pcidev;
++
++  onic_cdev_ptr->fp_rw = qdma_request_submit;
++  onic_cdev_ptr->no_mm_queues = no_mm_queues;
++
++  read_queue_pool = (int*) kzalloc(sizeof(int) * no_mm_queues, GFP_KERNEL);
++  write_queue_pool = (int*) kzalloc(sizeof(int) * no_mm_queues, GFP_KERNEL);
++
 +  // Create a cdev class
 +  onic_cdev_class = class_create(THIS_MODULE, ONIC_CDEV_CLASS_NAME);
++
 +  if(IS_ERR(onic_cdev_class)) {
 +    dev_err(&onic_cdev_ptr->qdev->pdev->dev, "%s: failed to create open-nic cdev class.",
 +            ONIC_CDEV_CLASS_NAME);
@@ -1110,38 +1192,9 @@ index 0000000..18f5b10
 +    return err;
 +  }
 +
-+  onic_cdev_ptr->fp_rw = qdma_request_submit;
-+  onic_cdev_ptr->no_mm_queues = no_mm_queues;
 +  onic_cdev_ptr->cdev_major = MAJOR(dev);
 +  sprintf(onic_cdev_ptr->name, "%s", ONIC_CDEV_CLASS_NAME);
-+  dev_info(&onic_cdev_ptr->qdev->pdev->dev, "onic_cdev_ptr->name = %s\n", onic_cdev_ptr->name);
-+
-+  sema_init(&read_sem, no_mm_queues);
-+  sema_init(&read_mutex, 1);
-+  sema_init(&read_mutex2, 1);
-+  read_read_idx = 0;
-+  read_write_idx = 0;
-+  read_queue_pool = (int*) kzalloc(sizeof(int) * no_mm_queues, GFP_KERNEL);
-+
-+  for(i = 0 ; i < no_mm_queues ; i++){
-+    read_queue_pool[i] = i;
-+  }
-+
-+  sema_init(&write_sem, no_mm_queues);
-+  sema_init(&write_mutex, 1);
-+  sema_init(&write_mutex2, 1);
-+  write_read_idx = 0;
-+  write_write_idx = 0;
-+  write_queue_pool = (int*) kzalloc(sizeof(int) * no_mm_queues, GFP_KERNEL);
-+  for(i = 0 ; i < no_mm_queues ; i++){
-+    write_queue_pool[i] = i;
-+  }
-+  return 0;
-+}
-+
-+int onic_create_cdev(struct onic_cdev *onic_cdev_ptr, unsigned int qid) {
-+  int err;
-+  struct device* sysfs_dev;
++  //dev_info(&onic_cdev_ptr->qdev->pdev->dev, "onic_cdev_ptr->name = %s\n", onic_cdev_ptr->name);
 +
 +  onic_cdev_ptr->mm_cdev.owner = THIS_MODULE;
 +  if(qid >= onic_cdev_ptr->cdev_minor_cnt) {
@@ -1208,13 +1261,17 @@ index 0000000..18f5b10
 +    onic_cdev_ptr->cdev_major = 0;
 +      dev_info(&onic_cdev_ptr->qdev->pdev->dev, "%s cdev_major is reset to %d, onic_destroy_cdev done\n", onic_cdev_ptr->name, onic_cdev_ptr->cdev_major);
 +  }
++
++  kfree(read_queue_pool);
++  kfree(write_queue_pool);
++  kfree(onic_cdev_ptr);
 +}
 diff --git a/onic_cdev.h b/onic_cdev.h
 new file mode 100755
-index 0000000..e6c5afc
+index 0000000..85fc0bd
 --- /dev/null
 +++ b/onic_cdev.h
-@@ -0,0 +1,124 @@
+@@ -0,0 +1,125 @@
 +/*
 + * Copyright (c) 2021 Xilinx, Inc.
 + * All rights reserved.
@@ -1250,7 +1307,7 @@ index 0000000..e6c5afc
 + * Data structure for a character device
 + **/
 +struct onic_cdev {
-+  /* pointer to qdma device handler */
++  /* pointer to PCIe device handler */
 +  struct qdma_dev* qdev;
 +  /* Generic character device interface */
 +  struct cdev mm_cdev;
@@ -1273,7 +1330,7 @@ index 0000000..e6c5afc
 +  /* name of the character device */
 +  char name[0];
 +  struct onic_priv *xpriv;
-+  struct net_device *netdev;
++  //struct net_device *netdev;
 +
 +  int read_idx;
 +  int write_idx;
@@ -1333,10 +1390,11 @@ index 0000000..e6c5afc
 +/**
 + * onic_create_cdev - create a character device
 + * @onic_cdev_ptr: pointer to an onic_cdev data
++ * @xpriv: ONIC private data
 + * @qid: QDMA qid as a char device minor number
 + * Return 0 on success, negative on failure
 + **/
-+int onic_create_cdev(struct onic_cdev *onic_cdev_ptr, unsigned int qid);
++int onic_create_cdev(struct onic_cdev *onic_cdev_ptr, struct onic_priv * xpriv, unsigned int qid);
 +
 +#endif /* ifndef __ONIC_CDEV_H__ */
 diff --git a/onic_json.c b/onic_json.c
@@ -1573,7 +1631,7 @@ index 84fbdf2..0000000
 -
 -#endif
 diff --git a/onic_main.c b/onic_main.c
-index 1d9107e..9c4b900 100644
+index 1d9107e..5be6227 100644
 --- a/onic_main.c
 +++ b/onic_main.c
 @@ -14,167 +14,179 @@ char onic_drv_name[] = "onic";
@@ -1900,7 +1958,7 @@ index 1d9107e..9c4b900 100644
  }
  
  /* This is deffered NAPI task for processing incoming Rx packet from DMA queue
-@@ -183,170 +195,197 @@ static int onic_rx_pkt_process(unsigned long qhndl, unsigned long quld,
+@@ -183,170 +195,206 @@ static int onic_rx_pkt_process(unsigned long qhndl, unsigned long quld,
   */
  static int onic_rx_poll(struct napi_struct *napi, int quota)
  {
@@ -2150,17 +2208,26 @@ index 1d9107e..9c4b900 100644
 -	}
 -
 -	kfree(xpriv->napi);
++  struct xlnx_dma_dev* xdev;
++  struct qdma_dev *qdev;
++	struct qdma_descq *descq;
++
 +  int ret = 0, q_no = 0;
 +  char error_str[ONIC_ERROR_STR_BUF_LEN] = { '0' };
 +
-+  for (q_no = 0; q_no < num_queues; q_no++) {
-+    ret = qdma_queue_remove(xpriv->dev_handle,
-+          (xpriv->base_rx_q_handle + q_no),
-+          error_str, ONIC_ERROR_STR_BUF_LEN);
-+    if (ret != 0) {
-+      netdev_err(xpriv->netdev,
-+          "%s: qdma_queue remove() failed for queue %d with status %d(%s)\n",
-+          __func__, q_no, ret, error_str);
++  xdev = (struct xlnx_dma_dev *) xpriv->dev_handle;
++  qdev = xdev_2_qdev(xdev);
++
++  for (q_no = 0, descq = qdev->c2h_descq; q_no < num_queues; q_no++, descq++) {
++    if (descq->q_state == Q_STATE_ENABLED) {
++      ret = qdma_queue_remove(xpriv->dev_handle,
++            (xpriv->base_rx_q_handle + q_no),
++            error_str, ONIC_ERROR_STR_BUF_LEN);
++      if (ret != 0) {
++        netdev_err(xpriv->netdev,
++            "%s: qdma_queue remove() failed for queue %d with status %d(%s)\n",
++            __func__, q_no, ret, error_str);
++      }
 +    }
 +    if (q_no < QDMA_NET_QUEUE) {
 +      netif_napi_del(&xpriv->napi[q_no]);
@@ -2237,7 +2304,7 @@ index 1d9107e..9c4b900 100644
  }
  
  /* This function is interrupt handler (TOP half).
-@@ -355,150 +394,154 @@ release_rx_q:
+@@ -355,150 +403,176 @@ release_rx_q:
   */
  static void onic_isr_tx_tophalf(unsigned long qhndl, unsigned long uld)
  {
@@ -2285,17 +2352,26 @@ index 1d9107e..9c4b900 100644
 -		}
 -
 -	}
++  struct xlnx_dma_dev* xdev;
++  struct qdma_dev *qdev;
++	struct qdma_descq *descq;
++
 +  int ret = 0, q_no = 0;
 +  char error_str[ONIC_ERROR_STR_BUF_LEN] = { '0' };
 +
-+  for (q_no = 0; q_no < num_queues; q_no++) {
-+    ret = qdma_queue_remove(xpriv->dev_handle,
-+          (xpriv->base_tx_q_handle + q_no),
-+          error_str, ONIC_ERROR_STR_BUF_LEN);
-+    if (ret != 0) {
-+      netdev_err(xpriv->netdev,
-+          "%s: qdma_queue_remove() failed for queue %d with status %d(%s)\n",
-+          __func__, q_no, ret, error_str);
++  xdev = (struct xlnx_dma_dev *) xpriv->dev_handle;
++  qdev = xdev_2_qdev(xdev);
++
++  for (q_no = 0, descq = qdev->h2c_descq; q_no < num_queues; q_no++, descq++) {
++    if (descq->q_state == Q_STATE_ENABLED) {
++      ret = qdma_queue_remove(xpriv->dev_handle,
++            (xpriv->base_tx_q_handle + q_no),
++            error_str, ONIC_ERROR_STR_BUF_LEN);
++      if (ret != 0) {
++        netdev_err(xpriv->netdev,
++            "%s: qdma_queue_remove() failed for queue %d with status %d(%s)\n",
++            __func__, q_no, ret, error_str);
++      }
 +    }
 +  }
  }
@@ -2341,7 +2417,6 @@ index 1d9107e..9c4b900 100644
 +  unsigned long q_handle = 0;
 +  struct qdma_queue_conf qconf;
 +
-+  //for (q_no = 0; q_no < xpriv->netdev->real_num_tx_queues; q_no++) {
 +  for (q_no = 0; q_no < (xpriv->netdev->real_num_tx_queues + xpriv->pinfo->mm_queues); q_no++) {
 +    memset(&qconf, 0, sizeof(struct qdma_queue_conf));
 +    qconf.st = (q_no >= QDMA_NET_QUEUE) ? 0 : 1;
@@ -2354,9 +2429,12 @@ index 1d9107e..9c4b900 100644
 +    qconf.desc_rng_sz_idx = xpriv->tx_desc_rng_sz_idx;
 +    qconf.quld = (unsigned long)xpriv;
 +    qconf.qidx = q_no;
++    qconf.fp_descq_isr_top = onic_isr_tx_tophalf;
++    /*
 +    if( q_no < QDMA_NET_QUEUE ) {
 +      qconf.fp_descq_isr_top = onic_isr_tx_tophalf;
 +    }
++    */
 +
 +    ret = qdma_queue_add(xpriv->dev_handle, &qconf, &q_handle,
 +             error_str, ONIC_ERROR_STR_BUF_LEN);
@@ -2417,29 +2495,40 @@ index 1d9107e..9c4b900 100644
 -
 -	return err;
 +  int ret = 0, q = 0, err = 0;
++  struct xlnx_dma_dev* xdev;
++  struct qdma_dev *qdev;
++	struct qdma_descq *descq;
++
 +  char error_str[ONIC_ERROR_STR_BUF_LEN] = { '0' };
 +
-+  for (q = 0; q < rxq; q++) {
-+    ret = qdma_queue_stop(xpriv->dev_handle,
-+              xpriv->base_rx_q_handle + q, error_str,
-+              ONIC_ERROR_STR_BUF_LEN);
-+    if (ret < 0) {
-+      netdev_err(xpriv->netdev,
-+          "%s: qdma_queue_stop() failed for Rx queue %d with status %d msg: %s\n",
-+          __func__, q, ret, error_str);
-+      err = -EINVAL;
++  xdev = (struct xlnx_dma_dev *) xpriv->dev_handle;
++  qdev = xdev_2_qdev(xdev);
++
++  for (q = 0, descq = qdev->c2h_descq; q < rxq; q++, descq++) {
++    if(descq->q_state == Q_STATE_ONLINE) {
++      ret = qdma_queue_stop(xpriv->dev_handle,
++                xpriv->base_rx_q_handle + q, error_str,
++                ONIC_ERROR_STR_BUF_LEN);
++      if (ret < 0) {
++        netdev_err(xpriv->netdev,
++            "%s: qdma_queue_stop() failed for Rx queue %d with status %d msg: %s\n",
++            __func__, q, ret, error_str);
++        err = -EINVAL;
++      }
 +    }
 +  }
 +
-+  for (q = 0; q < txq; q++) {
-+    ret = qdma_queue_stop(xpriv->dev_handle,
-+              xpriv->base_tx_q_handle + q, error_str,
-+              ONIC_ERROR_STR_BUF_LEN);
-+    if (ret < 0) {
-+      netdev_err(xpriv->netdev,
-+          "%s: qdma_queue_stop() failed for Tx queue %d with status %d msg: %s\n",
-+          __func__, q, ret, error_str);
-+      err = -EINVAL;
++  for (q = 0, descq = qdev->h2c_descq; q < txq; q++, descq++) {
++    if(descq->q_state == Q_STATE_ONLINE) {
++      ret = qdma_queue_stop(xpriv->dev_handle,
++                xpriv->base_tx_q_handle + q, error_str,
++                ONIC_ERROR_STR_BUF_LEN);
++      if (ret < 0) {
++        netdev_err(xpriv->netdev,
++            "%s: qdma_queue_stop() failed for Tx queue %d with status %d msg: %s\n",
++            __func__, q, ret, error_str);
++        err = -EINVAL;
++      }
 +    }
 +  }
 +
@@ -2513,7 +2602,7 @@ index 1d9107e..9c4b900 100644
  }
  
  /* This function gets called when interface gets 'UP' request via 'ifconfig up'
-@@ -507,69 +550,92 @@ static int onic_qdma_start(struct onic_priv *xpriv)
+@@ -507,175 +581,148 @@ static int onic_qdma_start(struct onic_priv *xpriv)
   */
  int onic_open(struct net_device *netdev)
  {
@@ -2576,121 +2665,43 @@ index 1d9107e..9c4b900 100644
 -	return 0;
 +  int ret = 0, q_no = 0;
 +  struct onic_priv * xpriv;
-+  int rv;
-+  int no_mm_queues;
-+  struct onic_cdev *onic_cdev_ptr;
-+  struct xlnx_dma_dev *xdev;
-+
+ 
+-release_queues:
+-	onic_qdma_tx_queue_release(xpriv, xpriv->netdev->real_num_tx_queues);
+-release_rx_queues:
+-	onic_qdma_rx_queue_release(xpriv, xpriv->netdev->real_num_rx_queues);
+-	return ret;
+-}
 +  if (!netdev) {
 +    pr_err("%s: netdev is NULL\n", __func__);
 +    return -EINVAL;
 +  }
-+
+ 
+-/* This function gets called when there is a interface down request.
+- * In this function, Tx/Rx operations on the queues are stopped
+- */
+-static int onic_stop(struct net_device *netdev)
+-{
+-	int ret = 0, q_no = 0;
+-	struct onic_priv *xpriv;
 +  xpriv = netdev_priv(netdev);
 +  if (!xpriv) {
 +    pr_err("%s: xpriv is NULL\n", __func__);
 +    return -EINVAL;
 +  }
 +
-+  ret = onic_stats_alloc(xpriv);
-+  if (ret != 0) {
-+    netdev_err(netdev,
-+         "%s: onic_stats_alloc() failed with status %d\n",
-+         __func__, ret);
-+    return ret;
-+  }
-+
-+  xdev = (struct xlnx_dma_dev *)xpriv->dev_handle;
-+  no_mm_queues = xpriv->pinfo->mm_queues;
-+  onic_cdev_ptr = (struct onic_cdev*) kzalloc(sizeof(struct onic_cdev)+strlen(ONIC_CDEV_CLASS_NAME)+5,
-+                   GFP_KERNEL);
-+  onic_cdev_ptr->dev_handle = xpriv->dev_handle;
-+  xpriv->onic_cdev_ptr = onic_cdev_ptr;
-+  xpriv->onic_cdev_ptr->qdev = xdev_2_qdev(xdev);
-+  xpriv->onic_cdev_ptr->xpriv = xpriv;
-+  xpriv->onic_cdev_ptr->netdev = netdev;
-+  xpriv->onic_cdev_ptr->qdev->pdev = xpriv->pcidev;
-+
-+  rv = onic_init_cdev(xpriv->onic_cdev_ptr, no_mm_queues);
-+  rv = onic_create_cdev(xpriv->onic_cdev_ptr, 0);
-+  if(rv < 0) {
-+  dev_err(&xpriv->onic_cdev_ptr->qdev->pdev->dev, "Error: onic_init_cdev failed\n");
-+  goto release_queues;
-+  }
-+    // end
-+
-+  ret = onic_qdma_rx_queue_setup(xpriv);
-+  if (ret != 0) {
-+    netdev_err(netdev, "%s: onic_qdmx_rx_queue_setup() failed with status %d\n",
-+         __func__, ret);
-+    kfree(xpriv->tx_qstats);
-+    return ret;
-+  }
-+
-+  ret = onic_qdma_tx_queue_setup(xpriv);
-+  if (ret != 0) {
-+    netdev_err(netdev, "%s: onic_qdmx_tx_queue_setup() failed with status %d\n",
-+         __func__, ret);
-+    goto release_rx_queues;
-+  }
-+
++  onic_init_cdev(xpriv->onic_cdev_ptr, xpriv->onic_cdev_ptr->no_mm_queues);
+ 
+-	if (!netdev) {
+-		pr_err("%s: netdev is NULL\n", __func__);
+-		return -EINVAL;
+-	}
 +  ret = onic_qdma_start(xpriv);
 +  if (ret != 0) {
 +    netdev_err(netdev, "%s: onic_qdma_start() failed with status %d\n",
 +         __func__, ret);
 +    goto release_queues;
 +  }
-+
-+  for (q_no = 0; q_no < xpriv->netdev->real_num_rx_queues; q_no++)
-+    napi_enable(&xpriv->napi[q_no]);
-+
-+  if (xpriv->pinfo->poll_mode)
-+    for (q_no = 0; q_no < xpriv->netdev->real_num_rx_queues; q_no++)
-+      napi_schedule(&xpriv->napi[q_no]);
-+
-+  netif_tx_start_all_queues(netdev);
-+  netif_carrier_on(netdev);
-+
-+  netdev_info(netdev, "%s: device open done\n", __func__);
-+
-+  return 0;
- 
- release_queues:
--	onic_qdma_tx_queue_release(xpriv, xpriv->netdev->real_num_tx_queues);
-+  onic_qdma_tx_queue_release(xpriv, xpriv->pinfo->active_tx_queues);
- release_rx_queues:
--	onic_qdma_rx_queue_release(xpriv, xpriv->netdev->real_num_rx_queues);
--	return ret;
-+  onic_qdma_rx_queue_release(xpriv, xpriv->pinfo->active_rx_queues);
-+  return ret;
- }
- 
- /* This function gets called when there is a interface down request.
-@@ -577,105 +643,106 @@ release_rx_queues:
-  */
- static int onic_stop(struct net_device *netdev)
- {
--	int ret = 0, q_no = 0;
--	struct onic_priv *xpriv;
-+  int ret = 0, q_no = 0;
-+  struct onic_priv *xpriv;
-+
-+  if (!netdev) {
-+    pr_err("%s: netdev is NULL\n", __func__);
-+    return -EINVAL;
-+  }
- 
--	if (!netdev) {
--		pr_err("%s: netdev is NULL\n", __func__);
--		return -EINVAL;
--	}
-+  xpriv = netdev_priv(netdev);
-+  if (!xpriv) {
-+    pr_err("%s: xpriv is NULL\n", __func__);
-+    return -EINVAL;
-+  }
-+  netif_tx_stop_all_queues(netdev);
-+  netif_carrier_off(netdev);
  
 -	xpriv = netdev_priv(netdev);
 -	if (!xpriv) {
@@ -2698,35 +2709,70 @@ index 1d9107e..9c4b900 100644
 -		return -EINVAL;
 -	}
 +  for (q_no = 0; q_no < xpriv->netdev->real_num_rx_queues; q_no++)
-+    napi_disable(&xpriv->napi[q_no]);
++    napi_enable(&xpriv->napi[q_no]);
  
 -	netif_tx_stop_all_queues(netdev);
 -	netif_carrier_off(netdev);
-+  ret = onic_qdma_stop(xpriv, xpriv->pinfo->active_tx_queues,
-+           xpriv->pinfo->active_rx_queues);
++  if (xpriv->pinfo->poll_mode)
++    for (q_no = 0; q_no < xpriv->netdev->real_num_rx_queues; q_no++)
++      napi_schedule(&xpriv->napi[q_no]);
  
 -	for (q_no = 0; q_no < xpriv->netdev->real_num_rx_queues; q_no++)
 -		napi_disable(&xpriv->napi[q_no]);
-+  if (ret != 0)
-+    netdev_err(netdev, "%s: onic_qdma_stop() failed with status %d\n",
-+         __func__, ret);
++  netif_tx_start_all_queues(netdev);
++  netif_carrier_on(netdev);
  
 -	ret = onic_qdma_stop(xpriv, netdev->real_num_tx_queues,
 -			     netdev->real_num_rx_queues);
 -	if (ret != 0)
 -		netdev_err(netdev, "%s: onic_qdma_stop() failed with status %d\n",
 -			   __func__, ret);
-+  onic_qdma_rx_queue_release(xpriv, xpriv->pinfo->active_rx_queues);
-+  onic_qdma_tx_queue_release(xpriv, xpriv->pinfo->active_tx_queues);
++  netdev_info(netdev, "%s: device open done\n", __func__);
  
 -	onic_qdma_rx_queue_release(xpriv, netdev->real_num_rx_queues);
 -	onic_qdma_tx_queue_release(xpriv, netdev->real_num_tx_queues);
++  return 0;
  
 -	kfree(xpriv->tx_qstats);
-+  kfree(xpriv->tx_qstats);
++release_queues:
++  onic_qdma_tx_queue_release(xpriv, xpriv->pinfo->active_tx_queues);
++  onic_qdma_rx_queue_release(xpriv, xpriv->pinfo->active_rx_queues);
++  return ret;
++}
  
 -	netdev_info(netdev, "%s: device close done\n", __func__);
 -	return ret;
++/* This function gets called when there is a interface down request.
++ * In this function, Tx/Rx operations on the queues are stopped
++ */
++static int onic_stop(struct net_device *netdev)
++{
++  int ret = 0, q_no = 0;
++  struct onic_priv *xpriv;
++
++  if (!netdev) {
++    pr_err("%s: netdev is NULL\n", __func__);
++    return -EINVAL;
++  }
++
++  xpriv = netdev_priv(netdev);
++  if (!xpriv) {
++    pr_err("%s: xpriv is NULL\n", __func__);
++    return -EINVAL;
++  }
++  netif_tx_stop_all_queues(netdev);
++  netif_carrier_off(netdev);
++
++  for (q_no = 0; q_no < xpriv->netdev->real_num_rx_queues; q_no++)
++    napi_disable(&xpriv->napi[q_no]);
++
++  ret = onic_qdma_stop(xpriv, xpriv->pinfo->active_tx_queues,
++           xpriv->pinfo->active_rx_queues);
++
++  if (ret != 0)
++    netdev_err(netdev, "%s: onic_qdma_stop() failed with status %d\n",
++         __func__, ret);
++
 +  netdev_info(netdev, "%s: device close done\n", __func__);
 +  return ret;
  }
@@ -2859,7 +2905,7 @@ index 1d9107e..9c4b900 100644
  }
  
  /* This function is called by QDMA core when one or multiple packet
-@@ -683,250 +750,246 @@ static int onic_unmap_free_pkt_data(struct qdma_request *req)
+@@ -683,250 +730,246 @@ static int onic_unmap_free_pkt_data(struct qdma_request *req)
   * This function frees skb associated with the transmitted packets.
   */
  static int onic_tx_done(struct qdma_request *req, unsigned int bytes_done,
@@ -3260,32 +3306,32 @@ index 1d9107e..9c4b900 100644
 +  int num_msix;
 +
 +  num_msix = pci_msix_vec_count(xpriv->pcidev);
-+
-+  if (num_msix <= 0) {
-+    pr_err("%s:No MSIX cpability %d\n", __func__, num_msix);
-+    return num_msix;
-+  }
  
 -	num_msix = pci_msix_vec_count(xpriv->pcidev);
 -	if (num_msix <= 0) {
 -		pr_err("%s:No MSIX cpability %d\n", __func__, num_msix);
 -		return num_msix;
 -	}
-+  nb_queues = num_msix;
-+  nb_queues -= xpriv->pinfo->pci_msix_user_cnt;
++  if (num_msix <= 0) {
++    pr_err("%s:No MSIX cpability %d\n", __func__, num_msix);
++    return num_msix;
++  }
  
 -	nb_queues = num_msix;
 -	nb_queues -= xpriv->pinfo->pci_msix_user_cnt;
 -	if (xpriv->pinfo->pci_master_pf)
 -		nb_queues--;
-+  pr_warn("%s: num_msix %d, nb_queues %d, pci_msix_user_cnt %d\n", __func__, num_msix, nb_queues, xpriv->pinfo->pci_msix_user_cnt);
++  nb_queues = num_msix;
++  nb_queues -= xpriv->pinfo->pci_msix_user_cnt;
  
 -	xpriv->num_msix = num_msix;
 -	xpriv->nb_queues = nb_queues;
-+  if (xpriv->pinfo->pci_master_pf)
-+    nb_queues--;
++  pr_warn("%s: num_msix %d, nb_queues %d, pci_msix_user_cnt %d\n", __func__, num_msix, nb_queues, xpriv->pinfo->pci_msix_user_cnt);
  
 -	return 0;
++  if (xpriv->pinfo->pci_master_pf)
++    nb_queues--;
++
 +  xpriv->num_msix = num_msix;
 +  xpriv->nb_queues = nb_queues;
 +
@@ -3310,7 +3356,7 @@ index 1d9107e..9c4b900 100644
  }
  
  /* This function gets global CSR and sets the default indexes of the
-@@ -935,358 +998,411 @@ static int onic_arr_find(unsigned int *arr, int n, int element)
+@@ -935,358 +978,446 @@ static int onic_arr_find(unsigned int *arr, int n, int element)
   */
  static int onic_qdma_csr_index_setup(struct onic_priv *xpriv)
  {
@@ -3530,13 +3576,13 @@ index 1d9107e..9c4b900 100644
  {
 -	u8 cmac_id = xpriv->pinfo->port_id;
 +  u8 cmac_id = xpriv->pinfo->port_id;
-+
-+  writel(0x0, xpriv->bar_base + CMAC_OFFSET_CONF_TX_1(cmac_id));
-+  writel(0x0, xpriv->bar_base + CMAC_OFFSET_CONF_RX_1(cmac_id));
-+}
  
 -	writel(0x0, xpriv->bar_base + CMAC_OFFSET_CONF_TX_1(cmac_id));
 -	writel(0x0, xpriv->bar_base + CMAC_OFFSET_CONF_RX_1(cmac_id));
++  writel(0x0, xpriv->bar_base + CMAC_OFFSET_CONF_TX_1(cmac_id));
++  writel(0x0, xpriv->bar_base + CMAC_OFFSET_CONF_RX_1(cmac_id));
++}
++
 +static void onic_reset_cmac(struct onic_priv *xpriv) {
 +  u8 cmac_id = xpriv->pinfo->port_id;
 +
@@ -3949,8 +3995,6 @@ index 1d9107e..9c4b900 100644
 +    goto exit;
 +  }
 +
-+  pr_info("%s mm_queues: %u\n", __func__, xpriv->pinfo->mm_queues);
-+
 +  if (xpriv->pinfo->used_queues > 0 ) {
 +    netif_set_real_num_tx_queues(xpriv->netdev,
 +               xpriv->pinfo->used_queues);
@@ -3965,6 +4009,14 @@ index 1d9107e..9c4b900 100644
 +  if (!xpriv->dma_req) {
 +    dev_err(&pdev->dev, "%s: Cache alloc failed", __func__);
 +    ret = -ENOMEM;
++    goto exit;
++  }
++
++  ret = onic_stats_alloc(xpriv);
++  if (ret != 0) {
++    netdev_err(netdev,
++         "%s: onic_stats_alloc() failed with status %d\n",
++         __func__, ret);
 +    goto exit;
 +  }
 +
@@ -3986,6 +4038,14 @@ index 1d9107e..9c4b900 100644
 +    goto close_qdma_device;
 +  }
 +
++  xpriv->onic_cdev_ptr = (struct onic_cdev*) kzalloc(sizeof(struct onic_cdev)+strlen(ONIC_CDEV_CLASS_NAME)+5,
++                   GFP_KERNEL);
++  ret = onic_create_cdev(xpriv->onic_cdev_ptr, xpriv, 0);
++  if(ret < 0) {
++    dev_err(&xpriv->onic_cdev_ptr->qdev->pdev->dev, "Error: onic_init_cdev failed\n");
++    goto destroy_cdev;
++  }
++
 +  ret = onic_enable_cmac(xpriv);
 +  if (ret != 0) {
 +    dev_err(&pdev->dev, "%s: onic_enable_cmac() failed with status %d\n", __func__, ret);
@@ -4001,17 +4061,38 @@ index 1d9107e..9c4b900 100644
 +    goto disable_cmac;
 +  }
 +
-+  netif_carrier_off(netdev);
++  // Set up QDMA queues
++  ret = onic_qdma_rx_queue_setup(xpriv);
++  if (ret != 0) {
++    netdev_err(netdev, "%s: onic_qdmx_rx_queue_setup() failed with status %d\n",
++         __func__, ret);
++    kfree(xpriv->tx_qstats);
++    goto release_rx_queues;
++  }
 +
++  ret = onic_qdma_tx_queue_setup(xpriv);
++  if (ret != 0) {
++    netdev_err(netdev, "%s: onic_qdmx_tx_queue_setup() failed with status %d\n",
++         __func__, ret);
++    goto release_queues;
++  }
++
++  netif_carrier_off(netdev);
 +
 +  return 0;
  
++release_queues:
++  onic_qdma_tx_queue_release(xpriv, xpriv->pinfo->active_tx_queues);
++release_rx_queues:
++  onic_qdma_rx_queue_release(xpriv, xpriv->pinfo->active_rx_queues);
  disable_cmac:
 -	onic_disable_cmac(xpriv);
 +  onic_disable_cmac(xpriv);
  iounmap_bar:
 -	iounmap(xpriv->bar_base);
 +  iounmap(xpriv->bar_base);
++destroy_cdev:
++  onic_destroy_cdev(xpriv->onic_cdev_ptr);
  close_qdma_device:
 -	qdma_device_close(pdev, xpriv->dev_handle);
 +  qdma_device_close(pdev, xpriv->dev_handle);
@@ -4028,7 +4109,7 @@ index 1d9107e..9c4b900 100644
  }
  
  /* This function gets called when PCIe device has been removed from the bus
-@@ -1294,38 +1410,40 @@ exit:
+@@ -1294,38 +1425,44 @@ exit:
   */
  static void onic_pci_remove(struct pci_dev *pdev)
  {
@@ -4070,6 +4151,10 @@ index 1d9107e..9c4b900 100644
 +    return;
 +  }
 +
++  onic_qdma_rx_queue_release(xpriv, xpriv->pinfo->active_rx_queues);
++  onic_qdma_tx_queue_release(xpriv, xpriv->pinfo->active_tx_queues);
++  kfree(xpriv->tx_qstats);
++
 +  pci_set_drvdata(pdev, NULL);
 +  unregister_netdev(netdev);
 +
@@ -4097,7 +4182,7 @@ index 1d9107e..9c4b900 100644
  };
  
  /* This is the entry point of the NIC driver.
-@@ -1333,22 +1451,19 @@ static struct pci_driver onic_pci_driver = {
+@@ -1333,22 +1470,19 @@ static struct pci_driver onic_pci_driver = {
   */
  static int __init onic_module_init(void)
  {
@@ -4133,7 +4218,7 @@ index 1d9107e..9c4b900 100644
  }
  
  /* This is the exit point of the NIC driver.
-@@ -1356,13 +1471,15 @@ static int __init onic_module_init(void)
+@@ -1356,13 +1490,15 @@ static int __init onic_module_init(void)
   */
  static void __exit onic_module_exit(void)
  {
