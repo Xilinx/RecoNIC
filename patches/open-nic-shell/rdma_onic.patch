@@ -5719,7 +5719,7 @@ index 0000000..afcc02e
 \ No newline at end of file
 diff --git a/src/utility/axi_5to2_interconnect_to_sys_mem.sv b/src/utility/axi_5to2_interconnect_to_sys_mem.sv
 new file mode 100755
-index 0000000..9d6ee40
+index 0000000..9da1907
 --- /dev/null
 +++ b/src/utility/axi_5to2_interconnect_to_sys_mem.sv
 @@ -0,0 +1,756 @@
@@ -7462,6 +7462,40 @@ index 4b63770..c30ef12 100644
      .s_axil_arready (s_axil_arready),
      .s_axil_rvalid  (s_axil_rvalid),
      .s_axil_rdata   (s_axil_rdata),
+diff --git a/src/utility/axi_stream_packet_buffer.sv b/src/utility/axi_stream_packet_buffer.sv
+old mode 100644
+new mode 100755
+index aa33d14..4750d0b
+--- a/src/utility/axi_stream_packet_buffer.sv
++++ b/src/utility/axi_stream_packet_buffer.sv
+@@ -128,25 +128,13 @@ module axi_stream_packet_buffer #(
+ 
+   // The `drop_busy` signal synchronizes with the packet stream `axis_*`.  When
+   // asserted, the corresponding beat is not written into the RAM.
+-  assign drop_busy = drop || drop_in_prog;
+-
+-  always @(posedge s_aclk) begin
+-    if (~s_aresetn) begin
+-      drop_in_prog <= 1'b0;
+-    end
+-    else if (s_axis_tvalid && s_axis_tlast && s_axis_tready) begin
+-      drop_in_prog <= 1'b0;
+-    end
+-    else if (drop) begin
+-      drop_in_prog <= 1'b1;
+-    end
+-  end
++  assign drop_busy = drop || dropped;
+ 
+   always @(posedge s_aclk) begin
+     if (~s_aresetn) begin
+       dropped <= 1'b0;
+     end
+-    else if (s_axis_tvalid && s_axis_tlast && s_axis_tready && drop_in_prog) begin
++    else if (s_axis_tvalid && s_axis_tlast && s_axis_tready && drop) begin
+       dropped <= 1'b1;
+     end
+     else begin
 diff --git a/src/utility/vivado_ip/axi_clock_converter_for_ddr.tcl b/src/utility/vivado_ip/axi_clock_converter_for_ddr.tcl
 new file mode 100755
 index 0000000..79b8c26
