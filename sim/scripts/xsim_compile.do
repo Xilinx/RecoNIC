@@ -44,9 +44,6 @@ xvlog $xvlog_opts -work reco --include "../build/ip/reconic_axil_crossbar/hdl" \
 "../build/ip/reconic_axil_crossbar/hdl/generic_baseblocks_v2_1_vl_rfs.v" \
 "../build/ip/reconic_axil_crossbar/sim/reconic_axil_crossbar.v"
 
-xvlog $xvlog_opts -work reco -L axi_crossbar_v2_1_26 --include "../build/ip/axil_2to1_crossbar/hdl" \
-"../build/ip/axil_2to1_crossbar/sim/axil_2to1_crossbar.v" \
-
 xvlog $xvlog_opts -work reco -L axi_crossbar_v2_1_26 --include "../build/ip/axil_3to1_crossbar/hdl" \
 "../build/ip/axil_3to1_crossbar/sim/axil_3to1_crossbar.v" \
 
@@ -66,6 +63,11 @@ xvlog $xvlog_opts -work reco -sv -L fifo_generator_v13_2_6 \
 
 xvlog $xvlog_opts -d DEBUG -work reco -i ../../shell/compute/lookside/interface -f ./interface.f
 xvlog $xvlog_opts -d DEBUG -work reco -i ../../shell/compute/lookside/kernel -f ./kernel.f
+
+xvhdl $xvhdl_opts -work reco -L ernic_v3_1_1 \
+"../build/ip/rdma_core/hdl/fifo_generator_v13_2_rfs.vhd" \
+"../build/ip/rdma_core/hdl/lib_bmg_v1_0_rfs.vhd" \
+"../build/ip/rdma_core/hdl/lib_fifo_v1_0_rfs.vhd"
 
 xvlog $xvlog_opts -work reco -sv -L ernic_v3_1_1 -i ../build/ip/rdma_core/hdl/common \
 "../build/ip/rdma_core/synth/rdma_core.sv"
