@@ -1631,10 +1631,10 @@ index 84fbdf2..0000000
 -
 -#endif
 diff --git a/onic_main.c b/onic_main.c
-index 1d9107e..8beb053 100644
+index 1d9107e..d4c61e6 100644
 --- a/onic_main.c
 +++ b/onic_main.c
-@@ -14,167 +14,185 @@ char onic_drv_name[] = "onic";
+@@ -14,167 +14,189 @@ char onic_drv_name[] = "onic";
  #define DRV_VER "1.00"
  char onic_drv_ver[] = DRV_VER;
  
@@ -1654,6 +1654,10 @@ index 1d9107e..8beb053 100644
 -	{ PCI_DEVICE(0x10ee, 0x923f) },
 -	{ PCI_DEVICE(0x10ee, 0x933f) },
 -	{0}
++  { PCI_DEVICE(0x10ee, 0x9048) },
++  { PCI_DEVICE(0x10ee, 0x9148) },
++  { PCI_DEVICE(0x10ee, 0x9248) },
++  { PCI_DEVICE(0x10ee, 0x9348) },
 +  { PCI_DEVICE(0x10ee, 0x903f) },
 +  { PCI_DEVICE(0x10ee, 0x913f) },
 +  { PCI_DEVICE(0x10ee, 0x923f) },
@@ -1964,7 +1968,7 @@ index 1d9107e..8beb053 100644
  }
  
  /* This is deffered NAPI task for processing incoming Rx packet from DMA queue
-@@ -183,170 +201,222 @@ static int onic_rx_pkt_process(unsigned long qhndl, unsigned long quld,
+@@ -183,170 +205,222 @@ static int onic_rx_pkt_process(unsigned long qhndl, unsigned long quld,
   */
  static int onic_rx_poll(struct napi_struct *napi, int quota)
  {
@@ -2326,7 +2330,7 @@ index 1d9107e..8beb053 100644
  }
  
  /* This function is interrupt handler (TOP half).
-@@ -355,150 +425,176 @@ release_rx_q:
+@@ -355,150 +429,176 @@ release_rx_q:
   */
  static void onic_isr_tx_tophalf(unsigned long qhndl, unsigned long uld)
  {
@@ -2624,7 +2628,7 @@ index 1d9107e..8beb053 100644
  }
  
  /* This function gets called when interface gets 'UP' request via 'ifconfig up'
-@@ -507,175 +603,148 @@ static int onic_qdma_start(struct onic_priv *xpriv)
+@@ -507,175 +607,148 @@ static int onic_qdma_start(struct onic_priv *xpriv)
   */
  int onic_open(struct net_device *netdev)
  {
@@ -2927,7 +2931,7 @@ index 1d9107e..8beb053 100644
  }
  
  /* This function is called by QDMA core when one or multiple packet
-@@ -683,250 +752,246 @@ static int onic_unmap_free_pkt_data(struct qdma_request *req)
+@@ -683,250 +756,246 @@ static int onic_unmap_free_pkt_data(struct qdma_request *req)
   * This function frees skb associated with the transmitted packets.
   */
  static int onic_tx_done(struct qdma_request *req, unsigned int bytes_done,
@@ -3378,7 +3382,7 @@ index 1d9107e..8beb053 100644
  }
  
  /* This function gets global CSR and sets the default indexes of the
-@@ -935,358 +1000,446 @@ static int onic_arr_find(unsigned int *arr, int n, int element)
+@@ -935,358 +1004,446 @@ static int onic_arr_find(unsigned int *arr, int n, int element)
   */
  static int onic_qdma_csr_index_setup(struct onic_priv *xpriv)
  {
@@ -4131,7 +4135,7 @@ index 1d9107e..8beb053 100644
  }
  
  /* This function gets called when PCIe device has been removed from the bus
-@@ -1294,38 +1447,44 @@ exit:
+@@ -1294,38 +1451,44 @@ exit:
   */
  static void onic_pci_remove(struct pci_dev *pdev)
  {
@@ -4204,7 +4208,7 @@ index 1d9107e..8beb053 100644
  };
  
  /* This is the entry point of the NIC driver.
-@@ -1333,22 +1492,19 @@ static struct pci_driver onic_pci_driver = {
+@@ -1333,22 +1496,19 @@ static struct pci_driver onic_pci_driver = {
   */
  static int __init onic_module_init(void)
  {
@@ -4240,7 +4244,7 @@ index 1d9107e..8beb053 100644
  }
  
  /* This is the exit point of the NIC driver.
-@@ -1356,13 +1512,15 @@ static int __init onic_module_init(void)
+@@ -1356,13 +1516,15 @@ static int __init onic_module_init(void)
   */
  static void __exit onic_module_exit(void)
  {
