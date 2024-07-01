@@ -594,10 +594,47 @@ index 7c92dae..0000000
 -	"mac_addr": [0x00, 0x0A, 0x35, 0x00, 0x91, 0x3F]
 -}
 diff --git a/libqdma/libqdma_export.c b/libqdma/libqdma_export.c
-index 25e735c..79d8c09 100644
+index 25e735c..d88d7c9 100644
 --- a/libqdma/libqdma_export.c
 +++ b/libqdma/libqdma_export.c
-@@ -2415,8 +2415,8 @@ ssize_t qdma_request_submit(unsigned long dev_hndl, unsigned long id,
+@@ -2301,8 +2301,12 @@ void sgl_unmap(struct pci_dev *pdev, struct qdma_sw_sg *sg, unsigned int sgcnt,
+ 		if (!sg->pg)
+ 			break;
+ 		if (sg->dma_addr) {
++#if LINUX_VERSION_CODE < KERNEL_VERSION(5, 18, 0)
+ 			pci_unmap_page(pdev, sg->dma_addr - sg->offset,
+ 							PAGE_SIZE, dir);
++#else // LINUX_VERSION_CODE >= KERNEL_VERSION(5, 18, 0)
++			dma_unmap_page(&pdev->dev, sg->dma_addr - sg->offset, PAGE_SIZE, dir);
++#endif
+ 			sg->dma_addr = 0UL;
+ 		}
+ 	}
+@@ -2333,6 +2337,7 @@ int sgl_map(struct pci_dev *pdev, struct qdma_sw_sg *sgl, unsigned int sgcnt,
+ 	 */
+ 	for (i = 0; i < sgcnt; i++, sg++) {
+ 		/* !! TODO  page size !! */
++#if LINUX_VERSION_CODE < KERNEL_VERSION(5, 18, 0)
+ 		sg->dma_addr = pci_map_page(pdev, sg->pg, 0, PAGE_SIZE, dir);
+ 		if (unlikely(pci_dma_mapping_error(pdev, sg->dma_addr))) {
+ 			pr_err("map sgl failed, sg %d, %u.\n", i, sg->len);
+@@ -2340,6 +2345,15 @@ int sgl_map(struct pci_dev *pdev, struct qdma_sw_sg *sgl, unsigned int sgcnt,
+ 				sgl_unmap(pdev, sgl, i, dir);
+ 			return -EIO;
+ 		}
++#else // LINUX_VERSION_CODE >= KERNEL_VERSION(5, 18, 0)
++		sg->dma_addr = dma_map_page(&pdev->dev, sg->pg, 0, PAGE_SIZE, dir);
++		if (unlikely(dma_mapping_error(&pdev->dev, sg->dma_addr))) {
++			pr_err("map sgl failed, sg %d, %u.\n", i, sg->len);
++			if (i)
++				sgl_unmap(pdev, sgl, i, dir);
++			return -EIO;
++		}
++#endif
+ 		sg->dma_addr += sg->offset;
+ 	}
+ 
+@@ -2415,8 +2429,8 @@ ssize_t qdma_request_submit(unsigned long dev_hndl, unsigned long id,
  	 */
  	if ((req->write && (descq->conf.q_type != Q_H2C)) ||
  	    (!req->write && (descq->conf.q_type != Q_C2H))) {
@@ -609,10 +646,18 @@ index 25e735c..79d8c09 100644
  	}
  
 diff --git a/libqdma/libqdma_export.h b/libqdma/libqdma_export.h
-index 75d4cdf..8a4d200 100644
+index 75d4cdf..ec0d6e6 100644
 --- a/libqdma/libqdma_export.h
 +++ b/libqdma/libqdma_export.h
-@@ -805,6 +805,9 @@ struct qdma_request {
+@@ -37,6 +37,7 @@
+ 
+ #include <linux/types.h>
+ #include <linux/interrupt.h>
++#include <linux/dma-mapping.h>
+ #include "libqdma_config.h"
+ #include "qdma_access_export.h"
+ 
+@@ -805,6 +806,9 @@ struct qdma_request {
  	struct qdma_sw_sg *sgl;
  	/**  udd data */
  	u8 udd[QDMA_UDD_MAXLEN];
@@ -662,6 +707,58 @@ index 375a12c..943b5af 100644
  };
  
  /**
+diff --git a/libqdma/qdma_st_c2h.c b/libqdma/qdma_st_c2h.c
+index db793cd..42f68d8 100644
+--- a/libqdma/qdma_st_c2h.c
++++ b/libqdma/qdma_st_c2h.c
+@@ -215,8 +215,13 @@ static inline int flq_fill_page_one(struct qdma_sw_pg_sg *pg_sdesc,
+ 		return -ENOMEM;
+ 	}
+ 
++#if LINUX_VERSION_CODE < KERNEL_VERSION(5, 18, 0)
+ 	mapping = dma_map_page(dev, pg, 0, (PAGE_SIZE << pg_order),
+ 				PCI_DMA_FROMDEVICE);
++#else // LINUX_VERSION_CODE >= KERNEL_VERSION(5, 18, 0)
++	mapping = dma_map_page(dev, pg, 0, (PAGE_SIZE << pg_order),
++				DMA_FROM_DEVICE);
++#endif
+ 	if (unlikely(dma_mapping_error(dev, mapping))) {
+ 		dev_err(dev, "page 0x%p mapping error 0x%llx.\n",
+ 			pg, (unsigned long long)mapping);
+diff --git a/libqdma/xdev.c b/libqdma/xdev.c
+index 770c395..7474ffa 100644
+--- a/libqdma/xdev.c
++++ b/libqdma/xdev.c
+@@ -91,6 +91,7 @@ struct qdma_resource_lock {
+ static int pci_dma_mask_set(struct pci_dev *pdev)
+ {
+ 	/** 64-bit addressing capability for XDMA? */
++#if LINUX_VERSION_CODE < KERNEL_VERSION(5, 18, 0)
+ 	if (!pci_set_dma_mask(pdev, DMA_BIT_MASK(64))) {
+ 		/** use 64-bit DMA for descriptors */
+ 		pci_set_consistent_dma_mask(pdev, DMA_BIT_MASK(64));
+@@ -104,6 +105,21 @@ static int pci_dma_mask_set(struct pci_dev *pdev)
+ 		dev_info(&pdev->dev, "No suitable DMA possible.\n");
+ 		return -EINVAL;
+ 	}
++#else // LINUX_VERSION_CODE >= KERNEL_VERSION(5, 18, 0)
++	if (!dma_set_mask(&pdev->dev, (u64) DMA_BIT_MASK(64))) {
++		/** use 64-bit DMA for descriptors */
++		dma_set_coherent_mask(&pdev->dev, (u64) DMA_BIT_MASK(64));
++		/** use 64-bit DMA, 32-bit for consistent */
++	} else if (!dma_set_mask(&pdev->dev, (u64) DMA_BIT_MASK(32))) {
++		dma_set_coherent_mask(&pdev->dev, (u64) DMA_BIT_MASK(32));
++		/** use 32-bit DMA */
++		dev_info(&pdev->dev, "Using a 32-bit DMA mask.\n");
++	} else {
++		/** use 32-bit DMA */
++		dev_info(&pdev->dev, "No suitable DMA possible.\n");
++		return -EINVAL;
++	}
++#endif
+ 
+ 	return 0;
+ }
 diff --git a/onic.h b/onic.h
 index e2b8865..4bbcbdc 100644
 --- a/onic.h
@@ -1631,7 +1728,7 @@ index 84fbdf2..0000000
 -
 -#endif
 diff --git a/onic_main.c b/onic_main.c
-index 1d9107e..d4c61e6 100644
+index 1d9107e..7f26c27 100644
 --- a/onic_main.c
 +++ b/onic_main.c
 @@ -14,167 +14,189 @@ char onic_drv_name[] = "onic";
@@ -2931,7 +3028,7 @@ index 1d9107e..d4c61e6 100644
  }
  
  /* This function is called by QDMA core when one or multiple packet
-@@ -683,250 +756,246 @@ static int onic_unmap_free_pkt_data(struct qdma_request *req)
+@@ -683,250 +756,250 @@ static int onic_unmap_free_pkt_data(struct qdma_request *req)
   * This function frees skb associated with the transmitted packets.
   */
  static int onic_tx_done(struct qdma_request *req, unsigned int bytes_done,
@@ -3239,7 +3336,11 @@ index 1d9107e..d4c61e6 100644
 +  netdev_info(dev, "Set MAC address to %x:%x:%x:%x:%x:%x",
 +        dev_addr[0], dev_addr[1], dev_addr[2],
 +        dev_addr[3], dev_addr[4], dev_addr[5]);
++#if LINUX_VERSION_CODE < KERNEL_VERSION(5, 18, 0)
 +  memcpy(dev->dev_addr, dev_addr, dev->addr_len);
++#else // LINUX_VERSION_CODE >= KERNEL_VERSION(5, 18, 0)
++  eth_hw_addr_set(dev, dev_addr);
++#endif
 +  return 0;
  };
  
@@ -3382,7 +3483,7 @@ index 1d9107e..d4c61e6 100644
  }
  
  /* This function gets global CSR and sets the default indexes of the
-@@ -935,358 +1004,446 @@ static int onic_arr_find(unsigned int *arr, int n, int element)
+@@ -935,358 +1008,446 @@ static int onic_arr_find(unsigned int *arr, int n, int element)
   */
  static int onic_qdma_csr_index_setup(struct onic_priv *xpriv)
  {
@@ -4135,7 +4236,7 @@ index 1d9107e..d4c61e6 100644
  }
  
  /* This function gets called when PCIe device has been removed from the bus
-@@ -1294,38 +1451,44 @@ exit:
+@@ -1294,38 +1455,44 @@ exit:
   */
  static void onic_pci_remove(struct pci_dev *pdev)
  {
@@ -4208,7 +4309,7 @@ index 1d9107e..d4c61e6 100644
  };
  
  /* This is the entry point of the NIC driver.
-@@ -1333,22 +1496,19 @@ static struct pci_driver onic_pci_driver = {
+@@ -1333,22 +1500,19 @@ static struct pci_driver onic_pci_driver = {
   */
  static int __init onic_module_init(void)
  {
@@ -4244,7 +4345,7 @@ index 1d9107e..d4c61e6 100644
  }
  
  /* This is the exit point of the NIC driver.
-@@ -1356,13 +1516,15 @@ static int __init onic_module_init(void)
+@@ -1356,13 +1520,15 @@ static int __init onic_module_init(void)
   */
  static void __exit onic_module_exit(void)
  {
