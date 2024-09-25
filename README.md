@@ -107,6 +107,10 @@ Info: Target ID or target name can be obtained from "Open New Target" under "Ope
 $ ./program_fpga.sh -b d8:00.0 -t target_name -r remote_hostname
 ```
 
+### How to generate patches for the hardware shell
+
+We leverage patches to include new changes in the hardware shell. If you want to modify the hardware shell such as adding board support and new features, please refer to this [document](./doc/how_to_gen_a_patch.md) for the instructions.
+
 ## Driver Installation
 
 * Install the modified onic driver
