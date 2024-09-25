@@ -74,3 +74,7 @@ $ git clean -fd
 ```
 
 Please make sure you don't have any errors or trailing whitespace. If you do, modify your repository and go back to step 3.
+
+-----
+
+<p align="center">Copyright&copy; 2021-2024 Advanced Micro Devices, Inc.</p>
