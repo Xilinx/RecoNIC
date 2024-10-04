@@ -16,6 +16,9 @@ nic_patch=${root_dir}/patches/open-nic-shell/rdma_onic.patch
 cd ${nic_dir}
 git apply --whitespace=fix ${nic_patch}
 
+cd ${cur_dir}
+source $(pwd)/add_au280_support.sh
+
 echo -e "gen_base_nic.sh done!"
 
 cd ${cur_dir}
