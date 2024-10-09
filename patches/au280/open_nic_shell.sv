@@ -2315,7 +2315,7 @@ axi_5to2_interconnect_to_sys_mem axi_interconnect_to_sys_mem_inst(
     .axis_arestn                           (qdma_rstn)
 );
 
-  axi_clock_converter_for_ddr  axi_clock_converter_for_ddr_inst (
+  axi_clock_converter_for_mem  axi_clock_converter_for_ddr_inst (
     .s_axi_aclk      (axis_aclk),
     .s_axi_aresetn   (qdma_rstn),
     .s_axi_awid      (axi_dev_mem_awid),
