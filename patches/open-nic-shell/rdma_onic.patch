@@ -30,18 +30,10 @@ index 6269b52..daeab3c 100644
 +set_property BITSTREAM.CONFIG.SPI_32BIT_ADDR Yes [current_design]
 \ No newline at end of file
 diff --git a/script/build.tcl b/script/build.tcl
-index c689eb6..8618558 100644
+index c689eb6..1d6082b 100644
 --- a/script/build.tcl
 +++ b/script/build.tcl
-@@ -17,6 +17,7 @@
- # *************************************************************************
- proc _do_impl {jobs {strategies ""}} {
-     if {![llength $strategies]} {
-+        create_run -flow {Vivado IDR Flow 2021} -parent_run synth_1 impl_1
-         launch_runs impl_1 -to_step write_bitstream -jobs $jobs
-         wait_on_run impl_1
-     } else {
-@@ -223,6 +224,11 @@ if {![file exists ${ip_build_dir}/manage_ip/]} {
+@@ -223,6 +223,11 @@ if {![file exists ${ip_build_dir}/manage_ip/]} {
  # Run synthesis for each IP
  set ip_dict [dict create]
  dict for {module module_dir} $module_dict {
@@ -53,13 +45,13 @@ index c689eb6..8618558 100644
      set ip_tcl_dir ${module_dir}/vivado_ip
  
      # Check the existence of "$ip_tcl_dir" and "${ip_tcl_dir}/vivado_ip.tcl"
-@@ -395,7 +401,8 @@ read_xdc ${build_dir}/run_params.xdc
+@@ -395,7 +400,8 @@ read_xdc ${build_dir}/run_params.xdc
  # Implement design
  if {$impl} {
      update_compile_order -fileset sources_1
 -    _do_impl $jobs {"Vivado Implementation Defaults"}
 +    #_do_impl $jobs {"Vivado Implementation Defaults"}
-+    _do_impl $jobs {}
++    _do_impl $jobs {"Performance_Retiming"}
  }
  
  if {$post_impl} {
